@@ -272,7 +272,7 @@ export default function Stats() {
                     </div>
                 ) : (
                     <div className="flex gap-1 flex-wrap">
-                        {stats.map((day, i) => {
+                        {stats.map((day) => {
                             const intensity = Math.min(day.minutes_protected / 60, 8) / 8;
                             return (
                                 <div

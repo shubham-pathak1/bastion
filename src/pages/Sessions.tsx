@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Clock, Shield, Trash2, Edit2, X, Loader2, Calendar, AlertTriangle } from 'lucide-react';
+import { Plus, Clock, Shield, Trash2, X, Loader2, Calendar, AlertTriangle } from 'lucide-react';
 import { sessionsApi, Session } from '../lib/api';
 
 const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -161,8 +161,8 @@ export default function Sessions() {
                         >
                             <div className="flex items-center gap-3 mb-3">
                                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${template.hardcore
-                                        ? 'bg-bastion-warning-muted'
-                                        : 'bg-bastion-accent-muted'
+                                    ? 'bg-bastion-warning-muted'
+                                    : 'bg-bastion-accent-muted'
                                     }`}>
                                     {template.hardcore ? (
                                         <Shield className="w-5 h-5 text-bastion-warning" />
@@ -182,8 +182,8 @@ export default function Sessions() {
                                     <span
                                         key={day}
                                         className={`w-8 h-6 text-xs rounded flex items-center justify-center ${template.days.includes(day)
-                                                ? 'bg-bastion-accent-muted text-bastion-accent'
-                                                : 'bg-bastion-surface-active text-bastion-text-muted'
+                                            ? 'bg-bastion-accent-muted text-bastion-accent'
+                                            : 'bg-bastion-surface-active text-bastion-text-muted'
                                             }`}
                                     >
                                         {day.charAt(0)}
@@ -222,8 +222,8 @@ export default function Sessions() {
                             >
                                 <div className="flex items-center gap-4">
                                     <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${session.hardcore
-                                            ? 'bg-bastion-warning-muted'
-                                            : 'bg-bastion-accent-muted'
+                                        ? 'bg-bastion-warning-muted'
+                                        : 'bg-bastion-accent-muted'
                                         }`}>
                                         {session.hardcore ? (
                                             <Shield className="w-6 h-6 text-bastion-warning" />
@@ -249,8 +249,8 @@ export default function Sessions() {
                                                 <span
                                                     key={day}
                                                     className={`w-6 h-5 text-xs rounded flex items-center justify-center ${parseDays(session.days).includes(day)
-                                                            ? 'bg-bastion-accent text-black'
-                                                            : 'bg-bastion-surface-active text-bastion-text-muted'
+                                                        ? 'bg-bastion-accent text-black'
+                                                        : 'bg-bastion-surface-active text-bastion-text-muted'
                                                         }`}
                                                 >
                                                     {day.charAt(0)}
@@ -343,8 +343,8 @@ export default function Sessions() {
                                                 key={day}
                                                 onClick={() => toggleDay(day)}
                                                 className={`flex-1 py-2 rounded-xl text-sm font-medium transition-all ${formData.days.includes(day)
-                                                        ? 'bg-bastion-accent text-black'
-                                                        : 'bg-bastion-surface-active text-bastion-text-muted hover:bg-bastion-surface-hover'
+                                                    ? 'bg-bastion-accent text-black'
+                                                    : 'bg-bastion-surface-active text-bastion-text-muted hover:bg-bastion-surface-hover'
                                                     }`}
                                             >
                                                 {day}

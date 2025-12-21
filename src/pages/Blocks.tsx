@@ -11,21 +11,21 @@ import {
     Upload,
     X,
     Loader2,
-    RefreshCw
+    RefreshCw,
+    AlertTriangle
 } from 'lucide-react';
-import { cn } from '../lib/utils';
 import { blockedSitesApi, blockedAppsApi, BlockedSite, BlockedApp } from '../lib/api';
 
 type TabType = 'websites' | 'applications';
 type Category = 'social' | 'entertainment' | 'news' | 'shopping' | 'work' | 'other';
 
 const categoryColors: Record<Category, string> = {
-    social: 'bg-pink-500/20 text-pink-400',
-    entertainment: 'bg-purple-500/20 text-purple-400',
-    news: 'bg-blue-500/20 text-blue-400',
-    shopping: 'bg-orange-500/20 text-orange-400',
-    work: 'bg-green-500/20 text-green-400',
-    other: 'bg-gray-500/20 text-gray-400',
+    social: 'bg-pink-500/15 text-pink-400',
+    entertainment: 'bg-purple-500/15 text-purple-400',
+    news: 'bg-blue-500/15 text-blue-400',
+    shopping: 'bg-orange-500/15 text-orange-400',
+    work: 'bg-green-500/15 text-green-400',
+    other: 'bg-gray-500/15 text-gray-400',
 };
 
 const popularSites = [
@@ -42,11 +42,9 @@ export default function Blocks() {
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
 
-    // Real data from Tauri backend
     const [websites, setWebsites] = useState<BlockedSite[]>([]);
     const [applications, setApplications] = useState<BlockedApp[]>([]);
 
-    // Load data from backend
     const loadData = async () => {
         setIsLoading(true);
         try {
@@ -113,7 +111,6 @@ export default function Blocks() {
             if (activeTab === 'websites') {
                 await blockedSitesApi.add(newItem.trim(), newCategory);
             } else {
-                // For apps, use the input as both name and process name
                 await blockedAppsApi.add(newItem.trim(), newItem.trim(), newCategory);
             }
             setNewItem('');
@@ -138,7 +135,7 @@ export default function Blocks() {
                 </div>
                 <div className="flex gap-2">
                     <button onClick={loadData} className="btn-ghost flex items-center gap-2">
-                        <RefreshCw className={cn("w-4 h-4", isLoading && "animate-spin")} /> Refresh
+                        <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
                     </button>
                     <button className="btn-ghost flex items-center gap-2">
                         <Download className="w-4 h-4" /> Export
@@ -150,34 +147,32 @@ export default function Blocks() {
             </div>
 
             {/* Tabs */}
-            <div className="flex items-center gap-4 mb-6">
+            <div className="flex items-center gap-2 mb-6 p-1 bg-bastion-bg-elevated rounded-xl w-fit">
                 <button
                     onClick={() => setActiveTab('websites')}
-                    className={cn(
-                        'flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all',
-                        activeTab === 'websites'
-                            ? 'bg-bastion-accent text-bastion-bg'
-                            : 'text-bastion-text-secondary hover:text-bastion-text-primary'
-                    )}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all ${activeTab === 'websites'
+                            ? 'bg-bastion-accent text-black'
+                            : 'text-bastion-text-muted hover:text-white'
+                        }`}
                 >
                     <Globe className="w-4 h-4" />
                     Websites
-                    <span className="ml-1 px-2 py-0.5 rounded-full bg-black/20 text-xs">
+                    <span className={`ml-1 px-2 py-0.5 rounded-full text-xs ${activeTab === 'websites' ? 'bg-black/20' : 'bg-bastion-surface'
+                        }`}>
                         {websites.length}
                     </span>
                 </button>
                 <button
                     onClick={() => setActiveTab('applications')}
-                    className={cn(
-                        'flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all',
-                        activeTab === 'applications'
-                            ? 'bg-bastion-accent text-bastion-bg'
-                            : 'text-bastion-text-secondary hover:text-bastion-text-primary'
-                    )}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all ${activeTab === 'applications'
+                            ? 'bg-bastion-accent text-black'
+                            : 'text-bastion-text-muted hover:text-white'
+                        }`}
                 >
                     <AppWindow className="w-4 h-4" />
                     Applications
-                    <span className="ml-1 px-2 py-0.5 rounded-full bg-bastion-surface text-xs">
+                    <span className={`ml-1 px-2 py-0.5 rounded-full text-xs ${activeTab === 'applications' ? 'bg-black/20' : 'bg-bastion-surface'
+                        }`}>
                         {applications.length}
                     </span>
                 </button>
@@ -204,6 +199,17 @@ export default function Blocks() {
                 </button>
             </div>
 
+            {/* Admin warning */}
+            <div className="mb-6 p-4 rounded-xl bg-bastion-warning-muted border border-bastion-warning/20 flex items-start gap-3">
+                <AlertTriangle className="w-5 h-5 text-bastion-warning flex-shrink-0 mt-0.5" />
+                <div>
+                    <p className="text-sm font-medium text-bastion-warning">Admin privileges required</p>
+                    <p className="text-xs text-bastion-text-muted mt-1">
+                        Run Bastion as Administrator for blocking to work. Sites are saved to database but won't block without admin.
+                    </p>
+                </div>
+            </div>
+
             {/* Items list */}
             <div className="card">
                 {isLoading ? (
@@ -216,10 +222,11 @@ export default function Blocks() {
                             <motion.div
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
-                                className="py-12 text-center text-bastion-text-muted"
+                                className="py-12 text-center"
                             >
-                                <p>No {activeTab} blocked yet</p>
-                                <p className="text-sm mt-1">Add some to start protecting your focus</p>
+                                <Globe className="w-12 h-12 mx-auto mb-4 text-bastion-text-muted opacity-30" />
+                                <p className="text-bastion-text-muted">No {activeTab} blocked yet</p>
+                                <p className="text-sm text-bastion-text-muted mt-1">Add some to start protecting your focus</p>
                             </motion.div>
                         ) : (
                             filteredItems.map((item) => {
@@ -240,31 +247,29 @@ export default function Blocks() {
                                         <div className="flex items-center gap-4">
                                             <button
                                                 onClick={() => toggleItem(item.id)}
-                                                className={cn(
-                                                    'w-12 h-7 rounded-full transition-all duration-200 relative',
-                                                    item.enabled ? 'bg-bastion-accent' : 'bg-bastion-border'
-                                                )}
+                                                className={`w-11 h-6 rounded-full transition-all duration-200 relative ${item.enabled ? 'bg-bastion-accent' : 'bg-bastion-surface-active'
+                                                    }`}
                                             >
                                                 <motion.div
                                                     layout
-                                                    className="w-5 h-5 rounded-full bg-white absolute top-1"
-                                                    animate={{ left: item.enabled ? 26 : 4 }}
+                                                    className="w-5 h-5 rounded-full bg-white absolute top-0.5"
+                                                    animate={{ left: item.enabled ? 22 : 2 }}
                                                 />
                                             </button>
                                             <div>
-                                                <p className="font-mono text-sm">{name}</p>
-                                                <span className={cn('text-xs px-2 py-0.5 rounded-full', categoryColors[category])}>
+                                                <p className="font-mono text-sm text-white">{name}</p>
+                                                <span className={`text-xs px-2 py-0.5 rounded-lg ${categoryColors[category]}`}>
                                                     {category}
                                                 </span>
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <button className="p-2 hover:bg-bastion-surface-hover rounded-lg transition-colors">
+                                            <button className="p-2 hover:bg-bastion-surface-hover rounded-xl transition-colors">
                                                 <Tag className="w-4 h-4 text-bastion-text-muted" />
                                             </button>
                                             <button
                                                 onClick={() => deleteItem(item.id)}
-                                                className="p-2 hover:bg-bastion-danger/10 rounded-lg transition-colors"
+                                                className="p-2 hover:bg-bastion-danger-muted rounded-xl transition-colors"
                                             >
                                                 <Trash2 className="w-4 h-4 text-bastion-danger" />
                                             </button>
@@ -284,7 +289,7 @@ export default function Blocks() {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50"
+                        className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50"
                         onClick={() => setShowAddModal(false)}
                     >
                         <motion.div
@@ -300,7 +305,7 @@ export default function Blocks() {
                                 </h2>
                                 <button
                                     onClick={() => setShowAddModal(false)}
-                                    className="p-2 hover:bg-bastion-surface-hover rounded-lg"
+                                    className="p-2 hover:bg-bastion-surface-hover rounded-xl"
                                 >
                                     <X className="w-5 h-5" />
                                 </button>
@@ -317,7 +322,7 @@ export default function Blocks() {
                             />
 
                             <div className="mb-4">
-                                <label className="text-sm text-bastion-text-muted mb-2 block">Category</label>
+                                <label className="label mb-2 block">Category</label>
                                 <select
                                     value={newCategory}
                                     onChange={(e) => setNewCategory(e.target.value as Category)}
@@ -334,13 +339,13 @@ export default function Blocks() {
 
                             {activeTab === 'websites' && (
                                 <div className="mb-6">
-                                    <p className="text-sm text-bastion-text-muted mb-2">Popular suggestions:</p>
+                                    <p className="label mb-2">Popular suggestions:</p>
                                     <div className="flex flex-wrap gap-2">
                                         {popularSites.slice(0, 6).map((site) => (
                                             <button
                                                 key={site}
                                                 onClick={() => setNewItem(site)}
-                                                className="px-3 py-1 rounded-full text-sm bg-bastion-bg border border-bastion-border hover:border-bastion-accent transition-colors"
+                                                className="px-3 py-1 rounded-lg text-sm bg-bastion-bg-elevated border border-bastion-border hover:border-bastion-accent transition-colors"
                                             >
                                                 {site}
                                             </button>

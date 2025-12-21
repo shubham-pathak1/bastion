@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Play, Pause, RotateCcw, Coffee, Brain, Settings2, ChevronDown } from 'lucide-react';
+import { Play, Pause, RotateCcw, Coffee, Brain, Settings2 } from 'lucide-react';
 import { sessionsApi } from '../lib/api';
 
 type Phase = 'work' | 'break' | 'longBreak';
@@ -128,8 +128,8 @@ export default function Pomodoro() {
                         key={key}
                         onClick={() => switchPhase(key as Phase)}
                         className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-all ${phase === key
-                                ? 'bg-bastion-surface text-white border border-bastion-border'
-                                : 'text-bastion-text-muted hover:text-white'
+                            ? 'bg-bastion-surface text-white border border-bastion-border'
+                            : 'text-bastion-text-muted hover:text-white'
                             }`}
                     >
                         <Icon className="w-4 h-4" />
@@ -194,8 +194,8 @@ export default function Pomodoro() {
                         whileTap={{ scale: 0.95 }}
                         onClick={() => setIsRunning(!isRunning)}
                         className={`w-20 h-20 rounded-full flex items-center justify-center shadow-glow transition-all ${isRunning
-                                ? 'bg-bastion-surface-active'
-                                : 'bg-bastion-accent'
+                            ? 'bg-bastion-surface-active'
+                            : 'bg-bastion-accent'
                             }`}
                     >
                         {isRunning ? (
@@ -222,8 +222,8 @@ export default function Pomodoro() {
                     <div
                         key={i}
                         className={`w-4 h-4 rounded-full transition-all ${i < completedSessions % settings.sessionsUntilLongBreak
-                                ? 'bg-bastion-accent shadow-glow'
-                                : 'bg-bastion-surface-active'
+                            ? 'bg-bastion-accent shadow-glow'
+                            : 'bg-bastion-surface-active'
                             }`}
                     />
                 ))}
