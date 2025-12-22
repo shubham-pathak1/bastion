@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-    Shield,
     ArrowRight,
     ArrowLeft,
     Check,
@@ -13,6 +12,7 @@ import {
     Loader2
 } from 'lucide-react';
 import { securityApi, blockedSitesApi } from '../lib/api';
+import logo from '../assets/bastion_logo.png';
 
 interface OnboardingProps {
     onComplete: () => void;
@@ -121,11 +121,11 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
                 {/* Logo */}
                 <div className="text-center mb-8">
                     <motion.div
-                        className="w-16 h-16 rounded-2xl bg-white flex items-center justify-center mx-auto mb-4 shadow-lg"
+                        className="w-16 h-16 rounded-2xl overflow-hidden flex items-center justify-center mx-auto mb-4 shadow-lg border border-white/10"
                         animate={{ boxShadow: ['0 0 20px rgba(255, 255, 255, 0.05)', '0 0 40px rgba(255, 255, 255, 0.1)', '0 0 20px rgba(255, 255, 255, 0.05)'] }}
                         transition={{ duration: 2, repeat: Infinity }}
                     >
-                        <Shield className="w-8 h-8 text-black" />
+                        <img src={logo} alt="Bastion Logo" className="w-full h-full object-cover" />
                     </motion.div>
                     <h1 className="text-3xl font-black tracking-tighter text-white uppercase">Bastion</h1>
                     <p className="text-bastion-muted mt-1 font-bold">Unbreakable focus for those who need it.</p>

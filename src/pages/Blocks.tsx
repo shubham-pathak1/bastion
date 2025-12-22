@@ -28,7 +28,7 @@ const categoryColors: Record<Category, string> = {
 
 const popularSites = [
     'twitter.com', 'x.com', 'youtube.com', 'instagram.com', 'reddit.com',
-    'tiktok.com', 'facebook.com', 'netflix.com', 'twitch.tv', 'discord.com'
+    'tiktok.com', 'facebook.com', 'fb.com', 'messenger.com', 'netflix.com'
 ];
 
 export default function Blocks() {
@@ -45,7 +45,7 @@ export default function Blocks() {
     const [applications, setApplications] = useState<BlockedApp[]>([]);
 
     const [isAdmin, setIsAdmin] = useState(true);
-    const [isFixingFirefox, setIsFixingFirefox] = useState(false);
+    const [isFixingBrowsers, setIsFixingBrowsers] = useState(false);
 
     useEffect(() => {
         const handleScroll = () => {
@@ -65,16 +65,16 @@ export default function Blocks() {
         }
     };
 
-    const fixFirefox = async () => {
-        setIsFixingFirefox(true);
+    const fixBrowsers = async () => {
+        setIsFixingBrowsers(true);
         try {
-            await systemApi.fixFirefoxPolicies();
-            alert('Firefox configuration updated! Please restart Firefox to apply changes.');
+            await systemApi.fixBrowserPolicies();
+            alert('Browser security policies updated! Please restart Firefox/Chrome/Thorium to apply changes.');
         } catch (err) {
-            console.error('Failed to fix Firefox:', err);
-            alert('Failed to configure Firefox. Make sure you are running as Administrator.');
+            console.error('Failed to fix browser policies:', err);
+            alert('Failed to configure browser policies. Make sure you are running as Administrator.');
         } finally {
-            setIsFixingFirefox(false);
+            setIsFixingBrowsers(false);
         }
     };
 
@@ -155,6 +155,15 @@ export default function Blocks() {
         try {
             if (activeTab === 'websites') {
                 await blockedSitesApi.add(cleanItem, newCategory);
+
+                // Smart Aliasing for Meta
+                if (cleanItem === 'facebook.com') {
+                    await blockedSitesApi.add('fb.com', newCategory);
+                    await blockedSitesApi.add('facebook.net', newCategory);
+                }
+                if (cleanItem === 'instagram.com') {
+                    await blockedSitesApi.add('cdninstagram.com', newCategory);
+                }
             } else {
                 await blockedAppsApi.add(newItem.trim(), newItem.trim(), newCategory);
             }
@@ -284,31 +293,42 @@ export default function Blocks() {
                 )}
             </AnimatePresence>
 
-            {/* Firefox Helper */}
+            {/* Browser Policy Helper */}
             <div className="mx-2 mt-6 mb-8 group">
-                <div className="glass-panel p-4 flex items-center justify-between border border-black/5 dark:border-white/5 hover:border-black/10 dark:hover:border-bastion-accent/30 transition-colors duration-300">
-                    <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-xl bg-black/5 dark:bg-white/10 flex items-center justify-center">
-                            <Globe className="w-5 h-5 text-black dark:text-white" />
+                <div className="glass-panel p-6 border border-black/5 dark:border-white/5 hover:border-black/10 dark:hover:border-bastion-accent/30 transition-colors duration-300">
+                    <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-xl bg-black/5 dark:bg-white/10 flex items-center justify-center">
+                                <RefreshCw className="w-6 h-6 text-black dark:text-white" />
+                            </div>
+                            <div>
+                                <p className="font-black text-black dark:text-white transition-colors uppercase tracking-tight text-lg">Inconsistent Blocking?</p>
+                                <p className="text-sm text-gray-500 dark:text-bastion-muted font-bold max-w-md">
+                                    Chromium browsers (Thorium/Chrome) can bypass blocks using persistent connections or DNS-over-HTTPS.
+                                </p>
+                            </div>
                         </div>
-                        <div>
-                            <p className="font-black text-black dark:text-white transition-colors uppercase tracking-tight">Using Firefox?</p>
-                            <p className="text-sm text-gray-500 dark:text-bastion-muted font-bold">Requires one-time policy configuration</p>
+                        <div className="flex flex-wrap gap-3 w-full md:w-auto">
+                            <button
+                                onClick={fixBrowsers}
+                                disabled={isFixingBrowsers}
+                                className="flex-1 md:flex-none px-6 py-3 rounded-xl bg-black/5 dark:bg-white/5 text-black dark:text-white hover:bg-black/10 dark:hover:bg-white/10 border border-black/10 dark:border-white/10 transition-all duration-300 text-xs font-black uppercase tracking-widest"
+                            >
+                                {isFixingBrowsers ? "Polices Applied" : "1. Harden Policies"}
+                            </button>
+                            <button
+                                onClick={async () => {
+                                    if (confirm("This will close all open browsers to reset connections. Save your work first! Continue?")) {
+                                        await systemApi.killBrowsers();
+                                        alert("Browsers terminated. Re-open to see blocking in effect.");
+                                    }
+                                }}
+                                className="flex-1 md:flex-none px-6 py-3 rounded-xl bg-black dark:bg-white text-white dark:text-black hover:bg-black/90 dark:hover:bg-white/90 border border-transparent transition-all duration-300 text-xs font-black uppercase tracking-widest shadow-lg"
+                            >
+                                2. Hardcore Reset
+                            </button>
                         </div>
                     </div>
-                    <button
-                        onClick={fixFirefox}
-                        disabled={isFixingFirefox}
-                        className="px-4 py-2 rounded-lg bg-black dark:bg-white text-white dark:text-black hover:bg-black/90 dark:hover:bg-white/90 border border-transparent transition-all duration-300 text-sm font-black uppercase tracking-widest"
-                    >
-                        {isFixingFirefox ? (
-                            <span className="flex items-center gap-2">
-                                <Loader2 className="w-3 h-3 animate-spin" /> Configuring...
-                            </span>
-                        ) : (
-                            "Auto-Fix policies"
-                        )}
-                    </button>
                 </div>
             </div>
 

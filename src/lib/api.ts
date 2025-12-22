@@ -87,7 +87,8 @@ export const securityApi = {
 
 export const systemApi = {
     isAdmin: () => invoke<boolean>('is_app_admin'),
-    fixFirefoxPolicies: () => invoke<void>('fix_firefox_policies'),
+    fixBrowserPolicies: () => invoke<void>('fix_browser_policies'),
+    killBrowsers: () => invoke<number>('kill_browsers'),
 };
 
 // ============= Blocked Sites API =============

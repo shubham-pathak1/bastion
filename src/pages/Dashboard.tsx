@@ -98,7 +98,9 @@ export default function Dashboard() {
     };
 
     const formatBlockTime = (blockedAt: string) => {
-        const date = new Date(blockedAt);
+        // SQLite CURRENT_TIMESTAMP is "YYYY-MM-DD HH:MM:SS" (UTC)
+        // We need to ensure JS treats it as UTC by using ISO format with 'Z'
+        const date = new Date(blockedAt.replace(' ', 'T') + 'Z');
         const now = new Date();
         const diffMs = now.getTime() - date.getTime();
         const diffMins = Math.floor(diffMs / 60000);

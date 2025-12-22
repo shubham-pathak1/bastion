@@ -9,11 +9,11 @@ import {
     BarChart3,
     Settings,
     ChevronLeft,
-    Shield,
     ShieldCheck,
     ShieldAlert,
 } from 'lucide-react';
 import { sessionsApi, blockedSitesApi } from '../lib/api';
+import logo from '../assets/bastion_logo.png';
 
 interface SidebarProps {
     collapsed: boolean;
@@ -65,8 +65,8 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
             {/* Logo Area */}
             <div className="h-20 flex items-center px-5 mb-2">
                 <div className="flex items-center gap-3 overflow-hidden">
-                    <div className="w-10 h-10 rounded-xl bg-black dark:bg-white flex items-center justify-center flex-shrink-0 shadow-lg">
-                        <Shield className="w-5 h-5 text-white dark:text-black" />
+                    <div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center flex-shrink-0 shadow-lg border border-black/5 dark:border-white/10">
+                        <img src={logo} alt="Bastion Logo" className="w-full h-full object-cover" />
                     </div>
                     {!collapsed && (
                         <motion.div
@@ -79,7 +79,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
                                 Bastion
                             </span>
                             <span className="text-[10px] uppercase tracking-widest text-black/40 dark:text-white/60 font-bold">
-                                Version 2.0
+                                Version 1.0
                             </span>
                         </motion.div>
                     )}

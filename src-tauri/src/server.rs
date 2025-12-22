@@ -7,27 +7,62 @@ use crate::AppState;
 
 /// Start the block stats collector server
 pub async fn start_block_server(state: Arc<AppState>) {
-    // Spawn listener for HTTP (80)
-    let state_http = state.clone();
-    tokio::spawn(async move {
-        if let Err(e) = listen_on_port(80, state_http).await {
-            eprintln!("Failed to bind port 80: {}", e);
-        }
-    });
+    let ports = [80, 443];
+    let addresses = [
+        "127.0.0.1",
+        "::1",
+    ];
 
-    // Spawn listener for HTTPS (443)
-    let state_https = state.clone();
-    tokio::spawn(async move {
-        if let Err(e) = listen_on_port(443, state_https).await {
-            eprintln!("Failed to bind port 443: {}", e);
+    for &port in &ports {
+        for &addr_str in &addresses {
+            let state_clone = state.clone();
+            tokio::spawn(async move {
+                if let Err(e) = listen_on_addr(addr_str, port, state_clone).await {
+                    // Only log if it's not a expected bind error (like IPv6 not supported)
+                    if port == 80 || addr_str == "127.0.0.1" {
+                        eprintln!("[Bastion] Block server failed to bind TCP {}:{}: {}", addr_str, port, e);
+                    }
+                }
+            });
+
+            // For port 443, also listen on UDP to block QUIC
+            if port == 443 {
+                let state_udp = state.clone();
+                let addr_udp = addr_str.to_string();
+                tokio::spawn(async move {
+                    if let Err(e) = listen_on_udp(&addr_udp, 443, state_udp).await {
+                         if addr_udp == "127.0.0.1" {
+                            eprintln!("[Bastion] Block server failed to bind UDP {}:443: {}", addr_udp, e);
+                         }
+                    }
+                });
+            }
         }
-    });
+    }
 }
 
-async fn listen_on_port(port: u16, state: Arc<AppState>) -> std::io::Result<()> {
-    let addr = SocketAddr::from(([127, 0, 0, 1], port));
+async fn listen_on_udp(addr_str: &str, port: u16, state: Arc<AppState>) -> std::io::Result<()> {
+    let addr = format!("{}:{}", addr_str, port).parse::<SocketAddr>().map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
+    let socket = tokio::net::UdpSocket::bind(addr).await?;
+    println!("[Bastion] Block server listening on UDP {}", addr);
+
+    let mut buf = [0u8; 4096];
+    loop {
+        let (n, _) = socket.recv_from(&mut buf).await?;
+        if n > 0 {
+            // QUIC is encrypted, so we can't easily parse the domain from a single packet
+            // without a full state machine. However, just hitting this listener means
+            // the domain was resolved to localhost, and we are successfully blocking it.
+            // We'll log a generic QUIC block.
+            let _ = state.db.log_block_event("QUIC/UDP Protocol", "website");
+        }
+    }
+}
+
+async fn listen_on_addr(addr_str: &str, port: u16, state: Arc<AppState>) -> std::io::Result<()> {
+    let addr = format!("{}:{}", addr_str, port).parse::<SocketAddr>().map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
     let listener = TcpListener::bind(addr).await?;
-    println!("Block server listening on port {}", port);
+    println!("[Bastion] Block server listening on {}", addr);
 
     loop {
         let (socket, _) = listener.accept().await?;

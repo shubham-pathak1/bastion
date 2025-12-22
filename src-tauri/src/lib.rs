@@ -82,6 +82,8 @@ fn sync_blocked_websites(state: &State<Arc<AppState>>) -> Result<(), String> {
     match blocking::update_blocked_websites(&enabled_domains) {
         Ok(()) => {
             println!("[Bastion] Hosts file updated with {} domains", enabled_domains.len());
+            // Flush DNS to make changes immediate
+            let _ = blocking::flush_dns();
         },
         Err(e) => {
             // Log the error but don't fail - database is still updated
@@ -243,8 +245,30 @@ fn is_app_admin() -> bool {
 }
 
 #[tauri::command]
-fn fix_firefox_policies() -> Result<(), String> {
-    blocking::disable_firefox_doh().map_err(|e| e.message)
+fn kill_browsers() -> Result<u32, String> {
+    let mut total_killed = 0;
+    let browser_processes = [
+        "chrome.exe", "google-chrome.exe", "thorium.exe", "thorium-browser.exe", 
+        "firefox.exe", "msedge.exe", "brave.exe", "opera.exe", "vivaldi.exe",
+        "chrome", "google-chrome", "thorium", "thorium-browser",
+        "firefox", "msedge", "brave", "opera", "vivaldi"
+    ];
+    
+    for browser in &browser_processes {
+        if let Ok(count) = blocking::kill_process_by_name(browser) {
+            total_killed += count;
+        }
+    }
+
+    Ok(total_killed)
+}
+
+#[tauri::command]
+fn fix_browser_policies() -> Result<(), String> {
+    let _ = blocking::disable_firefox_doh();
+    let _ = blocking::disable_chromium_doh();
+    let _ = blocking::flush_dns();
+    Ok(())
 }
 
 // ============= App Entry Point =============
@@ -309,7 +333,8 @@ pub fn run() {
             set_setting,
             // System
             is_app_admin,
-            fix_firefox_policies,
+            kill_browsers,
+            fix_browser_policies,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

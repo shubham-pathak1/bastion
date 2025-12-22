@@ -180,6 +180,48 @@ pub fn disable_firefox_doh() -> Result<(), BlockingError> {
     Ok(())
 }
 
+/// Disable DNS-over-HTTPS in Chromium-based browsers via Registry Policies
+pub fn disable_chromium_doh() -> Result<(), BlockingError> {
+    #[cfg(target_os = "windows")]
+    {
+        use std::process::Command;
+        
+        // Disable for Google Chrome
+        let _ = Command::new("reg")
+            .args(&["add", "HKLM\\SOFTWARE\\Policies\\Google\\Chrome", "/v", "DnsOverHttpsMode", "/t", "REG_SZ", "/d", "off", "/f"])
+            .output();
+
+        // Disable for Thorium (Specifically requested by user)
+        let _ = Command::new("reg")
+            .args(&["add", "HKLM\\SOFTWARE\\Policies\\Thorium", "/v", "DnsOverHttpsMode", "/t", "REG_SZ", "/d", "off", "/f"])
+            .output();
+            
+        // Also disable built-in DNS client to force OS/Hosts lookup
+        let _ = Command::new("reg")
+            .args(&["add", "HKLM\\SOFTWARE\\Policies\\Google\\Chrome", "/v", "BuiltInDnsClientEnabled", "/t", "REG_DWORD", "/d", "0", "/f"])
+            .output();
+
+        let _ = Command::new("reg")
+            .args(&["add", "HKLM\\SOFTWARE\\Policies\\Thorium", "/v", "BuiltInDnsClientEnabled", "/t", "REG_DWORD", "/d", "0", "/f"])
+            .output();
+    }
+    
+    Ok(())
+}
+
+/// Flush system DNS cache to ensure browser picks up hosts changes
+pub fn flush_dns() -> Result<(), BlockingError> {
+    #[cfg(target_os = "windows")]
+    {
+        use std::process::Command;
+        let _ = Command::new("ipconfig")
+            .arg("/flushdns")
+            .output();
+    }
+    
+    Ok(())
+}
+
 /// Application Blocking via process monitoring
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

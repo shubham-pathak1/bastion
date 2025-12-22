@@ -106,7 +106,7 @@ export default function Stats() {
                             onClick={loadStats}
                             className="p-3 rounded-xl bg-white/5 hover:bg-white/10 text-white transition-colors border border-white/5 hover:border-white/10"
                         >
-                            <RefreshCw className={`w-5 h-5 ${isLoading ? 'animate-spin' : ''}`} />
+                            <RefreshCw className={`w-3.5 h-3.5 text-white ${isLoading ? 'animate-spin' : ''}`} />
                         </motion.button>
 
                         <div className="relative group z-50">
