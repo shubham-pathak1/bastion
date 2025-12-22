@@ -3,15 +3,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import {
     Shield,
-    Play,
     Timer,
     Lock,
-    TrendingUp,
     Clock,
-    AlertTriangle,
     X,
     Loader2,
-    ChevronRight
+    ChevronRight,
+    Zap,
+    Activity
 } from 'lucide-react';
 import { statsApi, sessionsApi, blockedSitesApi, BlockEvent } from '../lib/api';
 
@@ -25,7 +24,7 @@ export default function Dashboard() {
     const [isSessionActive, setIsSessionActive] = useState(false);
 
     const [showStartModal, setShowStartModal] = useState(false);
-    const [sessionName, setSessionName] = useState('Focus Session');
+    const [sessionName, setSessionName] = useState('Deep Focus');
     const [sessionDuration, setSessionDuration] = useState(60);
     const [hardcoreMode, setHardcoreMode] = useState(false);
     const [isStarting, setIsStarting] = useState(false);
@@ -111,178 +110,199 @@ export default function Dashboard() {
         return date.toLocaleDateString();
     };
 
+    const container = {
+        hidden: { opacity: 0 },
+        show: {
+            opacity: 1,
+            transition: {
+                staggerChildren: 0.1
+            }
+        }
+    };
+
+    const item = {
+        hidden: { opacity: 0, y: 20 },
+        show: { opacity: 1, y: 0 }
+    };
+
     return (
-        <div className="max-w-6xl mx-auto animate-in">
-            {/* Hero stat */}
+        <div className="max-w-7xl mx-auto space-y-8">
+            {/* Header */}
             <motion.div
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mb-8"
+                className="flex items-end justify-between"
             >
-                <p className="text-bastion-text-muted mb-1">Today's Focus</p>
-                <div className="flex items-baseline gap-1">
-                    <span className="text-6xl font-bold tracking-tighter text-white">{todayStats.hours}</span>
-                    <span className="text-2xl text-bastion-text-muted">h</span>
-                    <span className="text-6xl font-bold tracking-tighter text-white ml-2">{todayStats.minutes}</span>
-                    <span className="text-2xl text-bastion-text-muted">m</span>
+                <div>
+                    <h1 className="heading-hero text-transparent bg-clip-text bg-gradient-to-r from-white to-white/50">
+                        Command Center
+                    </h1>
+                    <p className="text-bastion-muted mt-2 text-lg">
+                        You remain <span className="text-bastion-accent font-semibold">unbreakable</span> today.
+                    </p>
                 </div>
-                <p className="text-bastion-text-muted text-sm mt-1">
-                    {blockedCount > 0 ? `${blockedCount} sites blocked` : 'No sites blocked yet'}
-                </p>
+
+                {isSessionActive && (
+                    <motion.div
+                        initial={{ scale: 0.8, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        className="flex items-center gap-3 px-4 py-2 rounded-full bg-bastion-accent/10 border border-bastion-accent/20"
+                    >
+                        <div className="w-2 h-2 rounded-full bg-bastion-accent animate-pulse" />
+                        <span className="text-bastion-accent font-mono font-medium">
+                            SESSION ACTIVE
+                        </span>
+                    </motion.div>
+                )}
             </motion.div>
 
-            {/* Active session card */}
-            {isSessionActive && sessionTimeLeft !== null && (
-                <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="card mb-8 border-bastion-accent/30 bg-gradient-to-br from-bastion-surface to-bastion-accent-muted"
-                >
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                            <motion.div
-                                className="w-14 h-14 rounded-xl bg-bastion-accent-muted flex items-center justify-center"
-                                animate={{ boxShadow: ['0 0 0 rgba(0,229,255,0.3)', '0 0 20px rgba(0,229,255,0.3)', '0 0 0 rgba(0,229,255,0.3)'] }}
-                                transition={{ duration: 2, repeat: Infinity }}
-                            >
-                                <Shield className="w-7 h-7 text-bastion-accent" />
-                            </motion.div>
-                            <div>
-                                <h3 className="text-lg font-semibold text-white">Focus Session Active</h3>
-                                <p className="text-bastion-text-muted text-sm">{blockedCount} sites blocked</p>
+            {/* Bento Grid */}
+            <motion.div
+                variants={container}
+                initial="hidden"
+                animate="show"
+                className="grid grid-cols-1 md:grid-cols-4 gap-6"
+            >
+                {/* Main Stat Card - Spans 2 cols */}
+                <motion.div variants={item} className="md:col-span-2 glass-card p-8 flex flex-col justify-between group relative">
+                    <div className="absolute top-0 right-0 p-32 bg-bastion-accent/5 blur-[80px] rounded-full pointer-events-none group-hover:bg-bastion-accent/10 transition-colors duration-500" />
+
+                    <div className="flex items-start justify-between relative z-10">
+                        <div>
+                            <p className="text-bastion-secondary font-medium mb-1 flex items-center gap-2">
+                                <Clock className="w-4 h-4 text-bastion-accent" />
+                                Focus Time
+                            </p>
+                            <div className="flex items-baseline gap-2">
+                                <span className="text-6xl font-display font-bold text-white tracking-tighter">
+                                    {todayStats.hours}
+                                </span>
+                                <span className="text-xl text-bastion-muted font-medium">h</span>
+                                <span className="text-6xl font-display font-bold text-white tracking-tighter ml-2">
+                                    {todayStats.minutes}
+                                </span>
+                                <span className="text-xl text-bastion-muted font-medium">m</span>
                             </div>
                         </div>
-                        <div className="text-right">
-                            <p className="text-4xl font-mono font-bold text-bastion-accent tracking-tight">
-                                {formatTimeLeft(sessionTimeLeft)}
-                            </p>
-                            <p className="text-bastion-text-muted text-sm">remaining</p>
+                        {isSessionActive && sessionTimeLeft !== null && (
+                            <div className="text-right">
+                                <p className="text-sm text-bastion-muted mb-1">Remaining</p>
+                                <p className="text-2xl font-mono text-bastion-accent">{formatTimeLeft(sessionTimeLeft)}</p>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="mt-8 relative z-10">
+                        <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
+                            <motion.div
+                                initial={{ width: 0 }}
+                                animate={{ width: `${Math.min((todayStats.hours / 8) * 100, 100)}%` }}
+                                transition={{ duration: 1.5, ease: "easeOut" }}
+                                className="h-full bg-gradient-to-r from-bastion-accent to-bastion-purple shadow-[0_0_10px_rgba(0,240,255,0.5)]"
+                            />
                         </div>
+                        <p className="text-xs text-bastion-muted mt-2 text-right">Target: 8h</p>
                     </div>
                 </motion.div>
-            )}
 
-            {/* Quick actions */}
-            <div className="grid grid-cols-3 gap-4 mb-8">
-                {[
-                    { icon: Play, label: 'Start Focus', desc: 'Begin a session', color: 'bastion-accent', onClick: () => setShowStartModal(true) },
-                    { icon: Timer, label: 'Pomodoro', desc: '25/5 work cycles', color: 'bastion-success', onClick: () => navigate('/pomodoro') },
-                    { icon: Lock, label: 'Manage Blocks', desc: `${blockedCount} configured`, color: 'bastion-warning', onClick: () => navigate('/blocks') },
-                ].map((action, i) => (
-                    <motion.button
-                        key={i}
-                        whileHover={{ scale: 1.02, y: -2 }}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={action.onClick}
-                        className="card-interactive flex items-center gap-4 text-left"
-                    >
-                        <div className={`w-12 h-12 rounded-xl bg-${action.color}-muted flex items-center justify-center`}>
-                            <action.icon className={`w-6 h-6 text-${action.color}`} />
-                        </div>
-                        <div className="flex-1">
-                            <h3 className="font-semibold text-white">{action.label}</h3>
-                            <p className="text-sm text-bastion-text-muted">{action.desc}</p>
-                        </div>
-                        <ChevronRight className="w-5 h-5 text-bastion-text-muted" />
-                    </motion.button>
-                ))}
-            </div>
+                {/* Quick Start Card */}
+                <motion.div variants={item} className="glass-card-interactive p-6 flex flex-col items-center justify-center text-center gap-4 group" onClick={() => setShowStartModal(true)}>
+                    <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center group-hover:scale-110 group-hover:shadow-glow-md transition-all duration-300 border border-white/5">
+                        <Zap className="w-8 h-8 text-white group-hover:text-bastion-accent transition-colors" />
+                    </div>
+                    <div>
+                        <h3 className="text-xl font-bold text-white">Focus Now</h3>
+                        <p className="text-sm text-bastion-muted">Start a deep work session</p>
+                    </div>
+                </motion.div>
 
-            {/* Recent activity & stats */}
-            <div className="grid grid-cols-2 gap-6">
-                <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.1 }}
-                    className="card"
-                >
+                {/* Blocks Stat Card */}
+                <motion.div variants={item} className="glass-card p-6 flex flex-col justify-between relative overflow-hidden">
+                    <div className="absolute -bottom-10 -right-10 w-32 h-32 bg-bastion-danger/10 blur-[40px] rounded-full" />
+
                     <div className="flex items-center justify-between mb-4">
-                        <h2 className="heading-3 flex items-center gap-2">
-                            <AlertTriangle className="w-5 h-5 text-bastion-warning" />
-                            Recent Blocks
-                        </h2>
-                        <button
-                            onClick={() => navigate('/stats')}
-                            className="text-sm text-bastion-accent hover:underline"
-                        >
-                            View all
+                        <p className="text-bastion-secondary font-medium flex items-center gap-2">
+                            <Shield className="w-4 h-4 text-bastion-danger" />
+                            Threats
+                        </p>
+                        <span className="text-xs font-mono bg-white/5 px-2 py-1 rounded text-bastion-muted">{blockedCount} Active</span>
+                    </div>
+                    <div>
+                        <p className="text-4xl font-bold text-white">{todayStats.totalBlocks}</p>
+                        <p className="text-sm text-bastion-muted mt-1">Distractions blocked today</p>
+                    </div>
+                </motion.div>
+
+                {/* Recent Activity Feed - Spans full width on mobile, 2 on desktop */}
+                <motion.div variants={item} className="md:col-span-2 glass-card p-0 flex flex-col">
+                    <div className="p-6 border-b border-white/5 flex items-center justify-between">
+                        <h3 className="font-bold text-white flex items-center gap-2">
+                            <Activity className="w-5 h-5 text-bastion-accent" />
+                            Live Feed
+                        </h3>
+                        <button onClick={() => navigate('/stats')} className="text-xs font-medium text-bastion-accent hover:text-white transition-colors">
+                            VIEW REPORT
                         </button>
                     </div>
-                    <div className="space-y-2">
+                    <div className="flex-1 p-2">
                         {isLoading ? (
-                            <div className="py-8 flex justify-center">
+                            <div className="h-40 flex items-center justify-center">
                                 <Loader2 className="w-6 h-6 animate-spin text-bastion-accent" />
                             </div>
                         ) : recentBlocks.length === 0 ? (
-                            <div className="py-8 text-center">
-                                <AlertTriangle className="w-10 h-10 mx-auto mb-3 text-bastion-text-muted opacity-30" />
-                                <p className="text-bastion-text-muted text-sm">No blocks yet</p>
-                                <p className="text-xs text-bastion-text-muted">Sites will appear here when blocked</p>
+                            <div className="h-40 flex flex-col items-center justify-center text-bastion-muted gap-2">
+                                <Shield className="w-8 h-8 opacity-20" />
+                                <p className="text-sm">No activity recorded yet</p>
                             </div>
                         ) : (
-                            recentBlocks.map((block) => (
-                                <div key={block.id} className="flex items-center justify-between py-3 border-b border-bastion-border last:border-0">
-                                    <div>
-                                        <p className="font-mono text-sm text-white">{block.target}</p>
-                                        <p className="text-xs text-bastion-text-muted">{formatBlockTime(block.blocked_at)}</p>
+                            <div className="space-y-1">
+                                {recentBlocks.map((block) => (
+                                    <div key={block.id} className="flex items-center justify-between p-3 rounded-xl hover:bg-white/5 transition-colors group">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-2 h-2 rounded-full bg-bastion-danger shadow-[0_0_8px_rgba(255,0,51,0.5)]" />
+                                            <div>
+                                                <p className="font-mono text-sm text-white group-hover:text-bastion-accent transition-colors">
+                                                    {block.target}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <span className="text-xs font-mono text-bastion-muted">
+                                            {formatBlockTime(block.blocked_at)}
+                                        </span>
                                     </div>
-                                    <span className="badge-danger">blocked</span>
-                                </div>
-                            ))
+                                ))}
+                            </div>
                         )}
                     </div>
                 </motion.div>
 
-                <motion.div
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.2 }}
-                    className="card"
-                >
-                    <div className="flex items-center justify-between mb-4">
-                        <h2 className="heading-3 flex items-center gap-2">
-                            <TrendingUp className="w-5 h-5 text-bastion-success" />
-                            Today
-                        </h2>
-                        <button
-                            onClick={() => navigate('/stats')}
-                            className="text-sm text-bastion-accent hover:underline"
-                        >
-                            Full stats
-                        </button>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="p-4 rounded-xl bg-bastion-bg-elevated">
-                            <p className="stat-value">{todayStats.hours}h {todayStats.minutes}m</p>
-                            <p className="stat-label flex items-center gap-1 mt-1">
-                                <Clock className="w-4 h-4" /> Focus time
-                            </p>
+                {/* Quick Actions 2x1 */}
+                <motion.div variants={item} className="col-span-1 md:col-span-2 grid grid-cols-2 gap-6">
+                    <motion.div
+                        whileHover={{ y: -5 }}
+                        className="glass-card-interactive p-6 flex flex-col justify-center items-start gap-4 bg-gradient-to-br from-white/5 to-transparent"
+                        onClick={() => navigate('/pomodoro')}
+                    >
+                        <Timer className="w-8 h-8 text-bastion-purple" />
+                        <div>
+                            <h3 className="font-bold text-white">Pomodoro</h3>
+                            <p className="text-xs text-bastion-muted mt-1">Cycle focus & breaks</p>
                         </div>
-                        <div className="p-4 rounded-xl bg-bastion-bg-elevated">
-                            <p className="stat-value">{todayStats.totalBlocks}</p>
-                            <p className="stat-label flex items-center gap-1 mt-1">
-                                <AlertTriangle className="w-4 h-4" /> Blocks
-                            </p>
+                    </motion.div>
+
+                    <motion.div
+                        whileHover={{ y: -5 }}
+                        className="glass-card-interactive p-6 flex flex-col justify-center items-start gap-4 bg-gradient-to-br from-white/5 to-transparent"
+                        onClick={() => navigate('/blocks')}
+                    >
+                        <Lock className="w-8 h-8 text-bastion-warning" />
+                        <div>
+                            <h3 className="font-bold text-white">Manage Blocks</h3>
+                            <p className="text-xs text-bastion-muted mt-1">Configure firewall</p>
                         </div>
-                    </div>
-                    <div className="mt-4 h-16 flex items-end gap-1">
-                        {[40, 65, 30, 85, 70, 55, 45].map((h, i) => (
-                            <motion.div
-                                key={i}
-                                initial={{ height: 0 }}
-                                animate={{ height: `${h}%` }}
-                                transition={{ delay: 0.3 + i * 0.05 }}
-                                className="flex-1 bg-bastion-accent/30 rounded-t hover:bg-bastion-accent/50 transition-colors"
-                            />
-                        ))}
-                    </div>
-                    <div className="flex justify-between text-xs text-bastion-text-muted mt-2">
-                        {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(d => (
-                            <span key={d}>{d}</span>
-                        ))}
-                    </div>
+                    </motion.div>
                 </motion.div>
-            </div>
+            </motion.div>
 
             {/* Start Session Modal */}
             <AnimatePresence>
@@ -291,86 +311,100 @@ export default function Dashboard() {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50"
+                        className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4"
                         onClick={() => setShowStartModal(false)}
                     >
                         <motion.div
-                            initial={{ scale: 0.95, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            exit={{ scale: 0.95, opacity: 0 }}
+                            initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                            animate={{ scale: 1, opacity: 1, y: 0 }}
+                            exit={{ scale: 0.9, opacity: 0, y: 20 }}
                             onClick={(e) => e.stopPropagation()}
-                            className="bg-bastion-surface border border-bastion-border rounded-2xl p-6 w-full max-w-md"
+                            className="glass-panel w-full max-w-lg rounded-3xl p-8 border border-white/10 shadow-2xl relative overflow-hidden"
                         >
-                            <div className="flex items-center justify-between mb-6">
-                                <h2 className="heading-2">Start Focus Session</h2>
-                                <button
-                                    onClick={() => setShowStartModal(false)}
-                                    className="p-2 hover:bg-bastion-surface-hover rounded-xl"
-                                >
-                                    <X className="w-5 h-5" />
-                                </button>
-                            </div>
+                            {/* Decorative Glow */}
+                            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-64 bg-bastion-accent/20 blur-[100px] rounded-full pointer-events-none" />
 
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="label mb-2 block">Session Name</label>
-                                    <input
-                                        type="text"
-                                        value={sessionName}
-                                        onChange={(e) => setSessionName(e.target.value)}
-                                        className="input"
-                                        placeholder="Focus Session"
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="label mb-2 block">Duration (minutes)</label>
-                                    <input
-                                        type="number"
-                                        value={sessionDuration}
-                                        onChange={(e) => setSessionDuration(Number(e.target.value))}
-                                        className="input"
-                                        min={5}
-                                        max={480}
-                                    />
-                                </div>
-
-                                <div className="flex items-center justify-between py-4 border-t border-bastion-border">
-                                    <div>
-                                        <p className="font-medium text-white">Hardcore Mode</p>
-                                        <p className="text-sm text-bastion-text-muted">Cannot be disabled until session ends</p>
-                                    </div>
+                            <div className="relative z-10">
+                                <div className="flex items-center justify-between mb-8">
+                                    <h2 className="heading-title flex items-center gap-2">
+                                        <Zap className="w-6 h-6 text-bastion-accent" />
+                                        Initiate Focus
+                                    </h2>
                                     <button
-                                        onClick={() => setHardcoreMode(!hardcoreMode)}
-                                        className={`w-11 h-6 rounded-full transition-all duration-200 relative ${hardcoreMode ? 'bg-bastion-warning' : 'bg-bastion-surface-active'
-                                            }`}
+                                        onClick={() => setShowStartModal(false)}
+                                        className="p-2 hover:bg-white/10 rounded-full transition-colors"
                                     >
-                                        <motion.div
-                                            layout
-                                            className="w-5 h-5 rounded-full bg-white absolute top-0.5"
-                                            animate={{ left: hardcoreMode ? 22 : 2 }}
-                                        />
+                                        <X className="w-5 h-5 text-bastion-muted hover:text-white" />
                                     </button>
                                 </div>
-                            </div>
 
-                            <div className="flex justify-end gap-3 mt-6">
-                                <button onClick={() => setShowStartModal(false)} className="btn-secondary">
-                                    Cancel
-                                </button>
-                                <button onClick={startSession} disabled={isStarting} className="btn-primary flex items-center gap-2">
-                                    {isStarting ? (
-                                        <>
-                                            <Loader2 className="w-4 h-4 animate-spin" />
-                                            Starting...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Play className="w-4 h-4" />
-                                            Start Session
-                                        </>
-                                    )}
-                                </button>
+                                <div className="space-y-6">
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium text-bastion-secondary">Objective</label>
+                                        <input
+                                            type="text"
+                                            value={sessionName}
+                                            onChange={(e) => setSessionName(e.target.value)}
+                                            className="glass-input text-lg" // Larger input
+                                            placeholder="What are you working on?"
+                                        />
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium text-bastion-secondary">Duration</label>
+                                        <div className="grid grid-cols-4 gap-3">
+                                            {[15, 30, 60, 90].map(mins => (
+                                                <button
+                                                    key={mins}
+                                                    onClick={() => setSessionDuration(mins)}
+                                                    className={`py-3 rounded-xl border font-medium transition-all ${sessionDuration === mins
+                                                        ? 'bg-bastion-accent text-black border-bastion-accent shadow-glow-sm'
+                                                        : 'bg-white/5 border-white/5 text-bastion-muted hover:bg-white/10 hover:text-white'
+                                                        }`}
+                                                >
+                                                    {mins}m
+                                                </button>
+                                            ))}
+                                        </div>
+                                        {/* Custom duration slider could go here */}
+                                    </div>
+
+                                    <div className="flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/5">
+                                        <div className="flex items-center gap-3">
+                                            <div className={`p-2 rounded-lg ${hardcoreMode ? 'bg-bastion-danger/20 text-bastion-danger' : 'bg-white/10 text-bastion-muted'}`}>
+                                                <Lock className="w-5 h-5" />
+                                            </div>
+                                            <div>
+                                                <p className={`font-bold ${hardcoreMode ? 'text-white' : 'text-bastion-secondary'}`}>Hardcore Mode</p>
+                                                <p className="text-xs text-bastion-muted">Prevent edits & exit</p>
+                                            </div>
+                                        </div>
+                                        <button
+                                            onClick={() => setHardcoreMode(!hardcoreMode)}
+                                            className={`w-14 h-8 rounded-full transition-all relative ${hardcoreMode ? 'bg-bastion-danger shadow-[0_0_15px_rgba(255,0,51,0.4)]' : 'bg-white/10'}`}
+                                        >
+                                            <motion.div
+                                                className="w-6 h-6 bg-white rounded-full absolute top-1"
+                                                animate={{ left: hardcoreMode ? 28 : 4 }}
+                                            />
+                                        </button>
+                                    </div>
+
+                                    <button
+                                        onClick={startSession}
+                                        disabled={isStarting}
+                                        className="w-full btn-primary h-14 text-lg mt-4 flex items-center justify-center gap-2 group"
+                                    >
+                                        {isStarting ? (
+                                            <Loader2 className="w-6 h-6 animate-spin" />
+                                        ) : (
+                                            <>
+                                                ENGAGE PROTOCOL
+                                                <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
                             </div>
                         </motion.div>
                     </motion.div>

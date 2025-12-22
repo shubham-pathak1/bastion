@@ -54,21 +54,31 @@ function App() {
 
     return (
         <BrowserRouter>
-            <div className="h-full w-full flex bg-bastion-bg">
+            <div className="h-screen w-screen bg-black overflow-hidden flex p-4 gap-4 relative">
+                {/* Noise Texture Overlay */}
+                <div className="noise-overlay" />
+
+                {/* Ambient Background Gradient */}
+                <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-bastion-accent/5 blur-[120px] rounded-full pointer-events-none" />
+                <div className="absolute bottom-[-20%] right-[-10%] w-[40%] h-[40%] bg-bastion-purple/5 blur-[120px] rounded-full pointer-events-none" />
+
                 <Sidebar
                     collapsed={sidebarCollapsed}
                     onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
                 />
-                <main className="flex-1 overflow-auto p-8">
-                    <Routes>
-                        <Route path="/" element={<Dashboard />} />
-                        <Route path="/blocks" element={<Blocks />} />
-                        <Route path="/sessions" element={<Sessions />} />
-                        <Route path="/pomodoro" element={<Pomodoro />} />
-                        <Route path="/stats" element={<Stats />} />
-                        <Route path="/settings" element={<Settings />} />
-                        <Route path="*" element={<Navigate to="/" replace />} />
-                    </Routes>
+
+                <main className="flex-1 relative z-10 glass-panel rounded-3xl overflow-hidden flex flex-col">
+                    <div className="flex-1 overflow-y-auto overflow-x-hidden p-8 scroll-smooth">
+                        <Routes>
+                            <Route path="/" element={<Dashboard />} />
+                            <Route path="/blocks" element={<Blocks />} />
+                            <Route path="/sessions" element={<Sessions />} />
+                            <Route path="/pomodoro" element={<Pomodoro />} />
+                            <Route path="/stats" element={<Stats />} />
+                            <Route path="/settings" element={<Settings />} />
+                            <Route path="*" element={<Navigate to="/" replace />} />
+                        </Routes>
+                    </div>
                 </main>
             </div>
         </BrowserRouter>

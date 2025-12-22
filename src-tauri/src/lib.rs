@@ -7,13 +7,13 @@ mod session;
 mod storage;
 mod server;
 
-use blocking::{RunningProcess, BlockingError};
-use security::SecurityError;
+use blocking::RunningProcess;
+// use security::SecurityError;
 use session::{ActiveSession, PomodoroState, SessionManager};
 use storage::{BlockedApp, BlockedSite, BlockEvent, Database, FocusStats, Session};
 
 use std::sync::Arc;
-use tauri::{AppHandle, Manager, State};
+use tauri::{Manager, State};
 
 pub struct AppState {
     pub db: Database,

@@ -32,7 +32,6 @@ const navItems = [
 export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
     const location = useLocation();
     const [isProtected, setIsProtected] = useState(false);
-    const [blockedCount, setBlockedCount] = useState(0);
 
     useEffect(() => {
         const checkStatus = async () => {
@@ -46,7 +45,6 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
                 const hasBlockedSites = sites.filter(s => s.enabled).length > 0;
 
                 setIsProtected(hasActiveSession || hasBlockedSites);
-                setBlockedCount(sites.filter(s => s.enabled).length);
             } catch (err) {
                 // API not ready
             }
@@ -60,93 +58,108 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
     return (
         <motion.aside
             initial={false}
-            animate={{ width: collapsed ? 72 : 240 }}
-            transition={{ duration: 0.2, ease: 'easeInOut' }}
-            className="h-full bg-bastion-bg border-r border-bastion-border flex flex-col"
+            animate={{ width: collapsed ? 80 : 260 }}
+            transition={{ duration: 0.3, type: 'spring', bounce: 0, damping: 20 }}
+            className="h-full glass-panel rounded-3xl flex flex-col relative z-20"
         >
-            {/* Logo */}
-            <div className="h-16 flex items-center px-4 border-b border-bastion-border">
+            {/* Logo Area */}
+            <div className="h-20 flex items-center px-5 mb-2">
                 <div className="flex items-center gap-3 overflow-hidden">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-bastion-accent to-cyan-500 flex items-center justify-center flex-shrink-0 shadow-glow">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-bastion-accent to-bastion-purple flex items-center justify-center flex-shrink-0 shadow-glow-sm">
                         <Shield className="w-5 h-5 text-black" />
                     </div>
                     {!collapsed && (
-                        <motion.span
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            className="text-xl font-bold tracking-tight text-white"
+                        <motion.div
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: -10 }}
+                            className="flex flex-col"
                         >
-                            Bastion
-                        </motion.span>
+                            <span className="font-display text-xl font-bold tracking-tight text-white">
+                                Bastion
+                            </span>
+                            <span className="text-[10px] uppercase tracking-widest text-bastion-accent/80 font-semibold">
+                                Version 2.0
+                            </span>
+                        </motion.div>
                     )}
                 </div>
             </div>
 
             {/* Navigation */}
-            <nav className="flex-1 py-4 px-3 space-y-1">
+            <nav className="flex-1 px-3 space-y-2">
                 {navItems.map((item) => {
                     const isActive = location.pathname === item.path;
                     return (
                         <NavLink
                             key={item.path}
                             to={item.path}
-                            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 ${isActive
-                                    ? 'bg-bastion-accent text-black'
-                                    : 'text-bastion-text-secondary hover:bg-bastion-surface hover:text-white'
-                                }`}
+                            className="block relative group"
                         >
-                            <item.icon className={`w-5 h-5 flex-shrink-0 ${isActive ? 'text-black' : ''}`} />
-                            {!collapsed && (
-                                <motion.span
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    className="font-medium text-sm"
-                                >
-                                    {item.label}
-                                </motion.span>
+                            {isActive && (
+                                <motion.div
+                                    layoutId="activeTab"
+                                    className="absolute inset-0 bg-white/5 border border-white/5 rounded-xl shadow-glow-sm"
+                                    initial={false}
+                                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                                />
                             )}
+                            <div className={`
+                                relative flex items-center gap-4 px-3 py-3 rounded-xl transition-all duration-200
+                                ${isActive ? 'text-white' : 'text-bastion-secondary hover:text-white group-hover:bg-white/5'}
+                            `}>
+                                <item.icon className={`w-5 h-5 flex-shrink-0 transition-colors duration-200 ${isActive ? 'text-bastion-accent drop-shadow-[0_0_8px_rgba(0,240,255,0.4)]' : ''}`} />
+                                {!collapsed && (
+                                    <motion.span
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        className="font-medium text-sm tracking-wide"
+                                    >
+                                        {item.label}
+                                    </motion.span>
+                                )}
+                            </div>
                         </NavLink>
                     );
                 })}
             </nav>
 
-            {/* Status indicator */}
-            <div className="p-3 border-t border-bastion-border">
-                <div
-                    className={`flex items-center gap-3 px-3 py-3 rounded-xl ${isProtected ? 'bg-bastion-success-muted' : 'bg-bastion-danger-muted'
-                        }`}
-                >
-                    {isProtected ? (
-                        <ShieldCheck className="w-5 h-5 text-bastion-success flex-shrink-0" />
-                    ) : (
-                        <ShieldAlert className="w-5 h-5 text-bastion-danger flex-shrink-0" />
-                    )}
-                    {!collapsed && (
-                        <div className="overflow-hidden">
-                            <p className={`text-sm font-medium ${isProtected ? 'text-bastion-success' : 'text-bastion-danger'}`}>
-                                {isProtected ? 'Protected' : 'Not Protected'}
-                            </p>
-                            <p className="text-xs text-bastion-text-muted truncate">
-                                {isProtected ? `${blockedCount} sites blocked` : 'Add sites to protect'}
-                            </p>
+            {/* Status & Collapse */}
+            <div className="p-4 mt-auto space-y-4">
+                {/* Status Card */}
+                <div className={`
+                    relative overflow-hidden rounded-2xl p-3 transition-all duration-300 border
+                    ${isProtected
+                        ? 'bg-bastion-success/10 border-bastion-success/20'
+                        : 'bg-bastion-danger/10 border-bastion-danger/20'}
+                `}>
+                    <div className="flex items-center gap-3">
+                        <div className={`p-2 rounded-lg flex-shrink-0 ${isProtected ? 'bg-bastion-success/20 text-bastion-success' : 'bg-bastion-danger/20 text-bastion-danger'}`}>
+                            {isProtected ? <ShieldCheck className="w-5 h-5" /> : <ShieldAlert className="w-5 h-5" />}
                         </div>
-                    )}
+                        {!collapsed && (
+                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="overflow-hidden">
+                                <p className={`text-sm font-bold ${isProtected ? 'text-bastion-success' : 'text-bastion-danger'}`}>
+                                    {isProtected ? 'Protected' : 'Vulnerable'}
+                                </p>
+                                <p className="text-xs text-bastion-muted truncate">
+                                    {isProtected ? 'Focus Active' : 'No blocks active'}
+                                </p>
+                            </motion.div>
+                        )}
+                    </div>
                 </div>
-            </div>
 
-            {/* Collapse toggle */}
-            <button
-                onClick={onToggle}
-                className="p-4 border-t border-bastion-border flex items-center justify-center hover:bg-bastion-surface transition-colors"
-            >
-                <motion.div
-                    animate={{ rotate: collapsed ? 180 : 0 }}
-                    transition={{ duration: 0.2 }}
+                {/* Toggle Button */}
+                <button
+                    onClick={onToggle}
+                    className="w-full flex items-center justify-center p-3 rounded-xl hover:bg-white/5 text-bastion-muted hover:text-white transition-all border border-transparent hover:border-white/5"
                 >
-                    <ChevronLeft className="w-5 h-5 text-bastion-text-muted" />
-                </motion.div>
-            </button>
+                    <motion.div animate={{ rotate: collapsed ? 180 : 0 }}>
+                        <ChevronLeft className="w-5 h-5" />
+                    </motion.div>
+                </button>
+            </div>
         </motion.aside>
     );
 }

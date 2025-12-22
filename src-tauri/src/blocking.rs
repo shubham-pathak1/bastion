@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use std::fs::{self, OpenOptions};
 use std::io::{Read, Write};
 use std::path::PathBuf;
-use sysinfo::{System, Signal, Pid};
+use sysinfo::{System, Signal};
 
 #[cfg(target_os = "windows")]
 const HOSTS_PATH: &str = "C:\\Windows\\System32\\drivers\\etc\\hosts";
@@ -38,6 +38,7 @@ pub fn get_hosts_path() -> PathBuf {
 }
 
 /// Backup the hosts file before modification
+#[allow(dead_code)]
 pub fn backup_hosts(backup_dir: &PathBuf) -> Result<PathBuf, BlockingError> {
     let hosts_path = get_hosts_path();
     let backup_path = backup_dir.join("hosts.backup");
@@ -114,6 +115,7 @@ pub fn update_blocked_websites(domains: &[String]) -> Result<(), BlockingError> 
 }
 
 /// Remove all Bastion blocks from hosts file
+#[allow(dead_code)]
 pub fn clear_blocked_websites() -> Result<(), BlockingError> {
     let mut contents = read_hosts()?;
     
@@ -126,6 +128,7 @@ pub fn clear_blocked_websites() -> Result<(), BlockingError> {
 }
 
 /// Restore hosts file from backup
+#[allow(dead_code)]
 pub fn restore_hosts(backup_path: &PathBuf) -> Result<(), BlockingError> {
     fs::copy(backup_path, get_hosts_path())?;
     Ok(())
@@ -219,7 +222,7 @@ pub fn kill_process_by_name(process_name: &str) -> Result<u32, BlockingError> {
     let mut killed = 0u32;
     let process_name_lower = process_name.to_lowercase();
     
-    for (pid, process) in system.processes() {
+    for (_pid, process) in system.processes() {
         if process.name().to_string_lossy().to_lowercase() == process_name_lower {
             // First try SIGTERM (graceful)
             if process.kill_with(Signal::Term).is_none() {
