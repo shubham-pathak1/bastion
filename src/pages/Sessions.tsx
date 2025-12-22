@@ -25,7 +25,7 @@ const presetTemplates = [
         days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
         hardcore: false,
         icon: Clock,
-        color: 'text-bastion-accent'
+        color: 'text-black dark:text-white'
     },
     {
         name: 'Deep Focus',
@@ -34,7 +34,7 @@ const presetTemplates = [
         days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
         hardcore: true,
         icon: Zap,
-        color: 'text-purple-400'
+        color: 'text-black dark:text-white'
     },
     {
         name: 'Evening Chill',
@@ -43,7 +43,7 @@ const presetTemplates = [
         days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
         hardcore: false,
         icon: Sparkles,
-        color: 'text-pink-400'
+        color: 'text-black dark:text-white'
     },
 ];
 
@@ -162,7 +162,7 @@ export default function Sessions() {
     return (
         <div className="max-w-5xl mx-auto min-h-screen pb-20">
             {/* Header */}
-            <div className={`sticky top-0 z-30 transition-all duration-200 ${scrolled ? 'py-4 bg-black/50 backdrop-blur-xl border-b border-white/5' : 'py-8'}`}>
+            <div className={`sticky top-0 z-30 transition-all duration-200 ${scrolled ? 'py-4 bg-white/80 dark:bg-black/50 backdrop-blur-xl border-b border-black/5 dark:border-white/5' : 'py-8'}`}>
                 <div className="flex items-center justify-between px-2">
                     <div>
                         <motion.h1
@@ -176,7 +176,7 @@ export default function Sessions() {
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             transition={{ delay: 0.1 }}
-                            className="text-bastion-muted mt-2"
+                            className="text-gray-500 dark:text-bastion-muted mt-2 font-bold"
                         >
                             Automated defense schedules
                         </motion.p>
@@ -197,7 +197,7 @@ export default function Sessions() {
             <div className="mx-2 space-y-8">
                 {/* Templates */}
                 <div>
-                    <h2 className="text-sm font-semibold text-bastion-muted uppercase tracking-wider mb-4 px-1">Quick Templates</h2>
+                    <h2 className="text-xs font-black text-gray-400 dark:text-bastion-muted uppercase tracking-widest mb-4 px-1">Quick Templates</h2>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         {presetTemplates.map((template, i) => (
                             <motion.button
@@ -208,22 +208,22 @@ export default function Sessions() {
                                 whileHover={{ scale: 1.02, y: -2 }}
                                 whileTap={{ scale: 0.98 }}
                                 onClick={() => applyTemplate(template)}
-                                className="glass-panel p-6 text-left group border border-white/5 hover:border-white/10 relative overflow-hidden"
+                                className="glass-panel p-6 text-left group border border-black/5 dark:border-white/5 hover:border-black/10 dark:hover:border-white/10 relative overflow-hidden"
                             >
-                                <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                <div className="absolute inset-0 bg-gradient-to-br from-black/5 dark:from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
                                 <div className="flex items-start justify-between mb-4 relative z-10">
-                                    <div className={`p-3 rounded-xl bg-white/5 border border-white/5 group-hover:border-white/10 transition-colors`}>
+                                    <div className={`p-3 rounded-xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5 group-hover:border-black/10 dark:group-hover:border-white/10 transition-colors`}>
                                         <template.icon className={`w-6 h-6 ${template.color}`} />
                                     </div>
-                                    <div className="px-2 py-1 rounded-md bg-black/40 text-xs font-mono text-bastion-muted border border-white/5">
+                                    <div className="px-2 py-1 rounded-md bg-black dark:bg-black/40 text-[10px] font-black uppercase tracking-widest text-white dark:text-bastion-muted border border-black/5 dark:border-white/5">
                                         {template.startTime}
                                     </div>
                                 </div>
 
                                 <div className="relative z-10">
-                                    <h3 className="font-bold text-white mb-1">{template.name}</h3>
-                                    <p className="text-xs text-bastion-muted">
+                                    <h3 className="font-black text-black dark:text-white mb-1 uppercase tracking-tight">{template.name}</h3>
+                                    <p className="text-xs text-gray-400 dark:text-bastion-muted font-bold">
                                         {template.days.length} days • {template.hardcore ? 'Hardcore' : 'Standard'}
                                     </p>
                                 </div>
@@ -234,21 +234,21 @@ export default function Sessions() {
 
                 {/* Active Sessions */}
                 <div>
-                    <h2 className="text-sm font-semibold text-bastion-muted uppercase tracking-wider mb-4 px-1">Active Protocols</h2>
+                    <h2 className="text-xs font-black text-gray-400 dark:text-bastion-muted uppercase tracking-widest mb-4 px-1">Active Protocols</h2>
 
                     {isLoading ? (
                         <div className="h-40 flex items-center justify-center">
-                            <Loader2 className="w-8 h-8 animate-spin text-bastion-accent" />
+                            <Loader2 className="w-8 h-8 animate-spin text-black dark:text-white" />
                         </div>
                     ) : sessions.length === 0 ? (
                         <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
-                            className="glass-panel p-12 text-center border-dashed border-white/10"
+                            className="glass-panel p-12 text-center border-dashed border-black/10 dark:border-white/10"
                         >
-                            <Calendar className="w-12 h-12 mx-auto mb-4 text-bastion-muted opacity-30" />
-                            <h3 className="text-lg font-medium text-white mb-1">No Active Protocols</h3>
-                            <p className="text-bastion-muted max-w-sm mx-auto">
+                            <Calendar className="w-12 h-12 mx-auto mb-4 text-gray-400 dark:text-bastion-muted opacity-30" />
+                            <h3 className="text-lg font-black text-black dark:text-white mb-1 uppercase tracking-tight">No Active Protocols</h3>
+                            <p className="text-gray-500 dark:text-bastion-muted max-w-sm mx-auto font-bold">
                                 Configure automated sessions to protect your focus hours automatically.
                             </p>
                         </motion.div>
@@ -263,12 +263,12 @@ export default function Sessions() {
                                         initial={{ opacity: 0, x: -20 }}
                                         animate={{ opacity: 1, x: 0 }}
                                         transition={{ delay: i * 0.05 }}
-                                        className="glass-panel p-6 flex items-center justify-between group border border-white/5 hover:border-bastion-accent/20 active:border-bastion-accent/40"
+                                        className="glass-panel p-6 flex items-center justify-between group border border-black/5 dark:border-white/5 hover:border-black/10 dark:hover:border-bastion-accent/20 active:border-black/20 dark:active:border-bastion-accent/40"
                                     >
                                         <div className="flex items-center gap-6">
-                                            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border border-white/5 ${session.hardcore
-                                                ? 'bg-bastion-danger/10 text-bastion-danger shadow-[0_0_20px_rgba(255,0,51,0.1)]'
-                                                : 'bg-bastion-accent/10 text-bastion-accent shadow-[0_0_20px_rgba(0,240,255,0.1)]'
+                                            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border border-black/5 dark:border-white/5 ${session.hardcore
+                                                ? 'bg-black dark:bg-white text-white dark:text-black shadow-lg'
+                                                : 'bg-black/5 dark:bg-white/10 text-black dark:text-white shadow-none'
                                                 }`}>
                                                 {session.hardcore ? (
                                                     <Shield className="w-7 h-7" />
@@ -279,26 +279,26 @@ export default function Sessions() {
 
                                             <div>
                                                 <div className="flex items-center gap-3 mb-1">
-                                                    <h3 className="font-bold text-lg text-white">{session.name}</h3>
+                                                    <h3 className="font-black text-lg text-black dark:text-white uppercase tracking-tight">{session.name}</h3>
                                                     {session.hardcore && (
-                                                        <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-bastion-danger/20 text-bastion-danger border border-bastion-danger/20 flex items-center gap-1">
+                                                        <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest bg-black dark:bg-white text-white dark:text-black border border-black dark:border-white flex items-center gap-1">
                                                             <AlertTriangle className="w-3 h-3" />
                                                             Hardcore
                                                         </span>
                                                     )}
                                                 </div>
 
-                                                <div className="flex items-center gap-4 text-sm text-bastion-muted">
-                                                    <span className="font-mono bg-white/5 px-2 py-0.5 rounded text-white/80">
+                                                <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-bastion-muted font-bold">
+                                                    <span className="font-black bg-black/5 dark:bg-white/5 px-2 py-0.5 rounded text-black/80 dark:text-white/80">
                                                         {session.start_time} - {session.end_time}
                                                     </span>
                                                     <div className="flex gap-1">
                                                         {days.map((day) => (
                                                             <span
                                                                 key={day}
-                                                                className={`w-5 h-5 text-[10px] flex items-center justify-center rounded ${activeDays.includes(day)
-                                                                        ? 'bg-bastion-secondary text-black font-bold'
-                                                                        : 'text-white/20'
+                                                                className={`w-5 h-5 text-[10px] flex items-center justify-center rounded font-black uppercase transition-all ${activeDays.includes(day)
+                                                                    ? 'bg-black dark:bg-white text-white dark:text-black'
+                                                                    : 'text-gray-300 dark:text-white/10'
                                                                     }`}
                                                             >
                                                                 {day.charAt(0)}
@@ -311,7 +311,7 @@ export default function Sessions() {
 
                                         <button
                                             onClick={() => deleteSession(session.id)}
-                                            className="p-3 rounded-xl hover:bg-bastion-danger/10 text-bastion-muted hover:text-bastion-danger transition-all opacity-0 group-hover:opacity-100 translate-x-4 group-hover:translate-x-0"
+                                            className="p-3 rounded-xl hover:bg-black/5 dark:hover:bg-white/10 text-gray-400 dark:text-bastion-muted hover:text-black dark:hover:text-white transition-all opacity-0 group-hover:opacity-100 translate-x-4 group-hover:translate-x-0"
                                         >
                                             <Trash2 className="w-5 h-5" />
                                         </button>
@@ -338,67 +338,67 @@ export default function Sessions() {
                             animate={{ scale: 1, opacity: 1, y: 0 }}
                             exit={{ scale: 0.9, opacity: 0, y: 20 }}
                             onClick={(e) => e.stopPropagation()}
-                            className="glass-panel w-full max-w-lg rounded-3xl p-8 border border-white/10 shadow-2xl relative overflow-hidden"
+                            className="glass-panel w-full max-w-lg rounded-3xl p-8 border border-black/5 dark:border-white/10 shadow-2xl relative overflow-hidden"
                         >
-                            <div className="absolute top-0 right-0 p-32 bg-bastion-accent/10 blur-[80px] rounded-full pointer-events-none" />
+                            <div className="absolute top-0 right-0 p-32 bg-black/5 dark:bg-white/5 blur-[80px] rounded-full pointer-events-none" />
 
                             <div className="relative z-10">
                                 <div className="flex items-center justify-between mb-8">
-                                    <h2 className="heading-title">
+                                    <h2 className="heading-title text-black dark:text-white">
                                         {editingSession ? 'Edit Protocol' : 'New Protocol'}
                                     </h2>
                                     <button
                                         onClick={() => setShowModal(false)}
-                                        className="p-2 hover:bg-white/10 rounded-full transition-colors"
+                                        className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-full transition-colors"
                                     >
-                                        <X className="w-5 h-5 text-bastion-muted hover:text-white" />
+                                        <X className="w-5 h-5 text-gray-400 dark:text-bastion-muted hover:text-black dark:hover:text-white" />
                                     </button>
                                 </div>
 
                                 <div className="space-y-6">
                                     <div>
-                                        <label className="text-sm font-medium text-bastion-secondary mb-2 block">Protocol Name</label>
+                                        <label className="text-xs font-black text-gray-400 dark:text-bastion-secondary mb-2 block uppercase tracking-widest">Protocol Name</label>
                                         <input
                                             type="text"
                                             placeholder="e.g. Deep Work Morning"
                                             value={formData.name}
                                             onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                                            className="glass-input text-lg"
+                                            className="glass-input text-lg font-black"
                                             autoFocus
                                         />
                                     </div>
 
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
-                                            <label className="text-sm font-medium text-bastion-secondary mb-2 block">Start Time</label>
+                                            <label className="text-xs font-black text-gray-400 dark:text-bastion-secondary mb-2 block uppercase tracking-widest">Start Time</label>
                                             <input
                                                 type="time"
                                                 value={formData.startTime}
                                                 onChange={(e) => setFormData(prev => ({ ...prev, startTime: e.target.value }))}
-                                                className="glass-input text-center font-mono cursor-pointer"
+                                                className="glass-input text-center font-black cursor-pointer"
                                             />
                                         </div>
                                         <div>
-                                            <label className="text-sm font-medium text-bastion-secondary mb-2 block">End Time</label>
+                                            <label className="text-xs font-black text-gray-400 dark:text-bastion-secondary mb-2 block uppercase tracking-widest">End Time</label>
                                             <input
                                                 type="time"
                                                 value={formData.endTime}
                                                 onChange={(e) => setFormData(prev => ({ ...prev, endTime: e.target.value }))}
-                                                className="glass-input text-center font-mono cursor-pointer"
+                                                className="glass-input text-center font-black cursor-pointer"
                                             />
                                         </div>
                                     </div>
 
                                     <div>
-                                        <label className="text-sm font-medium text-bastion-secondary mb-3 block">Active Days</label>
+                                        <label className="text-xs font-black text-gray-400 dark:text-bastion-secondary mb-3 block uppercase tracking-widest">Active Days</label>
                                         <div className="flex gap-2">
                                             {days.map((day) => (
                                                 <button
                                                     key={day}
                                                     onClick={() => toggleDay(day)}
-                                                    className={`flex-1 h-12 rounded-xl text-sm font-bold transition-all relative overflow-hidden ${formData.days.includes(day)
-                                                            ? 'bg-bastion-accent text-black shadow-glow-sm'
-                                                            : 'bg-white/5 text-bastion-muted hover:bg-white/10 hover:text-white'
+                                                    className={`flex-1 h-12 rounded-xl text-xs font-black transition-all relative overflow-hidden uppercase tracking-widest ${formData.days.includes(day)
+                                                        ? 'bg-black dark:bg-white text-white dark:text-black shadow-lg'
+                                                        : 'bg-black/5 dark:bg-white/5 text-gray-500 dark:text-bastion-muted hover:bg-black/10 dark:hover:bg-white/10 hover:text-black dark:hover:text-white'
                                                         }`}
                                                 >
                                                     {day.charAt(0)}
@@ -407,23 +407,23 @@ export default function Sessions() {
                                         </div>
                                     </div>
 
-                                    <div className="flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/5">
+                                    <div className="flex items-center justify-between p-4 rounded-xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5">
                                         <div className="flex items-center gap-3">
-                                            <div className={`p-2 rounded-lg ${formData.hardcore ? 'bg-bastion-danger/20 text-bastion-danger' : 'bg-white/10 text-bastion-muted'}`}>
+                                            <div className={`p-2 rounded-lg ${formData.hardcore ? 'bg-black dark:bg-white text-white dark:text-black' : 'bg-black/5 dark:bg-white/10 text-gray-400 dark:text-bastion-muted'}`}>
                                                 <Shield className="w-5 h-5" />
                                             </div>
                                             <div>
-                                                <p className={`font-bold ${formData.hardcore ? 'text-white' : 'text-bastion-secondary'}`}>Hardcore Mode</p>
-                                                <p className="text-xs text-bastion-muted">Cannot be stopped once active</p>
+                                                <p className={`font-black uppercase tracking-widest text-xs ${formData.hardcore ? 'text-black dark:text-white' : 'text-gray-400 dark:text-bastion-secondary'}`}>Hardcore Mode</p>
+                                                <p className="text-[10px] text-gray-400 dark:text-bastion-muted font-bold uppercase tracking-tight">Cannot be stopped once active</p>
                                             </div>
                                         </div>
                                         <button
                                             onClick={() => setFormData(prev => ({ ...prev, hardcore: !prev.hardcore }))}
-                                            className={`w-14 h-8 rounded-full transition-all relative ${formData.hardcore ? 'bg-bastion-danger shadow-[0_0_15px_rgba(255,0,51,0.4)]' : 'bg-white/10'}`}
+                                            className={`w-14 h-8 rounded-full transition-all relative ${formData.hardcore ? 'bg-black dark:bg-white shadow-lg' : 'bg-black/10 dark:bg-white/10'}`}
                                         >
                                             <motion.div
                                                 layout
-                                                className="w-6 h-6 bg-white rounded-full absolute top-1"
+                                                className="w-6 h-6 bg-white dark:bg-black rounded-full absolute top-1"
                                                 animate={{ left: formData.hardcore ? 28 : 4 }}
                                             />
                                         </button>
@@ -432,7 +432,7 @@ export default function Sessions() {
                                     <div className="pt-4 flex justify-end gap-3">
                                         <button
                                             onClick={() => setShowModal(false)}
-                                            className="px-6 py-3 rounded-xl hover:bg-white/5 text-bastion-muted hover:text-white transition-colors font-medium"
+                                            className="px-6 py-3 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 text-gray-400 dark:text-bastion-muted hover:text-black dark:hover:text-white transition-colors font-black uppercase tracking-widest text-xs"
                                         >
                                             Cancel
                                         </button>

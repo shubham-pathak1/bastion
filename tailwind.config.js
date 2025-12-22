@@ -10,42 +10,38 @@ export default {
             colors: {
                 bastion: {
                     bg: '#000000',
-                    'bg-deep': '#030303', // Slightly lighter for subtle contrast
+                    'bg-deep': '#030303',
                     surface: '#0A0A0A',
-                    'surface-hover': '#121212',
+                    'surface-hover': '#151515',
                     border: '#1E1E1E',
                     'border-highlight': '#333333',
 
-                    // Obsidian & Aurora Palette
+                    // Monochromatic Palette
                     primary: '#FFFFFF',
-                    secondary: '#888888',
-                    muted: '#444444',
+                    secondary: '#A0A0A0',
+                    muted: '#666666',
 
-                    accent: '#00F0FF', // Cyber Cyan
-                    'accent-dim': 'rgba(0, 240, 255, 0.1)',
+                    accent: '#FFFFFF',
+                    'accent-dim': 'rgba(255, 255, 255, 0.1)',
 
-                    purple: '#BD00FF', // Cyber Purple
-                    pink: '#FF0055', // Cyber Pink
-
-                    success: '#00FF94',
-                    warning: '#FFB800',
-                    danger: '#FF0033',
+                    success: '#FFFFFF',
+                    warning: '#A0A0A0',
+                    danger: '#FFFFFF',
                 }
             },
             fontFamily: {
                 sans: ['Inter', 'sans-serif'],
                 mono: ['JetBrains Mono', 'monospace'],
-                display: ['Outfit', 'sans-serif'], // Premium display font
+                display: ['Outfit', 'sans-serif'],
             },
             boxShadow: {
-                'glow-sm': '0 0 10px rgba(0, 240, 255, 0.1)',
-                'glow-md': '0 0 20px rgba(0, 240, 255, 0.2)',
-                'glow-lg': '0 0 30px rgba(0, 240, 255, 0.3)',
-                'glow-purple': '0 0 20px rgba(189, 0, 255, 0.2)',
+                'glow-sm': '0 0 10px rgba(255, 255, 255, 0.1)',
+                'glow-md': '0 0 20px rgba(255, 255, 255, 0.2)',
+                'glow-lg': '0 0 30px rgba(255, 255, 255, 0.3)',
                 'glass': '0 8px 32px 0 rgba(0, 0, 0, 0.37)',
             },
             backgroundImage: {
-                'aurora-gradient': 'linear-gradient(to right, #00F0FF, #BD00FF)',
+                'monochrome-gradient': 'linear-gradient(to right, #FFFFFF, #A0A0A0)',
                 'glass-gradient': 'linear-gradient(145deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.01) 100%)',
             },
             animation: {

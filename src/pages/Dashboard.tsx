@@ -134,11 +134,11 @@ export default function Dashboard() {
                 className="flex items-end justify-between"
             >
                 <div>
-                    <h1 className="heading-hero text-transparent bg-clip-text bg-gradient-to-r from-white to-white/50">
+                    <h1 className="heading-hero">
                         Command Center
                     </h1>
-                    <p className="text-bastion-muted mt-2 text-lg">
-                        You remain <span className="text-bastion-accent font-semibold">unbreakable</span> today.
+                    <p className="text-gray-500 dark:text-bastion-muted mt-2 text-lg">
+                        You remain <span className="text-black dark:text-white font-black underline underline-offset-8 tracking-tight">UNBREAKABLE</span> today.
                     </p>
                 </div>
 
@@ -146,10 +146,10 @@ export default function Dashboard() {
                     <motion.div
                         initial={{ scale: 0.8, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
-                        className="flex items-center gap-3 px-4 py-2 rounded-full bg-bastion-accent/10 border border-bastion-accent/20"
+                        className="flex items-center gap-3 px-4 py-2 rounded-full bg-black dark:bg-white text-white dark:text-black border border-black dark:border-white shadow-xl"
                     >
-                        <div className="w-2 h-2 rounded-full bg-bastion-accent animate-pulse" />
-                        <span className="text-bastion-accent font-mono font-medium">
+                        <div className="w-2 h-2 rounded-full bg-white dark:bg-black animate-pulse" />
+                        <span className="font-mono font-black text-xs tracking-tighter">
                             SESSION ACTIVE
                         </span>
                     </motion.div>
@@ -164,109 +164,109 @@ export default function Dashboard() {
                 className="grid grid-cols-1 md:grid-cols-4 gap-6"
             >
                 {/* Main Stat Card - Spans 2 cols */}
-                <motion.div variants={item} className="md:col-span-2 glass-card p-8 flex flex-col justify-between group relative">
-                    <div className="absolute top-0 right-0 p-32 bg-bastion-accent/5 blur-[80px] rounded-full pointer-events-none group-hover:bg-bastion-accent/10 transition-colors duration-500" />
+                <motion.div variants={item} className="md:col-span-2 glass-card p-8 flex flex-col justify-between group relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-32 bg-black/5 dark:bg-white/5 blur-[80px] rounded-full pointer-events-none group-hover:bg-black/10 dark:group-hover:bg-white/10 transition-colors duration-500" />
 
                     <div className="flex items-start justify-between relative z-10">
                         <div>
-                            <p className="text-bastion-secondary font-medium mb-1 flex items-center gap-2">
-                                <Clock className="w-4 h-4 text-bastion-accent" />
+                            <p className="text-gray-500 dark:text-bastion-secondary font-bold mb-1 flex items-center gap-2">
+                                <Clock className="w-4 h-4 text-black dark:text-white" />
                                 Focus Time
                             </p>
                             <div className="flex items-baseline gap-2">
-                                <span className="text-6xl font-display font-bold text-white tracking-tighter">
+                                <span className="text-6xl font-display font-black text-black dark:text-white tracking-tighter">
                                     {todayStats.hours}
                                 </span>
-                                <span className="text-xl text-bastion-muted font-medium">h</span>
-                                <span className="text-6xl font-display font-bold text-white tracking-tighter ml-2">
+                                <span className="text-xl text-gray-400 dark:text-bastion-muted font-bold">h</span>
+                                <span className="text-6xl font-display font-black text-black dark:text-white tracking-tighter ml-2">
                                     {todayStats.minutes}
                                 </span>
-                                <span className="text-xl text-bastion-muted font-medium">m</span>
+                                <span className="text-xl text-gray-400 dark:text-bastion-muted font-bold">m</span>
                             </div>
                         </div>
                         {isSessionActive && sessionTimeLeft !== null && (
                             <div className="text-right">
-                                <p className="text-sm text-bastion-muted mb-1">Remaining</p>
-                                <p className="text-2xl font-mono text-bastion-accent">{formatTimeLeft(sessionTimeLeft)}</p>
+                                <p className="text-sm text-gray-400 dark:text-bastion-muted mb-1 font-bold">Remaining</p>
+                                <p className="text-2xl font-mono text-black dark:text-white tracking-widest font-black">{formatTimeLeft(sessionTimeLeft)}</p>
                             </div>
                         )}
                     </div>
 
                     <div className="mt-8 relative z-10">
-                        <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
+                        <div className="h-1 w-full bg-black/5 dark:bg-white/5 rounded-full overflow-hidden">
                             <motion.div
                                 initial={{ width: 0 }}
                                 animate={{ width: `${Math.min((todayStats.hours / 8) * 100, 100)}%` }}
                                 transition={{ duration: 1.5, ease: "easeOut" }}
-                                className="h-full bg-gradient-to-r from-bastion-accent to-bastion-purple shadow-[0_0_10px_rgba(0,240,255,0.5)]"
+                                className="h-full bg-black dark:bg-white shadow-md shadow-black/10 dark:shadow-white/50"
                             />
                         </div>
-                        <p className="text-xs text-bastion-muted mt-2 text-right">Target: 8h</p>
+                        <p className="text-xs text-gray-400 dark:text-bastion-muted mt-2 text-right font-bold uppercase tracking-wider">Target: 8h</p>
                     </div>
                 </motion.div>
 
                 {/* Quick Start Card */}
                 <motion.div variants={item} className="glass-card-interactive p-6 flex flex-col items-center justify-center text-center gap-4 group" onClick={() => setShowStartModal(true)}>
-                    <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center group-hover:scale-110 group-hover:shadow-glow-md transition-all duration-300 border border-white/5">
-                        <Zap className="w-8 h-8 text-white group-hover:text-bastion-accent transition-colors" />
+                    <div className="w-16 h-16 rounded-full bg-black/5 dark:bg-white/5 flex items-center justify-center group-hover:scale-110 group-hover:shadow-xl transition-all duration-300 border border-black/5 dark:border-white/5">
+                        <Zap className="w-8 h-8 text-black dark:text-white" />
                     </div>
                     <div>
-                        <h3 className="text-xl font-bold text-white">Focus Now</h3>
-                        <p className="text-sm text-bastion-muted">Start a deep work session</p>
+                        <h3 className="text-xl font-black text-black dark:text-white">Focus Now</h3>
+                        <p className="text-sm text-gray-500 dark:text-bastion-muted font-bold">Start a deep work session</p>
                     </div>
                 </motion.div>
 
                 {/* Blocks Stat Card */}
                 <motion.div variants={item} className="glass-card p-6 flex flex-col justify-between relative overflow-hidden">
-                    <div className="absolute -bottom-10 -right-10 w-32 h-32 bg-bastion-danger/10 blur-[40px] rounded-full" />
+                    <div className="absolute -bottom-10 -right-10 w-32 h-32 bg-black/5 dark:bg-white/5 blur-[40px] rounded-full" />
 
                     <div className="flex items-center justify-between mb-4">
-                        <p className="text-bastion-secondary font-medium flex items-center gap-2">
-                            <Shield className="w-4 h-4 text-bastion-danger" />
+                        <p className="text-gray-500 dark:text-bastion-secondary font-bold flex items-center gap-2">
+                            <Shield className="w-4 h-4 text-black dark:text-white" />
                             Threats
                         </p>
-                        <span className="text-xs font-mono bg-white/5 px-2 py-1 rounded text-bastion-muted">{blockedCount} Active</span>
+                        <span className="text-xs font-mono bg-black/5 dark:bg-white/5 px-2 py-1 rounded text-black/40 dark:text-bastion-muted font-bold">{blockedCount} Active</span>
                     </div>
                     <div>
-                        <p className="text-4xl font-bold text-white">{todayStats.totalBlocks}</p>
-                        <p className="text-sm text-bastion-muted mt-1">Distractions blocked today</p>
+                        <p className="text-4xl font-black text-black dark:text-white">{todayStats.totalBlocks}</p>
+                        <p className="text-sm text-gray-400 dark:text-bastion-muted mt-1 font-bold">Distractions blocked today</p>
                     </div>
                 </motion.div>
 
                 {/* Recent Activity Feed - Spans full width on mobile, 2 on desktop */}
                 <motion.div variants={item} className="md:col-span-2 glass-card p-0 flex flex-col">
-                    <div className="p-6 border-b border-white/5 flex items-center justify-between">
-                        <h3 className="font-bold text-white flex items-center gap-2">
-                            <Activity className="w-5 h-5 text-bastion-accent" />
+                    <div className="p-6 border-b border-black/5 dark:border-white/5 flex items-center justify-between">
+                        <h3 className="font-black text-black dark:text-white flex items-center gap-2">
+                            <Activity className="w-5 h-5 text-black dark:text-white" />
                             Live Feed
                         </h3>
-                        <button onClick={() => navigate('/stats')} className="text-xs font-medium text-bastion-accent hover:text-white transition-colors">
+                        <button onClick={() => navigate('/stats')} className="text-xs font-black text-black dark:text-white hover:underline transition-colors uppercase tracking-widest">
                             VIEW REPORT
                         </button>
                     </div>
                     <div className="flex-1 p-2">
                         {isLoading ? (
                             <div className="h-40 flex items-center justify-center">
-                                <Loader2 className="w-6 h-6 animate-spin text-bastion-accent" />
+                                <Loader2 className="w-6 h-6 animate-spin text-black dark:text-white" />
                             </div>
                         ) : recentBlocks.length === 0 ? (
-                            <div className="h-40 flex flex-col items-center justify-center text-bastion-muted gap-2">
+                            <div className="h-40 flex flex-col items-center justify-center text-gray-400 dark:text-bastion-muted gap-2 font-bold">
                                 <Shield className="w-8 h-8 opacity-20" />
                                 <p className="text-sm">No activity recorded yet</p>
                             </div>
                         ) : (
                             <div className="space-y-1">
                                 {recentBlocks.map((block) => (
-                                    <div key={block.id} className="flex items-center justify-between p-3 rounded-xl hover:bg-white/5 transition-colors group">
+                                    <div key={block.id} className="flex items-center justify-between p-3 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition-colors group">
                                         <div className="flex items-center gap-3">
-                                            <div className="w-2 h-2 rounded-full bg-bastion-danger shadow-[0_0_8px_rgba(255,0,51,0.5)]" />
+                                            <div className="w-2 h-2 rounded-full bg-black dark:bg-white shadow-md shadow-black/10 dark:shadow-white/50" />
                                             <div>
-                                                <p className="font-mono text-sm text-white group-hover:text-bastion-accent transition-colors">
+                                                <p className="font-mono text-sm text-black dark:text-white font-bold transition-colors">
                                                     {block.target}
                                                 </p>
                                             </div>
                                         </div>
-                                        <span className="text-xs font-mono text-bastion-muted">
+                                        <span className="text-xs font-mono text-gray-400 dark:text-bastion-muted font-bold">
                                             {formatBlockTime(block.blocked_at)}
                                         </span>
                                     </div>
@@ -280,25 +280,25 @@ export default function Dashboard() {
                 <motion.div variants={item} className="col-span-1 md:col-span-2 grid grid-cols-2 gap-6">
                     <motion.div
                         whileHover={{ y: -5 }}
-                        className="glass-card-interactive p-6 flex flex-col justify-center items-start gap-4 bg-gradient-to-br from-white/5 to-transparent"
+                        className="glass-card-interactive p-6 flex flex-col justify-center items-start gap-4"
                         onClick={() => navigate('/pomodoro')}
                     >
-                        <Timer className="w-8 h-8 text-bastion-purple" />
+                        <Timer className="w-8 h-8 text-black dark:text-white" />
                         <div>
-                            <h3 className="font-bold text-white">Pomodoro</h3>
-                            <p className="text-xs text-bastion-muted mt-1">Cycle focus & breaks</p>
+                            <h3 className="font-black text-black dark:text-white">Pomodoro</h3>
+                            <p className="text-xs text-gray-500 dark:text-bastion-muted mt-1 font-bold">Cycle focus & breaks</p>
                         </div>
                     </motion.div>
 
                     <motion.div
                         whileHover={{ y: -5 }}
-                        className="glass-card-interactive p-6 flex flex-col justify-center items-start gap-4 bg-gradient-to-br from-white/5 to-transparent"
+                        className="glass-card-interactive p-6 flex flex-col justify-center items-start gap-4"
                         onClick={() => navigate('/blocks')}
                     >
-                        <Lock className="w-8 h-8 text-bastion-warning" />
+                        <Lock className="w-8 h-8 text-black dark:text-white" />
                         <div>
-                            <h3 className="font-bold text-white">Manage Blocks</h3>
-                            <p className="text-xs text-bastion-muted mt-1">Configure firewall</p>
+                            <h3 className="font-black text-black dark:text-white">Manage Blocks</h3>
+                            <p className="text-xs text-gray-500 dark:text-bastion-muted mt-1 font-bold">Configure firewall</p>
                         </div>
                     </motion.div>
                 </motion.div>
@@ -322,25 +322,25 @@ export default function Dashboard() {
                             className="glass-panel w-full max-w-lg rounded-3xl p-8 border border-white/10 shadow-2xl relative overflow-hidden"
                         >
                             {/* Decorative Glow */}
-                            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-64 bg-bastion-accent/20 blur-[100px] rounded-full pointer-events-none" />
+                            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-64 bg-white/5 blur-[100px] rounded-full pointer-events-none" />
 
                             <div className="relative z-10">
                                 <div className="flex items-center justify-between mb-8">
                                     <h2 className="heading-title flex items-center gap-2">
-                                        <Zap className="w-6 h-6 text-bastion-accent" />
+                                        <Zap className="w-6 h-6 text-black dark:text-white" />
                                         Initiate Focus
                                     </h2>
                                     <button
                                         onClick={() => setShowStartModal(false)}
-                                        className="p-2 hover:bg-white/10 rounded-full transition-colors"
+                                        className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-full transition-colors"
                                     >
-                                        <X className="w-5 h-5 text-bastion-muted hover:text-white" />
+                                        <X className="w-5 h-5 text-gray-500 dark:text-bastion-muted hover:text-black dark:hover:text-white" />
                                     </button>
                                 </div>
 
                                 <div className="space-y-6">
                                     <div className="space-y-2">
-                                        <label className="text-sm font-medium text-bastion-secondary">Objective</label>
+                                        <label className="text-sm font-bold text-gray-500 dark:text-bastion-secondary uppercase tracking-widest">Objective</label>
                                         <input
                                             type="text"
                                             value={sessionName}
@@ -351,15 +351,15 @@ export default function Dashboard() {
                                     </div>
 
                                     <div className="space-y-2">
-                                        <label className="text-sm font-medium text-bastion-secondary">Duration</label>
+                                        <label className="text-sm font-bold text-gray-500 dark:text-bastion-secondary uppercase tracking-widest">Duration</label>
                                         <div className="grid grid-cols-4 gap-3">
                                             {[15, 30, 60, 90].map(mins => (
                                                 <button
                                                     key={mins}
                                                     onClick={() => setSessionDuration(mins)}
-                                                    className={`py-3 rounded-xl border font-medium transition-all ${sessionDuration === mins
-                                                        ? 'bg-bastion-accent text-black border-bastion-accent shadow-glow-sm'
-                                                        : 'bg-white/5 border-white/5 text-bastion-muted hover:bg-white/10 hover:text-white'
+                                                    className={`py-3 rounded-xl border font-black transition-all ${sessionDuration === mins
+                                                        ? 'bg-black dark:bg-white text-white dark:text-black border-transparent shadow-lg'
+                                                        : 'bg-black/5 dark:bg-white/5 border-black/5 dark:border-white/5 text-gray-500 dark:text-bastion-muted hover:bg-black/10 dark:hover:bg-white/10 hover:text-black dark:hover:text-white'
                                                         }`}
                                                 >
                                                     {mins}m
@@ -369,22 +369,22 @@ export default function Dashboard() {
                                         {/* Custom duration slider could go here */}
                                     </div>
 
-                                    <div className="flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/5">
+                                    <div className="flex items-center justify-between p-4 rounded-xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5">
                                         <div className="flex items-center gap-3">
-                                            <div className={`p-2 rounded-lg ${hardcoreMode ? 'bg-bastion-danger/20 text-bastion-danger' : 'bg-white/10 text-bastion-muted'}`}>
+                                            <div className={`p-2 rounded-lg ${hardcoreMode ? 'bg-black dark:bg-white text-white dark:text-black' : 'bg-black/10 dark:bg-white/10 text-gray-400 dark:text-bastion-muted'}`}>
                                                 <Lock className="w-5 h-5" />
                                             </div>
                                             <div>
-                                                <p className={`font-bold ${hardcoreMode ? 'text-white' : 'text-bastion-secondary'}`}>Hardcore Mode</p>
-                                                <p className="text-xs text-bastion-muted">Prevent edits & exit</p>
+                                                <p className={`font-black ${hardcoreMode ? 'text-black dark:text-white' : 'text-gray-500 dark:text-bastion-secondary'}`}>Hardcore Mode</p>
+                                                <p className="text-xs text-gray-400 dark:text-bastion-muted font-bold">Prevent edits & exit</p>
                                             </div>
                                         </div>
                                         <button
                                             onClick={() => setHardcoreMode(!hardcoreMode)}
-                                            className={`w-14 h-8 rounded-full transition-all relative ${hardcoreMode ? 'bg-bastion-danger shadow-[0_0_15px_rgba(255,0,51,0.4)]' : 'bg-white/10'}`}
+                                            className={`w-14 h-8 rounded-full transition-all relative ${hardcoreMode ? 'bg-black dark:bg-white shadow-lg' : 'bg-black/10 dark:bg-white/10'}`}
                                         >
                                             <motion.div
-                                                className="w-6 h-6 bg-white rounded-full absolute top-1"
+                                                className="w-6 h-6 bg-white dark:bg-black rounded-full absolute top-1 shadow-sm"
                                                 animate={{ left: hardcoreMode ? 28 : 4 }}
                                             />
                                         </button>

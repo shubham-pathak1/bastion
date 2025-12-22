@@ -38,10 +38,10 @@ function App() {
     // Loading state
     if (isOnboarded === null) {
         return (
-            <div className="h-full w-full flex items-center justify-center bg-bastion-bg">
+            <div className="h-screen w-screen flex items-center justify-center bg-black">
                 <div className="flex flex-col items-center gap-4">
-                    <Loader2 className="w-8 h-8 animate-spin text-bastion-accent" />
-                    <div className="text-bastion-text-muted text-sm">Loading Bastion...</div>
+                    <Loader2 className="w-8 h-8 animate-spin text-white" />
+                    <div className="text-bastion-muted text-xs font-black uppercase tracking-widest animate-pulse">Loading Bastion...</div>
                 </div>
             </div>
         );
@@ -58,16 +58,16 @@ function App() {
                 {/* Noise Texture Overlay */}
                 <div className="noise-overlay" />
 
-                {/* Ambient Background Gradient */}
-                <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-bastion-accent/5 blur-[120px] rounded-full pointer-events-none" />
-                <div className="absolute bottom-[-20%] right-[-10%] w-[40%] h-[40%] bg-bastion-purple/5 blur-[120px] rounded-full pointer-events-none" />
+                {/* Ambient Background Glows */}
+                <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-white/5 blur-[120px] rounded-full pointer-events-none" />
+                <div className="absolute bottom-[-20%] right-[-10%] w-[40%] h-[40%] bg-white/5 blur-[120px] rounded-full pointer-events-none" />
 
                 <Sidebar
                     collapsed={sidebarCollapsed}
                     onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
                 />
 
-                <main className="flex-1 relative z-10 glass-panel rounded-3xl overflow-hidden flex flex-col">
+                <main className="flex-1 relative z-10 glass-panel rounded-3xl overflow-hidden flex flex-col border border-white/5">
                     <div className="flex-1 overflow-y-auto overflow-x-hidden p-8 scroll-smooth">
                         <Routes>
                             <Route path="/" element={<Dashboard />} />

@@ -93,7 +93,7 @@ export default function Stats() {
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             transition={{ delay: 0.1 }}
-                            className="text-bastion-muted mt-2"
+                            className="text-bastion-muted mt-2 font-bold"
                         >
                             Deep dive into your productivity metrics
                         </motion.p>
@@ -110,13 +110,13 @@ export default function Stats() {
                         </motion.button>
 
                         <div className="relative group z-50">
-                            <div className="absolute inset-0 bg-bastion-accent/20 rounded-xl blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                            <div className="absolute inset-0 bg-white/20 rounded-xl blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                             <div className="relative bg-black/40 backdrop-blur-md border border-white/10 rounded-xl flex items-center p-1">
                                 {['7d', '30d', '90d'].map((r) => (
                                     <button
                                         key={r}
                                         onClick={() => setTimeRange(r as TimeRange)}
-                                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 relative ${timeRange === r
+                                        className={`px-4 py-2 rounded-lg text-sm font-bold transition-all duration-300 relative ${timeRange === r
                                             ? 'text-black'
                                             : 'text-bastion-muted hover:text-white'
                                             }`}
@@ -124,7 +124,7 @@ export default function Stats() {
                                         {timeRange === r && (
                                             <motion.div
                                                 layoutId="range-bg"
-                                                className="absolute inset-0 bg-bastion-accent rounded-lg shadow-[0_0_15px_rgba(0,240,255,0.4)]"
+                                                className="absolute inset-0 bg-white rounded-lg shadow-lg"
                                                 transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                                             />
                                         )}
@@ -154,36 +154,36 @@ export default function Stats() {
                         value: `${totalHours.toFixed(1)}h`,
                         sub: `Last ${days} days`,
                         icon: Clock,
-                        color: "text-bastion-accent",
-                        bg: "bg-bastion-accent/10",
-                        border: "border-bastion-accent/20"
+                        color: "text-white",
+                        bg: "bg-white/10",
+                        border: "border-white/20"
                     },
                     {
                         label: "Distractions Blocked",
                         value: totalBlocks,
                         sub: `~${Math.round(totalBlocks / days)} per day`,
                         icon: Ban,
-                        color: "text-bastion-danger",
-                        bg: "bg-bastion-danger/10",
-                        border: "border-bastion-danger/20"
+                        color: "text-white",
+                        bg: "bg-white/10",
+                        border: "border-white/20"
                     },
                     {
                         label: "Daily Average",
                         value: `${avgDaily.toFixed(1)}h`,
                         sub: "Goal: 6h",
                         icon: BarChart3,
-                        color: "text-bastion-success",
-                        bg: "bg-bastion-success/10",
-                        border: "border-bastion-success/20"
+                        color: "text-white",
+                        bg: "bg-white/10",
+                        border: "border-white/20"
                     },
                     {
                         label: "Productivity Strike",
                         value: `${stats.length} Days`,
                         sub: "Current Streak",
                         icon: TrendingUp,
-                        color: "text-purple-400",
-                        bg: "bg-purple-500/10",
-                        border: "border-purple-500/20"
+                        color: "text-white",
+                        bg: "bg-white/10",
+                        border: "border-white/20"
                     }
                 ].map((stat, i) => (
                     <motion.div
@@ -199,16 +199,16 @@ export default function Stats() {
                             <div className={`p-3 rounded-2xl ${stat.bg} border ${stat.border}`}>
                                 <stat.icon className={`w-6 h-6 ${stat.color}`} />
                             </div>
-                            <div className="flex items-center gap-1 text-xs font-medium text-bastion-success bg-bastion-success/10 px-2 py-1 rounded-lg border border-bastion-success/20">
+                            <div className="flex items-center gap-1 text-xs font-black text-white bg-white/10 px-2 py-1 rounded-lg border border-white/20">
                                 <ArrowUpRight className="w-3 h-3" />
                                 {trend}
                             </div>
                         </div>
 
                         <div className="relative z-10">
-                            <h3 className="text-3xl font-bold text-white mb-1 tracking-tight">{stat.value}</h3>
-                            <p className="text-sm text-bastion-muted font-medium">{stat.label}</p>
-                            <p className="text-xs text-white/40 mt-2">{stat.sub}</p>
+                            <h3 className="text-3xl font-black text-white mb-1 tracking-tight">{stat.value}</h3>
+                            <p className="text-sm text-bastion-muted font-black uppercase tracking-widest">{stat.label}</p>
+                            <p className="text-xs text-white/40 mt-2 font-bold">{stat.sub}</p>
                         </div>
                     </motion.div>
                 ))}
@@ -225,56 +225,56 @@ export default function Stats() {
                 >
                     <div className="flex items-center justify-between mb-8">
                         <div>
-                            <h2 className="text-xl font-bold text-white">Focus Trajectory</h2>
-                            <p className="text-sm text-bastion-muted">Daily breakdown vs goal</p>
+                            <h2 className="text-xl font-black text-white">Focus Trajectory</h2>
+                            <p className="text-sm text-bastion-muted font-bold">Daily breakdown vs goal</p>
                         </div>
                         <button className="p-2 hover:bg-white/5 rounded-xl transition-colors">
                             <Info className="w-5 h-5 text-bastion-muted" />
                         </button>
                     </div>
 
-                    <div className="h-[300px] w-full">
+                    <div className="h-[300px] w-full text-white">
                         {isLoading ? (
                             <div className="h-full flex items-center justify-center">
-                                <Loader2 className="w-8 h-8 animate-spin text-bastion-accent" />
+                                <Loader2 className="w-8 h-8 animate-spin text-white" />
                             </div>
                         ) : (
                             <ResponsiveContainer width="100%" height="100%">
                                 <AreaChart data={chartData}>
                                     <defs>
                                         <linearGradient id="colorHours" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="#00F0FF" stopOpacity={0.3} />
-                                            <stop offset="95%" stopColor="#00F0FF" stopOpacity={0} />
+                                            <stop offset="5%" stopColor="var(--chart-fill)" stopOpacity={0.3} />
+                                            <stop offset="95%" stopColor="var(--chart-fill)" stopOpacity={0} />
                                         </linearGradient>
                                     </defs>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="#ffffff" strokeOpacity={0.05} vertical={false} />
+                                    <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" strokeOpacity={1} vertical={false} />
                                     <XAxis
                                         dataKey="date"
-                                        stroke="#666"
+                                        stroke="var(--chart-text)"
                                         fontSize={12}
                                         tickLine={false}
                                         axisLine={false}
-                                        tick={{ fill: '#666' }}
+                                        tick={{ fill: 'var(--chart-text)', fontWeight: 700 }}
                                         dy={10}
                                     />
                                     <YAxis
-                                        stroke="#666"
+                                        stroke="var(--chart-text)"
                                         fontSize={12}
                                         tickLine={false}
                                         axisLine={false}
                                         tickFormatter={(v) => `${v}h`}
-                                        tick={{ fill: '#666' }}
+                                        tick={{ fill: 'var(--chart-text)', fontWeight: 700 }}
                                     />
                                     <Tooltip
                                         contentStyle={{
-                                            backgroundColor: 'rgba(0,0,0,0.8)',
+                                            backgroundColor: 'var(--bg-primary)',
                                             backdropFilter: 'blur(10px)',
-                                            border: '1px solid rgba(255,255,255,0.1)',
+                                            border: '1px solid var(--chart-grid)',
                                             borderRadius: '12px',
-                                            boxShadow: '0 10px 40px rgba(0,0,0,0.5)'
+                                            boxShadow: '0 10px 40px rgba(0,0,0,0.2)'
                                         }}
-                                        itemStyle={{ color: '#fff' }}
-                                        labelStyle={{ color: '#999', marginBottom: '0.5rem' }}
+                                        itemStyle={{ color: 'var(--chart-line)', fontWeight: 800 }}
+                                        labelStyle={{ color: 'var(--chart-text)', marginBottom: '0.5rem', fontWeight: 700 }}
                                         labelFormatter={(label, payload) => {
                                             if (payload && payload.length > 0) {
                                                 return payload[0].payload.fullDate;
@@ -285,11 +285,11 @@ export default function Stats() {
                                     <Area
                                         type="monotone"
                                         dataKey="hours"
-                                        stroke="#00F0FF"
+                                        stroke="var(--chart-line)"
                                         strokeWidth={3}
                                         fillOpacity={1}
                                         fill="url(#colorHours)"
-                                        activeDot={{ r: 6, strokeWidth: 0, fill: '#fff' }}
+                                        activeDot={{ r: 6, strokeWidth: 0, fill: 'var(--chart-line)' }}
                                     />
                                 </AreaChart>
                             </ResponsiveContainer>
@@ -306,42 +306,42 @@ export default function Stats() {
                 >
                     <div className="flex items-center justify-between mb-8">
                         <div>
-                            <h2 className="text-xl font-bold text-white">Blocked Items</h2>
-                            <p className="text-sm text-bastion-muted">Distractions prevented</p>
+                            <h2 className="text-xl font-black text-white">Blocked Items</h2>
+                            <p className="text-sm text-bastion-muted font-bold">Distractions prevented</p>
                         </div>
                     </div>
 
                     <div className="h-[300px] w-full">
                         {isLoading ? (
                             <div className="h-full flex items-center justify-center">
-                                <Loader2 className="w-8 h-8 animate-spin text-bastion-danger" />
+                                <Loader2 className="w-8 h-8 animate-spin text-black dark:text-white" />
                             </div>
                         ) : (
                             <ResponsiveContainer width="100%" height="100%">
                                 <BarChart data={chartData}>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="#ffffff" strokeOpacity={0.05} vertical={false} />
+                                    <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" strokeOpacity={1} vertical={false} />
                                     <XAxis
                                         dataKey="date"
-                                        stroke="#666"
+                                        stroke="var(--chart-text)"
                                         fontSize={10}
                                         tickLine={false}
                                         axisLine={false}
-                                        tick={{ fill: '#666' }}
+                                        tick={{ fill: 'var(--chart-text)', fontWeight: 700 }}
                                         dy={10}
                                         interval={1}
                                     />
                                     <Tooltip
-                                        cursor={{ fill: 'rgba(255,255,255,0.05)' }}
+                                        cursor={{ fill: 'var(--chart-grid)' }}
                                         contentStyle={{
-                                            backgroundColor: 'rgba(0,0,0,0.8)',
+                                            backgroundColor: 'var(--bg-primary)',
                                             backdropFilter: 'blur(10px)',
-                                            border: '1px solid rgba(255,255,255,0.1)',
+                                            border: '1px solid var(--chart-grid)',
                                             borderRadius: '12px',
                                         }}
                                     />
                                     <Bar dataKey="blocks" radius={[4, 4, 0, 0]}>
                                         {chartData.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={entry.blocks > 20 ? '#FF3366' : '#FF336680'} />
+                                            <Cell key={`cell-${index}`} fill={entry.blocks > 20 ? 'var(--chart-line)' : 'var(--chart-text)'} />
                                         ))}
                                     </Bar>
                                 </BarChart>
@@ -358,22 +358,22 @@ export default function Stats() {
                 transition={{ delay: 0.4 }}
                 className="mx-2 glass-panel p-8 border border-white/5 relative overflow-hidden"
             >
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-bastion-accent/50 to-transparent opacity-20" />
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-white/50 to-transparent opacity-20" />
 
                 <div className="flex items-end justify-between mb-8">
                     <div>
                         <h2 className="heading-2 mb-2">Consistency Heatmap</h2>
-                        <p className="text-bastion-muted max-w-lg">
+                        <p className="text-bastion-muted max-w-lg font-bold">
                             Visualizing your daily focus intensity. Darker cells indicate longer deep work sessions.
                         </p>
                     </div>
-                    <div className="flex items-center gap-2 text-xs text-bastion-muted">
+                    <div className="flex items-center gap-2 text-xs text-bastion-muted font-bold">
                         <span>Less</span>
                         <div className="flex gap-1">
-                            <div className="w-3 h-3 rounded-sm bg-white/5" />
-                            <div className="w-3 h-3 rounded-sm bg-bastion-accent/20" />
-                            <div className="w-3 h-3 rounded-sm bg-bastion-accent/50" />
-                            <div className="w-3 h-3 rounded-sm bg-bastion-accent" />
+                            <div className="w-3 h-3 rounded-sm bg-white/5 border border-white/5" />
+                            <div className="w-3 h-3 rounded-sm bg-white/20" />
+                            <div className="w-3 h-3 rounded-sm bg-white/50" />
+                            <div className="w-3 h-3 rounded-sm bg-white" />
                         </div>
                         <span>More</span>
                     </div>
@@ -381,12 +381,12 @@ export default function Stats() {
 
                 {isLoading ? (
                     <div className="h-32 flex justify-center items-center">
-                        <Loader2 className="w-8 h-8 animate-spin text-bastion-accent" />
+                        <Loader2 className="w-8 h-8 animate-spin text-white" />
                     </div>
                 ) : stats.length === 0 ? (
                     <div className="py-12 text-center text-bastion-muted border border-dashed border-white/10 rounded-2xl bg-black/20">
                         <Calendar className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                        <p>No activity data recorded yet</p>
+                        <p className="font-bold">No activity data recorded yet</p>
                     </div>
                 ) : (
                     <div className="flex gap-1.5 flex-wrap">
@@ -396,17 +396,21 @@ export default function Stats() {
                                 initial={{ opacity: 0, scale: 0 }}
                                 animate={{ opacity: 1, scale: 1 }}
                                 transition={{ delay: i * 0.01 }}
-                                className="w-8 h-8 rounded-md transition-all duration-300 hover:scale-125 hover:z-10 relative group cursor-pointer"
+                                className={`w-8 h-8 rounded-md transition-all duration-300 hover:scale-125 hover:z-10 relative group cursor-pointer border border-white/5 ${day.minutes_protected === 0
+                                    ? 'bg-white/5 opacity-50'
+                                    : 'bg-white'}`}
                                 style={{
-                                    backgroundColor: day.minutes_protected === 0
-                                        ? 'rgba(255,255,255,0.05)'
-                                        : `rgba(0, 240, 255, ${Math.max(0.2, Math.min(day.minutes_protected / 300, 1))})`,
-                                    boxShadow: day.minutes_protected > 240 ? '0 0 10px rgba(0,240,255,0.4)' : 'none'
+                                    opacity: day.minutes_protected === 0
+                                        ? 0.1
+                                        : Math.max(0.2, Math.min(day.minutes_protected / 300, 1)),
+                                    boxShadow: day.minutes_protected > 240
+                                        ? '0 0 10px rgba(255,255,255,0.4)'
+                                        : 'none'
                                 }}
                             >
-                                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-black/90 backdrop-blur-md rounded-lg text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20 border border-white/10">
-                                    <p className="font-bold text-white">{day.date}</p>
-                                    <p className="text-bastion-accent">{Math.floor(day.minutes_protected / 60)}h {day.minutes_protected % 60}m</p>
+                                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-black/90 backdrop-blur-md rounded-lg text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20 border border-white/10 shadow-xl">
+                                    <p className="font-black text-white">{day.date}</p>
+                                    <p className="text-white font-black">{Math.floor(day.minutes_protected / 60)}h {day.minutes_protected % 60}m</p>
                                 </div>
                             </motion.div>
                         ))}

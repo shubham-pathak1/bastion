@@ -65,8 +65,8 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
             {/* Logo Area */}
             <div className="h-20 flex items-center px-5 mb-2">
                 <div className="flex items-center gap-3 overflow-hidden">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-bastion-accent to-bastion-purple flex items-center justify-center flex-shrink-0 shadow-glow-sm">
-                        <Shield className="w-5 h-5 text-black" />
+                    <div className="w-10 h-10 rounded-xl bg-black dark:bg-white flex items-center justify-center flex-shrink-0 shadow-lg">
+                        <Shield className="w-5 h-5 text-white dark:text-black" />
                     </div>
                     {!collapsed && (
                         <motion.div
@@ -75,10 +75,10 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
                             exit={{ opacity: 0, x: -10 }}
                             className="flex flex-col"
                         >
-                            <span className="font-display text-xl font-bold tracking-tight text-white">
+                            <span className="font-display text-xl font-black tracking-tight text-black dark:text-white">
                                 Bastion
                             </span>
-                            <span className="text-[10px] uppercase tracking-widest text-bastion-accent/80 font-semibold">
+                            <span className="text-[10px] uppercase tracking-widest text-black/40 dark:text-white/60 font-bold">
                                 Version 2.0
                             </span>
                         </motion.div>
@@ -99,21 +99,21 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
                             {isActive && (
                                 <motion.div
                                     layoutId="activeTab"
-                                    className="absolute inset-0 bg-white/5 border border-white/5 rounded-xl shadow-glow-sm"
+                                    className="absolute inset-0 bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5 rounded-xl shadow-md"
                                     initial={false}
                                     transition={{ type: "spring", stiffness: 500, damping: 30 }}
                                 />
                             )}
                             <div className={`
                                 relative flex items-center gap-4 px-3 py-3 rounded-xl transition-all duration-200
-                                ${isActive ? 'text-white' : 'text-bastion-secondary hover:text-white group-hover:bg-white/5'}
+                                ${isActive ? 'text-black dark:text-white' : 'text-gray-500 dark:text-bastion-secondary hover:text-black dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5'}
                             `}>
-                                <item.icon className={`w-5 h-5 flex-shrink-0 transition-colors duration-200 ${isActive ? 'text-bastion-accent drop-shadow-[0_0_8px_rgba(0,240,255,0.4)]' : ''}`} />
+                                <item.icon className={`w-5 h-5 flex-shrink-0 transition-colors duration-200 ${isActive ? 'text-black dark:text-white' : ''}`} />
                                 {!collapsed && (
                                     <motion.span
                                         initial={{ opacity: 0 }}
                                         animate={{ opacity: 1 }}
-                                        className="font-medium text-sm tracking-wide"
+                                        className="font-black text-sm tracking-wide"
                                     >
                                         {item.label}
                                     </motion.span>
@@ -130,19 +130,19 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
                 <div className={`
                     relative overflow-hidden rounded-2xl p-3 transition-all duration-300 border
                     ${isProtected
-                        ? 'bg-bastion-success/10 border-bastion-success/20'
-                        : 'bg-bastion-danger/10 border-bastion-danger/20'}
+                        ? 'bg-black/10 dark:bg-white/10 border-black/10 dark:border-white/20'
+                        : 'bg-black/5 dark:bg-white/5 border-black/5 dark:border-white/10'}
                 `}>
                     <div className="flex items-center gap-3">
-                        <div className={`p-2 rounded-lg flex-shrink-0 ${isProtected ? 'bg-bastion-success/20 text-bastion-success' : 'bg-bastion-danger/20 text-bastion-danger'}`}>
+                        <div className={`p-2 rounded-lg flex-shrink-0 ${isProtected ? 'bg-black dark:bg-white text-white dark:text-black' : 'bg-black/5 dark:bg-white/5 text-black dark:text-white'}`}>
                             {isProtected ? <ShieldCheck className="w-5 h-5" /> : <ShieldAlert className="w-5 h-5" />}
                         </div>
                         {!collapsed && (
                             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="overflow-hidden">
-                                <p className={`text-sm font-bold ${isProtected ? 'text-bastion-success' : 'text-bastion-danger'}`}>
+                                <p className={`text-sm font-black ${isProtected ? 'text-black dark:text-white' : 'text-black/40 dark:text-white/60'}`}>
                                     {isProtected ? 'Protected' : 'Vulnerable'}
                                 </p>
-                                <p className="text-xs text-bastion-muted truncate">
+                                <p className="text-xs text-gray-500 dark:text-bastion-muted truncate font-bold">
                                     {isProtected ? 'Focus Active' : 'No blocks active'}
                                 </p>
                             </motion.div>
@@ -153,7 +153,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
                 {/* Toggle Button */}
                 <button
                     onClick={onToggle}
-                    className="w-full flex items-center justify-center p-3 rounded-xl hover:bg-white/5 text-bastion-muted hover:text-white transition-all border border-transparent hover:border-white/5"
+                    className="w-full flex items-center justify-center p-3 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 text-gray-400 dark:text-bastion-muted hover:text-black dark:hover:text-white transition-all border border-transparent hover:border-black/5 dark:hover:border-white/5"
                 >
                     <motion.div animate={{ rotate: collapsed ? 180 : 0 }}>
                         <ChevronLeft className="w-5 h-5" />

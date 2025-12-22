@@ -119,21 +119,21 @@ export default function Pomodoro() {
 
     const phaseConfig = {
         work: {
-            color: '#00F0FF',
-            bg: 'from-bastion-accent/20 to-cyan-500/5',
-            glow: 'shadow-[0_0_50px_rgba(0,240,255,0.2)]',
+            color: '#FFFFFF',
+            bg: 'from-white/20 to-transparent',
+            glow: 'shadow-[0_0_50px_rgba(255,255,255,0.2)]',
             icon: Brain
         },
         break: {
-            color: '#00D68F',
-            bg: 'from-bastion-success/20 to-emerald-500/5',
-            glow: 'shadow-[0_0_50px_rgba(0,214,143,0.2)]',
+            color: '#FFFFFF',
+            bg: 'from-white/10 to-transparent',
+            glow: 'shadow-[0_0_50px_rgba(255,255,255,0.1)]',
             icon: Coffee
         },
         longBreak: {
-            color: '#A855F7',
-            bg: 'from-purple-500/20 to-violet-500/5',
-            glow: 'shadow-[0_0_50px_rgba(168,85,247,0.2)]',
+            color: '#FFFFFF',
+            bg: 'from-white/5 to-transparent',
+            glow: 'shadow-[0_0_50px_rgba(255,255,255,0.05)]',
             icon: Coffee
         },
     };
@@ -143,7 +143,7 @@ export default function Pomodoro() {
     return (
         <div className="max-w-4xl mx-auto min-h-screen pb-20 overflow-hidden">
             {/* Header */}
-            <div className={`sticky top-0 z-30 transition-all duration-200 ${scrolled ? 'py-4 bg-black/50 backdrop-blur-xl border-b border-white/5' : 'py-8'}`}>
+            <div className={`sticky top-0 z-30 transition-all duration-200 ${scrolled ? 'py-4 bg-white/80 dark:bg-black/50 backdrop-blur-xl border-b border-black/5 dark:border-white/5' : 'py-8'}`}>
                 <div className="flex items-center justify-between px-4">
                     <div>
                         <motion.h1
@@ -157,11 +157,11 @@ export default function Pomodoro() {
                     <div className="flex gap-2">
                         <button
                             onClick={() => setSettings(s => ({ ...s, soundEnabled: !s.soundEnabled }))}
-                            className="p-3 rounded-xl bg-white/5 hover:bg-white/10 text-white transition-colors"
+                            className="p-3 rounded-xl bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-black dark:text-white transition-colors"
                         >
-                            {settings.soundEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5 text-bastion-muted" />}
+                            {settings.soundEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5 text-gray-400 dark:text-bastion-muted" />}
                         </button>
-                        <button className="p-3 rounded-xl bg-white/5 hover:bg-white/10 text-white transition-colors">
+                        <button className="p-3 rounded-xl bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-black dark:text-white transition-colors">
                             <Maximize2 className="w-5 h-5" />
                         </button>
                     </div>
@@ -173,10 +173,10 @@ export default function Pomodoro() {
                 <div className="flex-1 w-full">
                     {/* Phase Tabs */}
                     <div className="flex justify-center mb-12">
-                        <div className="p-1.5 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl flex relative">
+                        <div className="p-1.5 bg-black/5 dark:bg-white/5 backdrop-blur-xl border border-black/10 dark:border-white/10 rounded-2xl flex relative">
                             {/* Sliding Background */}
                             <motion.div
-                                className="absolute top-1.5 bottom-1.5 rounded-xl bg-white/10 border border-white/5"
+                                className="absolute top-1.5 bottom-1.5 rounded-xl bg-black/10 dark:bg-white/10 border border-black/5 dark:border-white/5"
                                 layoutId="phase-bg"
                                 initial={false}
                                 transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
@@ -194,7 +194,7 @@ export default function Pomodoro() {
                                 <button
                                     key={key}
                                     onClick={() => switchPhase(key as Phase)}
-                                    className={`relative z-10 px-6 py-2 rounded-xl text-sm font-medium transition-colors ${phase === key ? 'text-white' : 'text-bastion-muted hover:text-white'
+                                    className={`relative z-10 px-6 py-2 rounded-xl text-sm font-bold transition-colors ${phase === key ? 'text-black dark:text-white' : 'text-gray-400 dark:text-bastion-muted hover:text-black dark:hover:text-white'
                                         }`}
                                 >
                                     {label}
@@ -216,7 +216,8 @@ export default function Pomodoro() {
                                         cx="50%"
                                         cy="50%"
                                         r="45%"
-                                        stroke="rgba(255,255,255,0.05)"
+                                        stroke="currentColor"
+                                        className="text-black/5 dark:text-white/5"
                                         strokeWidth="6"
                                         fill="none"
                                     />
@@ -225,7 +226,8 @@ export default function Pomodoro() {
                                         cx="50%"
                                         cy="50%"
                                         r="45%"
-                                        stroke={phaseConfig[phase].color}
+                                        stroke="currentColor"
+                                        className="text-black dark:text-white"
                                         strokeWidth="6"
                                         fill="none"
                                         strokeLinecap="round"
@@ -234,7 +236,6 @@ export default function Pomodoro() {
                                         transition={{ duration: 0.5, ease: "linear" }}
                                         style={{
                                             strokeDasharray: circumference,
-                                            filter: `drop-shadow(0 0 8px ${phaseConfig[phase].color})`
                                         }}
                                     />
                                 </svg>
@@ -245,19 +246,19 @@ export default function Pomodoro() {
                                         key={phase}
                                         initial={{ scale: 0.5, opacity: 0 }}
                                         animate={{ scale: 1, opacity: 1 }}
-                                        className="mb-4 p-3 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md"
+                                        className="mb-4 p-3 rounded-2xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 backdrop-blur-md"
                                     >
-                                        <CurrentIcon className="w-6 h-6 text-white" />
+                                        <CurrentIcon className="w-6 h-6 text-black dark:text-white" />
                                     </motion.div>
 
-                                    <div className="text-7xl lg:text-8xl font-mono font-bold text-white tracking-tighter tabular-nums drop-shadow-lg">
+                                    <div className="text-7xl lg:text-8xl font-mono font-black text-black dark:text-white tracking-tighter tabular-nums drop-shadow-lg">
                                         {formatTime(timeLeft)}
                                     </div>
 
                                     <motion.div
                                         animate={{ opacity: isRunning ? [0.5, 1, 0.5] : 0.5 }}
                                         transition={{ duration: 2, repeat: Infinity }}
-                                        className="mt-4 text-sm font-medium tracking-widest uppercase text-bastion-muted"
+                                        className="mt-4 text-sm font-black tracking-widest uppercase text-black dark:text-white"
                                     >
                                         {isRunning ? 'Timer Active' : 'Ready to Start'}
                                     </motion.div>
@@ -272,9 +273,9 @@ export default function Pomodoro() {
                             whileHover={{ scale: 1.1 }}
                             whileTap={{ scale: 0.9 }}
                             onClick={reset}
-                            className="w-16 h-16 rounded-full bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 flex items-center justify-center transition-colors group"
+                            className="w-16 h-16 rounded-full bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 border border-black/5 dark:border-white/5 hover:border-black/20 dark:hover:border-white/20 flex items-center justify-center transition-colors group"
                         >
-                            <RotateCcw className="w-6 h-6 text-bastion-muted group-hover:text-white transition-colors" />
+                            <RotateCcw className="w-6 h-6 text-gray-500 dark:text-bastion-muted group-hover:text-black dark:group-hover:text-white transition-colors" />
                         </motion.button>
 
                         <motion.button
@@ -282,14 +283,14 @@ export default function Pomodoro() {
                             whileTap={{ scale: 0.9 }}
                             onClick={() => setIsRunning(!isRunning)}
                             className={`w-24 h-24 rounded-full flex items-center justify-center transition-all ${isRunning
-                                    ? 'bg-white/5 border border-white/10'
-                                    : `bg-white text-black shadow-[0_0_40px_${phaseConfig[phase].color}60]`
+                                ? 'bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10'
+                                : `bg-black dark:bg-white text-white dark:text-black shadow-lg`
                                 }`}
                         >
                             {isRunning ? (
-                                <Pause className="w-10 h-10 text-white fill-current" />
+                                <Pause className="w-10 h-10 text-black dark:text-white fill-current" />
                             ) : (
-                                <Play className="w-10 h-10 text-black fill-current ml-1" />
+                                <Play className="w-10 h-10 text-white dark:text-black fill-current ml-1" />
                             )}
                         </motion.button>
 
@@ -298,11 +299,11 @@ export default function Pomodoro() {
                             whileTap={{ scale: 0.9 }}
                             onClick={() => setShowSettings(!showSettings)}
                             className={`w-16 h-16 rounded-full border flex items-center justify-center transition-all ${showSettings
-                                    ? 'bg-white text-black border-white'
-                                    : 'bg-white/5 hover:bg-white/10 border-white/5 hover:border-white/20'
+                                ? 'bg-black dark:bg-white text-white dark:text-black border-transparent'
+                                : 'bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 border-black/5 dark:border-white/5 hover:border-black/20 dark:hover:border-white/20'
                                 }`}
                         >
-                            <Settings2 className={`w-6 h-6 ${showSettings ? 'text-black' : 'text-bastion-muted'}`} />
+                            <Settings2 className={`w-6 h-6 ${showSettings ? 'text-white dark:text-black' : 'text-gray-400 dark:text-bastion-muted'}`} />
                         </motion.button>
                     </div>
                 </div>
@@ -310,34 +311,34 @@ export default function Pomodoro() {
                 {/* Side Panel (Stats & Settings) */}
                 <div className="w-full lg:w-80 space-y-6">
                     {/* Session Tracker */}
-                    <div className="glass-panel p-6 border border-white/5">
-                        <h3 className="text-sm font-bold text-white mb-4 uppercase tracking-wider">Session Progress</h3>
+                    <div className="glass-panel p-6 border border-black/5 dark:border-white/5">
+                        <h3 className="text-sm font-black text-black dark:text-white mb-4 uppercase tracking-wider">Session Progress</h3>
                         <div className="flex justify-between items-end mb-2">
-                            <span className="text-3xl font-bold text-white">{completedSessions}</span>
-                            <span className="text-xs text-bastion-muted mb-1">/{settings.sessionsUntilLongBreak} to Long Break</span>
+                            <span className="text-3xl font-black text-black dark:text-white">{completedSessions}</span>
+                            <span className="text-xs text-gray-500 dark:text-bastion-muted mb-1">/{settings.sessionsUntilLongBreak} to Long Break</span>
                         </div>
                         <div className="flex gap-2 h-2 mb-6">
                             {Array.from({ length: settings.sessionsUntilLongBreak }).map((_, i) => (
                                 <div
                                     key={i}
                                     className={`flex-1 rounded-full transition-all duration-500 ${i < completedSessions % settings.sessionsUntilLongBreak
-                                            ? 'bg-bastion-accent shadow-[0_0_10px_rgba(0,240,255,0.5)]'
-                                            : 'bg-white/10'
+                                        ? 'bg-black dark:bg-white shadow-md'
+                                        : 'bg-black/10 dark:bg-white/10'
                                         }`}
                                 />
                             ))}
                         </div>
                         <div className="grid grid-cols-2 gap-4">
-                            <div className="p-3 rounded-xl bg-white/5">
-                                <p className="text-xs text-bastion-muted">Total Time</p>
-                                <p className="text-lg font-bold text-white mt-1">
+                            <div className="p-3 rounded-xl bg-black/5 dark:bg-white/5">
+                                <p className="text-xs text-gray-500 dark:text-bastion-muted">Total Time</p>
+                                <p className="text-lg font-black text-black dark:text-white mt-1">
                                     {Math.floor((completedSessions * settings.workDuration) / 60)}h{' '}
                                     {(completedSessions * settings.workDuration) % 60}m
                                 </p>
                             </div>
-                            <div className="p-3 rounded-xl bg-white/5">
-                                <p className="text-xs text-bastion-muted">Daily Goal</p>
-                                <p className="text-lg font-bold text-white/50 mt-1">4h 00m</p>
+                            <div className="p-3 rounded-xl bg-black/5 dark:bg-white/5">
+                                <p className="text-xs text-gray-500 dark:text-bastion-muted">Daily Goal</p>
+                                <p className="text-lg font-black text-black/40 dark:text-white/40 mt-1">4h 00m</p>
                             </div>
                         </div>
                     </div>
@@ -349,20 +350,20 @@ export default function Pomodoro() {
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, y: 20 }}
-                                className="glass-panel p-6 border border-white/5"
+                                className="glass-panel p-6 border border-black/5 dark:border-white/5"
                             >
-                                <h3 className="text-sm font-bold text-white mb-4 uppercase tracking-wider">Timer Configuration</h3>
+                                <h3 className="text-sm font-black text-black dark:text-white mb-4 uppercase tracking-wider">Timer Configuration</h3>
                                 <div className="space-y-4">
                                     <div>
-                                        <label className="text-xs text-bastion-muted mb-1.5 block">Deep Work Duration</label>
-                                        <div className="glass-input p-1 flex">
+                                        <label className="text-xs text-gray-400 dark:text-bastion-muted mb-1.5 block font-bold">Deep Work Duration</label>
+                                        <div className="bg-black/5 dark:bg-white/5 p-1 flex rounded-xl border border-black/5 dark:border-white/10">
                                             {[15, 25, 45, 60].map(v => (
                                                 <button
                                                     key={v}
                                                     onClick={() => setSettings(s => ({ ...s, workDuration: v }))}
-                                                    className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-colors ${settings.workDuration === v
-                                                            ? 'bg-white/10 text-white'
-                                                            : 'text-bastion-muted hover:text-white'
+                                                    className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${settings.workDuration === v
+                                                        ? 'bg-white dark:bg-white/20 text-black dark:text-white shadow-sm'
+                                                        : 'text-gray-400 dark:text-bastion-muted hover:text-black dark:hover:text-white'
                                                         }`}
                                                 >
                                                     {v}m
@@ -373,26 +374,26 @@ export default function Pomodoro() {
 
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
-                                            <label className="text-xs text-bastion-muted mb-1.5 block">Short Break</label>
+                                            <label className="text-xs text-gray-400 dark:text-bastion-muted mb-1.5 block font-bold">Short Break</label>
                                             <select
                                                 value={settings.breakDuration}
                                                 onChange={(e) => setSettings(s => ({ ...s, breakDuration: Number(e.target.value) }))}
-                                                className="glass-input w-full py-2 px-3 text-sm appearance-none cursor-pointer"
+                                                className="bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl w-full py-2 px-3 text-sm text-black dark:text-white appearance-none cursor-pointer outline-none focus:border-black dark:focus:border-white transition-all"
                                             >
                                                 {[3, 5, 10, 15].map(v => (
-                                                    <option key={v} value={v}>{v} min</option>
+                                                    <option key={v} value={v} className="bg-black text-white">{v} min</option>
                                                 ))}
                                             </select>
                                         </div>
                                         <div>
-                                            <label className="text-xs text-bastion-muted mb-1.5 block">Long Break</label>
+                                            <label className="text-xs text-gray-400 dark:text-bastion-muted mb-1.5 block font-bold">Long Break</label>
                                             <select
                                                 value={settings.longBreakDuration}
                                                 onChange={(e) => setSettings(s => ({ ...s, longBreakDuration: Number(e.target.value) }))}
-                                                className="glass-input w-full py-2 px-3 text-sm appearance-none cursor-pointer"
+                                                className="bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl w-full py-2 px-3 text-sm text-black dark:text-white appearance-none cursor-pointer outline-none focus:border-black dark:focus:border-white transition-all"
                                             >
                                                 {[10, 15, 20, 30].map(v => (
-                                                    <option key={v} value={v}>{v} min</option>
+                                                    <option key={v} value={v} className="bg-black text-white">{v} min</option>
                                                 ))}
                                             </select>
                                         </div>
