@@ -14,7 +14,7 @@ import {
     RefreshCw,
     AlertTriangle
 } from 'lucide-react';
-import { blockedSitesApi, blockedAppsApi, BlockedSite, BlockedApp } from '../lib/api';
+import { blockedSitesApi, blockedAppsApi, systemApi, BlockedSite, BlockedApp } from '../lib/api';
 
 type TabType = 'websites' | 'applications';
 type Category = 'social' | 'entertainment' | 'news' | 'shopping' | 'work' | 'other';
@@ -45,6 +45,32 @@ export default function Blocks() {
     const [websites, setWebsites] = useState<BlockedSite[]>([]);
     const [applications, setApplications] = useState<BlockedApp[]>([]);
 
+    const [isAdmin, setIsAdmin] = useState(true);
+    const [isFixingFirefox, setIsFixingFirefox] = useState(false);
+
+    const checkAdmin = async () => {
+        try {
+            const admin = await systemApi.isAdmin();
+            setIsAdmin(admin);
+        } catch (err) {
+            console.error('Failed to check admin status:', err);
+            setIsAdmin(false);
+        }
+    };
+
+    const fixFirefox = async () => {
+        setIsFixingFirefox(true);
+        try {
+            await systemApi.fixFirefoxPolicies();
+            alert('Firefox configuration updated! Please restart Firefox to apply changes.');
+        } catch (err) {
+            console.error('Failed to fix Firefox:', err);
+            alert('Failed to configure Firefox. Make sure you are running as Administrator.');
+        } finally {
+            setIsFixingFirefox(false);
+        }
+    };
+
     const loadData = async () => {
         setIsLoading(true);
         try {
@@ -62,6 +88,7 @@ export default function Blocks() {
     };
 
     useEffect(() => {
+        checkAdmin();
         loadData();
     }, []);
 
@@ -107,10 +134,23 @@ export default function Blocks() {
         if (!newItem.trim()) return;
         setIsSaving(true);
 
+        let cleanItem = newItem.trim().toLowerCase();
+
+        // Remove protocol
+        cleanItem = cleanItem.replace(/^https?:\/\//, '');
+        // Remove www.
+        cleanItem = cleanItem.replace(/^www\./, '');
+        // Remove trailing slash
+        cleanItem = cleanItem.replace(/\/$/, '');
+        // Remove path if present (just get domain)
+        cleanItem = cleanItem.split('/')[0];
+
         try {
             if (activeTab === 'websites') {
-                await blockedSitesApi.add(newItem.trim(), newCategory);
+                await blockedSitesApi.add(cleanItem, newCategory);
             } else {
+                // For apps, we might want to keep original casing or logic, 
+                // but for now let's use the trimmed input for name and process
                 await blockedAppsApi.add(newItem.trim(), newItem.trim(), newCategory);
             }
             setNewItem('');
@@ -134,7 +174,7 @@ export default function Blocks() {
                     </p>
                 </div>
                 <div className="flex gap-2">
-                    <button onClick={loadData} className="btn-ghost flex items-center gap-2">
+                    <button onClick={() => { checkAdmin(); loadData(); }} className="btn-ghost flex items-center gap-2">
                         <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
                     </button>
                     <button className="btn-ghost flex items-center gap-2">
@@ -151,8 +191,8 @@ export default function Blocks() {
                 <button
                     onClick={() => setActiveTab('websites')}
                     className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all ${activeTab === 'websites'
-                            ? 'bg-bastion-accent text-black'
-                            : 'text-bastion-text-muted hover:text-white'
+                        ? 'bg-bastion-accent text-black'
+                        : 'text-bastion-text-muted hover:text-white'
                         }`}
                 >
                     <Globe className="w-4 h-4" />
@@ -165,8 +205,8 @@ export default function Blocks() {
                 <button
                     onClick={() => setActiveTab('applications')}
                     className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all ${activeTab === 'applications'
-                            ? 'bg-bastion-accent text-black'
-                            : 'text-bastion-text-muted hover:text-white'
+                        ? 'bg-bastion-accent text-black'
+                        : 'text-bastion-text-muted hover:text-white'
                         }`}
                 >
                     <AppWindow className="w-4 h-4" />
@@ -200,14 +240,43 @@ export default function Blocks() {
             </div>
 
             {/* Admin warning */}
-            <div className="mb-6 p-4 rounded-xl bg-bastion-warning-muted border border-bastion-warning/20 flex items-start gap-3">
-                <AlertTriangle className="w-5 h-5 text-bastion-warning flex-shrink-0 mt-0.5" />
-                <div>
-                    <p className="text-sm font-medium text-bastion-warning">Admin privileges required</p>
-                    <p className="text-xs text-bastion-text-muted mt-1">
-                        Run Bastion as Administrator for blocking to work. Sites are saved to database but won't block without admin.
-                    </p>
+            {/* Admin & Browser Warnings */}
+            {!isAdmin && (
+                <div className="mb-6 p-4 rounded-xl bg-bastion-danger-muted border border-bastion-danger/20 flex items-start gap-3 animate-pulse">
+                    <AlertTriangle className="w-6 h-6 text-bastion-danger flex-shrink-0 mt-0.5" />
+                    <div>
+                        <h3 className="font-bold text-bastion-danger">Administrator Privileges Required</h3>
+                        <p className="text-sm text-white/80 mt-1">
+                            Bastion cannot block websites without admin rights. Please <strong>close the app and run as Administrator</strong>.
+                        </p>
+                    </div>
                 </div>
+            )}
+
+            {/* Firefox Fix (Show for all users as a helper) */}
+            <div className="mb-6 p-4 rounded-xl bg-bastion-bg-elevated border border-bastion-border flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                    <Globe className="w-5 h-5 text-bastion-accent" />
+                    <div>
+                        <p className="font-medium text-white">Using Firefox?</p>
+                        <p className="text-xs text-bastion-text-muted">
+                            Firefox needs special configuration to respect block lists.
+                        </p>
+                    </div>
+                </div>
+                <button
+                    onClick={fixFirefox}
+                    disabled={isFixingFirefox}
+                    className="btn-secondary text-sm py-1.5"
+                >
+                    {isFixingFirefox ? (
+                        <span className="flex items-center gap-2">
+                            <Loader2 className="w-3 h-3 animate-spin" /> Configuring...
+                        </span>
+                    ) : (
+                        "Fix Firefox Blocking"
+                    )}
+                </button>
             </div>
 
             {/* Items list */}

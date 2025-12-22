@@ -131,6 +131,52 @@ pub fn restore_hosts(backup_path: &PathBuf) -> Result<(), BlockingError> {
     Ok(())
 }
 
+/// Check if the application has admin privileges
+pub fn is_admin() -> bool {
+    // Try to open hosts file in write mode as a check
+    OpenOptions::new()
+        .write(true)
+        .append(true)
+        .open(get_hosts_path())
+        .is_ok()
+}
+
+/// Disable DNS-over-HTTPS in Firefox via Enterprise Policies
+pub fn disable_firefox_doh() -> Result<(), BlockingError> {
+    #[cfg(target_os = "windows")]
+    let policies_path = PathBuf::from("C:\\Program Files\\Mozilla Firefox\\distribution\\policies.json");
+    
+    #[cfg(not(target_os = "windows"))]
+    // Skip for non-Windows for now or implement as needed
+    return Ok(());
+
+    #[cfg(target_os = "windows")]
+    {
+        if !policies_path.parent().unwrap().exists() {
+            fs::create_dir_all(policies_path.parent().unwrap())?;
+        }
+
+        let policy_content = r#"{
+    "policies": {
+        "DNSOverHTTPS": {
+            "Enabled": false,
+            "Locked": true
+        }
+    }
+}"#;
+
+        let mut file = OpenOptions::new()
+            .write(true)
+            .create(true)
+            .truncate(true)
+            .open(policies_path)?;
+            
+        file.write_all(policy_content.as_bytes())?;
+    }
+    
+    Ok(())
+}
+
 /// Application Blocking via process monitoring
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -1,0 +1,151 @@
+use std::net::SocketAddr;
+use std::sync::Arc;
+use tokio::io::{AsyncReadExt, AsyncWriteExt};
+use tokio::net::{TcpListener, TcpStream};
+use tauri::State;
+use crate::AppState;
+
+/// Start the block stats collector server
+pub async fn start_block_server(state: Arc<AppState>) {
+    // Spawn listener for HTTP (80)
+    let state_http = state.clone();
+    tokio::spawn(async move {
+        if let Err(e) = listen_on_port(80, state_http).await {
+            eprintln!("Failed to bind port 80: {}", e);
+        }
+    });
+
+    // Spawn listener for HTTPS (443)
+    let state_https = state.clone();
+    tokio::spawn(async move {
+        if let Err(e) = listen_on_port(443, state_https).await {
+            eprintln!("Failed to bind port 443: {}", e);
+        }
+    });
+}
+
+async fn listen_on_port(port: u16, state: Arc<AppState>) -> std::io::Result<()> {
+    let addr = SocketAddr::from(([127, 0, 0, 1], port));
+    let listener = TcpListener::bind(addr).await?;
+    println!("Block server listening on port {}", port);
+
+    loop {
+        let (socket, _) = listener.accept().await?;
+        let state_clone = state.clone();
+        tokio::spawn(async move {
+            handle_connection(socket, port, state_clone).await;
+        });
+    }
+}
+
+async fn handle_connection(mut socket: TcpStream, port: u16, state: Arc<AppState>) {
+    // Buffer to read initial packet
+    let mut buf = [0u8; 4096];
+    
+    // Set a short timeout for reading so we don't hang on idle connections
+    let read_result = tokio::time::timeout(
+        std::time::Duration::from_millis(500),
+        socket.read(&mut buf)
+    ).await;
+
+    match read_result {
+        Ok(Ok(n)) if n > 0 => {
+            let data = &buf[..n];
+            let domain = if port == 443 {
+                parse_sni(data)
+            } else {
+                parse_host_header(data)
+            };
+
+            if let Some(domain) = domain {
+                println!("Intercepted blocked request for: {}", domain);
+                let _ = state.db.log_block_event(&domain, "website");
+            }
+
+            // Send a basic response to close gracefully
+            let response = if port == 80 {
+                "HTTP/1.1 403 Forbidden\r\nContent-Type: text/html\r\n\r\n<h1>Blocked by Bastion</h1>"
+            } else {
+                // For HTTPS, we can't send a valid response without certs, so just close
+                ""
+            };
+
+            if !response.is_empty() {
+                let _ = socket.write_all(response.as_bytes()).await;
+            }
+        }
+        _ => {}
+    }
+}
+
+/// Parse SNI from ClientHello to get the domain name
+fn parse_sni(data: &[u8]) -> Option<String> {
+    // Very basic TLS ClientHello parser
+    // This is a simplified implementation just to extract the server name extension
+    
+    if data.len() < 43 { return None; } // Min size for ClientHello
+    
+    // Handshake type 0x01 (ClientHello)
+    if data[0] != 0x16 { return None; } // Content Type: Handshake
+    if data[5] != 0x01 { return None; } // Handshake Type: ClientHello
+
+    let mut pos = 43; // Skip header + random + session ID len
+    
+    // Skip Session ID
+    if pos >= data.len() { return None; }
+    let session_id_len = data[38] as usize;
+    pos += session_id_len;
+
+    // Skip Cipher Sultes
+    if pos + 2 >= data.len() { return None; }
+    let cipher_suites_len = ((data[pos] as usize) << 8) | (data[pos + 1] as usize);
+    pos += 2 + cipher_suites_len;
+
+    // Skip Compression Methods
+    if pos + 1 >= data.len() { return None; }
+    let compression_len = data[pos] as usize;
+    pos += 1 + compression_len;
+
+    // Extensions
+    if pos + 2 >= data.len() { return None; }
+    let _extensions_len = ((data[pos] as usize) << 8) | (data[pos + 1] as usize);
+    pos += 2;
+
+    while pos + 4 <= data.len() {
+        let ext_type = ((data[pos] as usize) << 8) | (data[pos + 1] as usize);
+        let ext_len = ((data[pos + 2] as usize) << 8) | (data[pos + 3] as usize);
+        pos += 4;
+
+        if ext_type == 0x0000 { // Server Name extension
+            if pos + 2 > data.len() { return None; }
+            let _list_len = ((data[pos] as usize) << 8) | (data[pos + 1] as usize);
+            pos += 2;
+            
+            if pos + 3 > data.len() { return None; }
+            let name_type = data[pos];
+             // 0x00 is host_name
+            if name_type == 0x00 {
+                let name_len = ((data[pos + 1] as usize) << 8) | (data[pos + 2] as usize);
+                pos += 3;
+                if pos + name_len <= data.len() {
+                    return Some(String::from_utf8_lossy(&data[pos..pos + name_len]).to_string());
+                }
+            }
+        }
+        
+        pos += ext_len;
+    }
+
+    None
+}
+
+/// Parse Host header from HTTP request
+fn parse_host_header(data: &[u8]) -> Option<String> {
+    let text = String::from_utf8_lossy(data);
+    for line in text.lines() {
+        if line.to_lowercase().starts_with("host:") {
+            return Some(line[5..].trim().to_string());
+        }
+    }
+    None
+}

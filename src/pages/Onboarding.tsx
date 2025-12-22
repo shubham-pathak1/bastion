@@ -34,9 +34,7 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
-    const [selectedDistractions, setSelectedDistractions] = useState<string[]>([
-        'twitter.com', 'youtube.com', 'reddit.com'
-    ]);
+    const [selectedDistractions, setSelectedDistractions] = useState<string[]>([]);
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
 
@@ -225,8 +223,8 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
                                                 <div
                                                     key={level}
                                                     className={`flex-1 h-1 rounded-full transition-colors ${password.length >= level * 3
-                                                            ? level <= 2 ? 'bg-bastion-warning' : 'bg-bastion-success'
-                                                            : 'bg-bastion-surface-active'
+                                                        ? level <= 2 ? 'bg-bastion-warning' : 'bg-bastion-success'
+                                                        : 'bg-bastion-surface-active'
                                                         }`}
                                                 />
                                             ))}
@@ -255,13 +253,13 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
                                             whileTap={{ scale: 0.97 }}
                                             onClick={() => toggleDistraction(item.name)}
                                             className={`flex items-center gap-3 p-3 rounded-xl border transition-all text-left ${selectedDistractions.includes(item.name)
-                                                    ? 'bg-bastion-accent-muted border-bastion-accent text-white'
-                                                    : 'bg-bastion-bg-elevated border-bastion-border text-bastion-text-muted hover:border-bastion-border-hover'
+                                                ? 'bg-bastion-accent-muted border-bastion-accent text-white'
+                                                : 'bg-bastion-bg-elevated border-bastion-border text-bastion-text-muted hover:border-bastion-border-hover'
                                                 }`}
                                         >
                                             <div className={`w-5 h-5 rounded-md flex items-center justify-center transition-colors ${selectedDistractions.includes(item.name)
-                                                    ? 'bg-bastion-accent'
-                                                    : 'border border-bastion-border'
+                                                ? 'bg-bastion-accent'
+                                                : 'border border-bastion-border'
                                                 }`}>
                                                 {selectedDistractions.includes(item.name) && (
                                                     <Check className="w-3 h-3 text-black" />

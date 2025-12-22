@@ -5,6 +5,7 @@ mod blocking;
 mod security;
 mod session;
 mod storage;
+mod server;
 
 use blocking::{RunningProcess, BlockingError};
 use security::SecurityError;
@@ -234,6 +235,18 @@ fn set_setting(state: State<Arc<AppState>>, key: String, value: String) -> Resul
     state.db.set_setting(&key, &value).map_err(|e| e.to_string())
 }
 
+// ============= System Commands =============
+
+#[tauri::command]
+fn is_app_admin() -> bool {
+    blocking::is_admin()
+}
+
+#[tauri::command]
+fn fix_firefox_policies() -> Result<(), String> {
+    blocking::disable_firefox_doh().map_err(|e| e.message)
+}
+
 // ============= App Entry Point =============
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -246,7 +259,13 @@ pub fn run() {
             let session_manager = SessionManager::new();
             
             let state = Arc::new(AppState { db, session_manager });
-            app.manage(state);
+            app.manage(state.clone());
+            
+            // Start blocking stats listener
+            let server_state = state.clone();
+            tauri::async_runtime::spawn(async move {
+                server::start_block_server(server_state).await;
+            });
             
             Ok(())
         })
@@ -288,6 +307,9 @@ pub fn run() {
             // Settings
             get_setting,
             set_setting,
+            // System
+            is_app_admin,
+            fix_firefox_policies,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -83,6 +83,13 @@ export const securityApi = {
         invoke<boolean>('is_onboarded'),
 };
 
+// ============= System API =============
+
+export const systemApi = {
+    isAdmin: () => invoke<boolean>('is_app_admin'),
+    fixFirefoxPolicies: () => invoke<void>('fix_firefox_policies'),
+};
+
 // ============= Blocked Sites API =============
 
 export const blockedSitesApi = {
@@ -198,6 +205,7 @@ export const api = {
     pomodoro: pomodoroApi,
     stats: statsApi,
     settings: settingsApi,
+    system: systemApi,
 };
 
 export default api;
