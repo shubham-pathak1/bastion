@@ -13,7 +13,9 @@ use session::{ActiveSession, PomodoroState, SessionManager};
 use storage::{BlockedApp, BlockedSite, BlockEvent, Database, FocusStats, Session};
 
 use std::sync::Arc;
-use tauri::{Manager, State};
+use tauri::{Manager, State, Wry};
+use tauri::menu::{MenuBuilder, MenuItemBuilder};
+use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
 
 pub struct AppState {
     pub db: Database,
@@ -277,6 +279,21 @@ fn fix_browser_policies() -> Result<(), String> {
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_autostart::init(tauri_plugin_autostart::MacosLauncher::LaunchAgent, Some(vec!["--silent"])))
+        .plugin(tauri_plugin_notification::init())
+        .on_window_event(|window, event| {
+            if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                let state = window.state::<Arc<AppState>>();
+                let minimize_to_tray = state.db.get_setting("minimize_to_tray")
+                    .unwrap_or(Some("true".to_string()))
+                    .unwrap_or("true".to_string()) == "true";
+
+                if minimize_to_tray {
+                    let _ = window.hide();
+                    api.prevent_close();
+                }
+            }
+        })
         .setup(|app| {
             let data_dir = app.path().app_data_dir().expect("Failed to get app data dir");
             let db = Database::new(data_dir).expect("Failed to initialize database");
@@ -291,6 +308,48 @@ pub fn run() {
                 server::start_block_server(server_state).await;
             });
             
+            // Tray Menu
+            let quit_i = MenuItemBuilder::with_id("quit", "Quit Bastion").build(app)?;
+            let show_i = MenuItemBuilder::with_id("show", "Show Bastion").build(app)?;
+            let menu = MenuBuilder::new(app)
+                .item(&show_i)
+                .separator()
+                .item(&quit_i)
+                .build()?;
+
+            let _tray = TrayIconBuilder::new()
+                .icon(app.default_window_icon().unwrap().clone())
+                .menu(&menu)
+                .on_menu_event(|app, event| {
+                    match event.id.as_ref() {
+                        "quit" => {
+                            std::process::exit(0);
+                        }
+                        "show" => {
+                            if let Some(window) = app.get_webview_window("main") {
+                                let _ = window.show();
+                                let _ = window.set_focus();
+                            }
+                        }
+                        _ => {}
+                    }
+                })
+                .on_tray_icon_event(|tray, event| {
+                    if let TrayIconEvent::Click {
+                        button: MouseButton::Left,
+                        button_state: MouseButtonState::Up,
+                        ..
+                    } = event
+                    {
+                        let app = tray.app_handle();
+                        if let Some(window) = app.get_webview_window("main") {
+                            let _ = window.show();
+                            let _ = window.set_focus();
+                        }
+                    }
+                })
+                .build(app)?;
+
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![

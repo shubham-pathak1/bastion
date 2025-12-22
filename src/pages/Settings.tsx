@@ -13,7 +13,8 @@ import {
     LogOut as LogoutIcon,
     Check as CheckIcon
 } from 'lucide-react';
-import { securityApi } from '../lib/api';
+import { settingsApi, securityApi } from '../lib/api';
+import { enable, disable, isEnabled } from '@tauri-apps/plugin-autostart';
 
 type Tab = 'general' | 'security' | 'hardcore' | 'advanced' | 'about';
 
@@ -27,7 +28,7 @@ const tabs = [
 
 export default function Settings() {
     const [activeTab, setActiveTab] = useState<Tab>('general');
-    const [startOnBoot, setStartOnBoot] = useState(true);
+    const [startOnBoot, setStartOnBoot] = useState(false);
     const [minimizeToTray, setMinimizeToTray] = useState(true);
     const [showNotifications, setShowNotifications] = useState(true);
     const [hardcoreEnabled, setHardcoreEnabled] = useState(false);
@@ -46,8 +47,61 @@ export default function Settings() {
         };
         window.addEventListener('scroll', handleScroll);
 
+        // Load settings
+        const loadSettings = async () => {
+            try {
+                const [boot, tray, notify, autostart] = await Promise.all([
+                    settingsApi.get('start_on_boot'),
+                    settingsApi.get('minimize_to_tray'),
+                    settingsApi.get('show_notifications'),
+                    isEnabled()
+                ]);
+
+                if (boot !== null) setStartOnBoot(boot === 'true');
+                else setStartOnBoot(autostart); // Default to autostart status if not in DB
+
+                if (tray !== null) setMinimizeToTray(tray === 'true');
+                if (notify !== null) setShowNotifications(notify === 'true');
+            } catch (err) {
+                console.error('Failed to load settings:', err);
+            }
+        };
+        loadSettings();
+
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
+
+    const toggleStartOnBoot = async () => {
+        const newValue = !startOnBoot;
+        setStartOnBoot(newValue);
+        try {
+            await settingsApi.set('start_on_boot', String(newValue));
+            if (newValue) await enable();
+            else await disable();
+        } catch (err) {
+            console.error('Failed to update start on boot:', err);
+        }
+    };
+
+    const toggleMinimizeToTray = async () => {
+        const newValue = !minimizeToTray;
+        setMinimizeToTray(newValue);
+        try {
+            await settingsApi.set('minimize_to_tray', String(newValue));
+        } catch (err) {
+            console.error('Failed to update minimize to tray:', err);
+        }
+    };
+
+    const toggleNotifications = async () => {
+        const newValue = !showNotifications;
+        setShowNotifications(newValue);
+        try {
+            await settingsApi.set('show_notifications', String(newValue));
+        } catch (err) {
+            console.error('Failed to update notifications:', err);
+        }
+    };
 
     const handlePasswordChange = async () => {
         if (newPassword.length < 8) {
@@ -178,15 +232,15 @@ export default function Settings() {
                                     <h2 className="text-xl font-black text-black dark:text-white mb-6">General Preferences</h2>
 
                                     <SettingRow label="Start on Boot" description="Launch Bastion automatically when you log in">
-                                        <Toggle enabled={startOnBoot} onChange={() => setStartOnBoot(!startOnBoot)} />
+                                        <Toggle enabled={startOnBoot} onChange={toggleStartOnBoot} />
                                     </SettingRow>
 
                                     <SettingRow label="Minimize to Tray" description="Keep Bastion running in the background when closed">
-                                        <Toggle enabled={minimizeToTray} onChange={() => setMinimizeToTray(!minimizeToTray)} />
+                                        <Toggle enabled={minimizeToTray} onChange={toggleMinimizeToTray} />
                                     </SettingRow>
 
                                     <SettingRow label="Notifications" description="Receive alerts for session start/stop and blocks">
-                                        <Toggle enabled={showNotifications} onChange={() => setShowNotifications(!showNotifications)} />
+                                        <Toggle enabled={showNotifications} onChange={toggleNotifications} />
                                     </SettingRow>
                                 </div>
                             )}
