@@ -13,7 +13,7 @@ use session::{ActiveSession, PomodoroState, SessionManager};
 use storage::{BlockedApp, BlockedSite, BlockEvent, Database, FocusStats, Session};
 
 use std::sync::Arc;
-use tauri::{Manager, State, Wry};
+use tauri::{Manager, State};
 use tauri::menu::{MenuBuilder, MenuItemBuilder};
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
 

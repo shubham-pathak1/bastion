@@ -17,10 +17,15 @@ pub async fn start_block_server(state: Arc<AppState>) {
         for &addr_str in &addresses {
             let state_clone = state.clone();
             tokio::spawn(async move {
-                if let Err(e) = listen_on_addr(addr_str, port, state_clone).await {
+                let full_addr = if addr_str.contains(':') {
+                    format!("[{}]:{}", addr_str, port)
+                } else {
+                    format!("{}:{}", addr_str, port)
+                };
+                if let Err(e) = listen_on_addr(&full_addr, port, state_clone).await {
                     // Only log if it's not a expected bind error (like IPv6 not supported)
                     if port == 80 || addr_str == "127.0.0.1" {
-                        eprintln!("[Bastion] Block server failed to bind TCP {}:{}: {}", addr_str, port, e);
+                        eprintln!("[Bastion] Block server failed to bind TCP {}: {}", full_addr, e);
                     }
                 }
             });
@@ -30,9 +35,14 @@ pub async fn start_block_server(state: Arc<AppState>) {
                 let state_udp = state.clone();
                 let addr_udp = addr_str.to_string();
                 tokio::spawn(async move {
-                    if let Err(e) = listen_on_udp(&addr_udp, 443, state_udp).await {
+                    let full_addr = if addr_udp.contains(':') {
+                        format!("[{}]:443", addr_udp)
+                    } else {
+                        format!("{}:443", addr_udp)
+                    };
+                    if let Err(e) = listen_on_udp(&full_addr, 443, state_udp).await {
                          if addr_udp == "127.0.0.1" {
-                            eprintln!("[Bastion] Block server failed to bind UDP {}:443: {}", addr_udp, e);
+                            eprintln!("[Bastion] Block server failed to bind UDP {}: {}", full_addr, e);
                          }
                     }
                 });
@@ -41,8 +51,8 @@ pub async fn start_block_server(state: Arc<AppState>) {
     }
 }
 
-async fn listen_on_udp(addr_str: &str, port: u16, state: Arc<AppState>) -> std::io::Result<()> {
-    let addr = format!("{}:{}", addr_str, port).parse::<SocketAddr>().map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
+async fn listen_on_udp(addr_str: &str, _port: u16, state: Arc<AppState>) -> std::io::Result<()> {
+    let addr = addr_str.parse::<SocketAddr>().map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
     let socket = tokio::net::UdpSocket::bind(addr).await?;
     println!("[Bastion] Block server listening on UDP {}", addr);
 
@@ -60,7 +70,7 @@ async fn listen_on_udp(addr_str: &str, port: u16, state: Arc<AppState>) -> std::
 }
 
 async fn listen_on_addr(addr_str: &str, port: u16, state: Arc<AppState>) -> std::io::Result<()> {
-    let addr = format!("{}:{}", addr_str, port).parse::<SocketAddr>().map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
+    let addr = addr_str.parse::<SocketAddr>().map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
     let listener = TcpListener::bind(addr).await?;
     println!("[Bastion] Block server listening on {}", addr);
 
