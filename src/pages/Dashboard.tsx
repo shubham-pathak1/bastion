@@ -98,8 +98,6 @@ export default function Dashboard() {
     };
 
     const formatBlockTime = (blockedAt: string) => {
-        // SQLite CURRENT_TIMESTAMP is "YYYY-MM-DD HH:MM:SS" (UTC)
-        // We need to ensure JS treats it as UTC by using ISO format with 'Z'
         const date = new Date(blockedAt.replace(' ', 'T') + 'Z');
         const now = new Date();
         const diffMs = now.getTime() - date.getTime();
@@ -128,183 +126,192 @@ export default function Dashboard() {
     };
 
     return (
-        <div className="max-w-7xl mx-auto space-y-8">
-            {/* Header */}
-            <motion.div
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="flex items-end justify-between"
-            >
-                <div>
-                    <h1 className="heading-hero">
-                        Command Center
-                    </h1>
-                    <p className="text-gray-500 dark:text-bastion-muted mt-2 text-lg">
-                        You remain <span className="text-black dark:text-white font-black underline underline-offset-8 tracking-tight">UNBREAKABLE</span> today.
-                    </p>
+        <div className="flex flex-col h-full">
+            {/* Header - Fixed */}
+            <div className="flex-shrink-0 px-8 pt-8 pb-6 bg-black z-20 border-b border-white/5">
+                <div className="flex items-end justify-between">
+                    <div>
+                        <motion.h1
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            className="heading-hero"
+                        >
+                            Dashboard
+                        </motion.h1>
+                        <motion.p
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ delay: 0.1 }}
+                            className="text-gray-500 dark:text-bastion-muted mt-2 text-lg"
+                        >
+                            Statistics and active focus activities.
+                        </motion.p>
+                    </div>
+
+                    {isSessionActive && (
+                        <motion.div
+                            initial={{ scale: 0.8, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            className="flex items-center gap-3 px-4 py-2 rounded-full bg-black dark:bg-white text-white dark:text-black border border-black dark:border-white shadow-xl"
+                        >
+                            <div className="w-2 h-2 rounded-full bg-white dark:bg-black animate-pulse" />
+                            <span className="font-mono font-black text-xs tracking-tighter">
+                                SESSION ACTIVE
+                            </span>
+                        </motion.div>
+                    )}
                 </div>
+            </div>
 
-                {isSessionActive && (
-                    <motion.div
-                        initial={{ scale: 0.8, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        className="flex items-center gap-3 px-4 py-2 rounded-full bg-black dark:bg-white text-white dark:text-black border border-black dark:border-white shadow-xl"
-                    >
-                        <div className="w-2 h-2 rounded-full bg-white dark:bg-black animate-pulse" />
-                        <span className="font-mono font-black text-xs tracking-tighter">
-                            SESSION ACTIVE
-                        </span>
+            {/* Content - Scrollable */}
+            <div className="flex-1 overflow-y-auto px-8 pt-8 pb-8">
+                <motion.div
+                    variants={container}
+                    initial="hidden"
+                    animate="show"
+                    className="grid grid-cols-1 md:grid-cols-4 gap-6"
+                >
+                    {/* Main Stat Card - Spans 2 cols */}
+                    <motion.div variants={item} className="md:col-span-2 glass-card p-8 flex flex-col justify-between group relative overflow-hidden">
+                        <div className="absolute top-0 right-0 p-32 bg-black/5 dark:bg-white/5 blur-[80px] rounded-full pointer-events-none group-hover:bg-black/10 dark:group-hover:bg-white/10 transition-colors duration-500" />
+
+                        <div className="flex items-start justify-between relative z-10">
+                            <div>
+                                <p className="text-gray-500 dark:text-bastion-secondary font-bold mb-1 flex items-center gap-2">
+                                    <Clock className="w-4 h-4 text-black dark:text-white" />
+                                    Focus Time
+                                </p>
+                                <div className="flex items-baseline gap-2">
+                                    <span className="text-6xl font-display font-black text-black dark:text-white tracking-tighter">
+                                        {todayStats.hours}
+                                    </span>
+                                    <span className="text-xl text-gray-400 dark:text-bastion-muted font-bold">h</span>
+                                    <span className="text-6xl font-display font-black text-black dark:text-white tracking-tighter ml-2">
+                                        {todayStats.minutes}
+                                    </span>
+                                    <span className="text-xl text-gray-400 dark:text-bastion-muted font-bold">m</span>
+                                </div>
+                            </div>
+                            {isSessionActive && sessionTimeLeft !== null && (
+                                <div className="text-right">
+                                    <p className="text-sm text-gray-400 dark:text-bastion-muted mb-1 font-bold">Remaining</p>
+                                    <p className="text-2xl font-mono text-black dark:text-white tracking-widest font-black">{formatTimeLeft(sessionTimeLeft)}</p>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="mt-8 relative z-10">
+                            <div className="h-1 w-full bg-black/5 dark:bg-white/5 rounded-full overflow-hidden">
+                                <motion.div
+                                    initial={{ width: 0 }}
+                                    animate={{ width: `${Math.min((todayStats.hours / 8) * 100, 100)}%` }}
+                                    transition={{ duration: 1.5, ease: "easeOut" }}
+                                    className="h-full bg-black dark:bg-white shadow-md shadow-black/10 dark:shadow-white/50"
+                                />
+                            </div>
+                            <p className="text-xs text-gray-400 dark:text-bastion-muted mt-2 text-right font-bold uppercase tracking-wider">Target: 8h</p>
+                        </div>
                     </motion.div>
-                )}
-            </motion.div>
 
-            {/* Bento Grid */}
-            <motion.div
-                variants={container}
-                initial="hidden"
-                animate="show"
-                className="grid grid-cols-1 md:grid-cols-4 gap-6"
-            >
-                {/* Main Stat Card - Spans 2 cols */}
-                <motion.div variants={item} className="md:col-span-2 glass-card p-8 flex flex-col justify-between group relative overflow-hidden">
-                    <div className="absolute top-0 right-0 p-32 bg-black/5 dark:bg-white/5 blur-[80px] rounded-full pointer-events-none group-hover:bg-black/10 dark:group-hover:bg-white/10 transition-colors duration-500" />
-
-                    <div className="flex items-start justify-between relative z-10">
+                    {/* Quick Start Card */}
+                    <motion.div variants={item} className="glass-card-interactive p-6 flex flex-col items-center justify-center text-center gap-4 group" onClick={() => setShowStartModal(true)}>
+                        <div className="w-16 h-16 rounded-full bg-black/5 dark:bg-white/5 flex items-center justify-center group-hover:scale-110 group-hover:shadow-xl transition-all duration-300 border border-black/5 dark:border-white/5">
+                            <Zap className="w-8 h-8 text-black dark:text-white" />
+                        </div>
                         <div>
-                            <p className="text-gray-500 dark:text-bastion-secondary font-bold mb-1 flex items-center gap-2">
-                                <Clock className="w-4 h-4 text-black dark:text-white" />
-                                Focus Time
+                            <h3 className="text-xl font-black text-black dark:text-white">Focus Now</h3>
+                            <p className="text-sm text-gray-500 dark:text-bastion-muted font-bold">Start a deep work session</p>
+                        </div>
+                    </motion.div>
+
+                    {/* Blocks Stat Card */}
+                    <motion.div variants={item} className="glass-card p-6 flex flex-col justify-between relative overflow-hidden">
+                        <div className="absolute -bottom-10 -right-10 w-32 h-32 bg-black/5 dark:bg-white/5 blur-[40px] rounded-full" />
+
+                        <div className="flex items-center justify-between mb-4">
+                            <p className="text-gray-500 dark:text-bastion-secondary font-bold flex items-center gap-2">
+                                <Shield className="w-4 h-4 text-black dark:text-white" />
+                                Active Blocks
                             </p>
-                            <div className="flex items-baseline gap-2">
-                                <span className="text-6xl font-display font-black text-black dark:text-white tracking-tighter">
-                                    {todayStats.hours}
-                                </span>
-                                <span className="text-xl text-gray-400 dark:text-bastion-muted font-bold">h</span>
-                                <span className="text-6xl font-display font-black text-black dark:text-white tracking-tighter ml-2">
-                                    {todayStats.minutes}
-                                </span>
-                                <span className="text-xl text-gray-400 dark:text-bastion-muted font-bold">m</span>
-                            </div>
+                            <span className="text-xs font-mono bg-black/5 dark:bg-white/5 px-2 py-1 rounded text-black/40 dark:text-bastion-muted font-bold">{blockedCount} Active</span>
                         </div>
-                        {isSessionActive && sessionTimeLeft !== null && (
-                            <div className="text-right">
-                                <p className="text-sm text-gray-400 dark:text-bastion-muted mb-1 font-bold">Remaining</p>
-                                <p className="text-2xl font-mono text-black dark:text-white tracking-widest font-black">{formatTimeLeft(sessionTimeLeft)}</p>
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="mt-8 relative z-10">
-                        <div className="h-1 w-full bg-black/5 dark:bg-white/5 rounded-full overflow-hidden">
-                            <motion.div
-                                initial={{ width: 0 }}
-                                animate={{ width: `${Math.min((todayStats.hours / 8) * 100, 100)}%` }}
-                                transition={{ duration: 1.5, ease: "easeOut" }}
-                                className="h-full bg-black dark:bg-white shadow-md shadow-black/10 dark:shadow-white/50"
-                            />
+                        <div>
+                            <p className="text-4xl font-black text-black dark:text-white">{todayStats.totalBlocks}</p>
+                            <p className="text-sm text-gray-400 dark:text-bastion-muted mt-1 font-bold">Distractions blocked today</p>
                         </div>
-                        <p className="text-xs text-gray-400 dark:text-bastion-muted mt-2 text-right font-bold uppercase tracking-wider">Target: 8h</p>
-                    </div>
-                </motion.div>
+                    </motion.div>
 
-                {/* Quick Start Card */}
-                <motion.div variants={item} className="glass-card-interactive p-6 flex flex-col items-center justify-center text-center gap-4 group" onClick={() => setShowStartModal(true)}>
-                    <div className="w-16 h-16 rounded-full bg-black/5 dark:bg-white/5 flex items-center justify-center group-hover:scale-110 group-hover:shadow-xl transition-all duration-300 border border-black/5 dark:border-white/5">
-                        <Zap className="w-8 h-8 text-black dark:text-white" />
-                    </div>
-                    <div>
-                        <h3 className="text-xl font-black text-black dark:text-white">Focus Now</h3>
-                        <p className="text-sm text-gray-500 dark:text-bastion-muted font-bold">Start a deep work session</p>
-                    </div>
-                </motion.div>
-
-                {/* Blocks Stat Card */}
-                <motion.div variants={item} className="glass-card p-6 flex flex-col justify-between relative overflow-hidden">
-                    <div className="absolute -bottom-10 -right-10 w-32 h-32 bg-black/5 dark:bg-white/5 blur-[40px] rounded-full" />
-
-                    <div className="flex items-center justify-between mb-4">
-                        <p className="text-gray-500 dark:text-bastion-secondary font-bold flex items-center gap-2">
-                            <Shield className="w-4 h-4 text-black dark:text-white" />
-                            Threats
-                        </p>
-                        <span className="text-xs font-mono bg-black/5 dark:bg-white/5 px-2 py-1 rounded text-black/40 dark:text-bastion-muted font-bold">{blockedCount} Active</span>
-                    </div>
-                    <div>
-                        <p className="text-4xl font-black text-black dark:text-white">{todayStats.totalBlocks}</p>
-                        <p className="text-sm text-gray-400 dark:text-bastion-muted mt-1 font-bold">Distractions blocked today</p>
-                    </div>
-                </motion.div>
-
-                {/* Recent Activity Feed - Spans full width on mobile, 2 on desktop */}
-                <motion.div variants={item} className="md:col-span-2 glass-card p-0 flex flex-col">
-                    <div className="p-6 border-b border-black/5 dark:border-white/5 flex items-center justify-between">
-                        <h3 className="font-black text-black dark:text-white flex items-center gap-2">
-                            <Activity className="w-5 h-5 text-black dark:text-white" />
-                            Live Feed
-                        </h3>
-                        <button onClick={() => navigate('/stats')} className="text-xs font-black text-black dark:text-white hover:underline transition-colors uppercase tracking-widest">
-                            VIEW REPORT
-                        </button>
-                    </div>
-                    <div className="flex-1 p-2">
-                        {isLoading ? (
-                            <div className="h-40 flex items-center justify-center">
-                                <Loader2 className="w-6 h-6 animate-spin text-black dark:text-white" />
-                            </div>
-                        ) : recentBlocks.length === 0 ? (
-                            <div className="h-40 flex flex-col items-center justify-center text-gray-400 dark:text-bastion-muted gap-2 font-bold">
-                                <Shield className="w-8 h-8 opacity-20" />
-                                <p className="text-sm">No activity recorded yet</p>
-                            </div>
-                        ) : (
-                            <div className="space-y-1">
-                                {recentBlocks.map((block) => (
-                                    <div key={block.id} className="flex items-center justify-between p-3 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition-colors group">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-2 h-2 rounded-full bg-black dark:bg-white shadow-md shadow-black/10 dark:shadow-white/50" />
-                                            <div>
-                                                <p className="font-mono text-sm text-black dark:text-white font-bold transition-colors">
-                                                    {block.target}
-                                                </p>
+                    {/* Recent Activity Feed - Spans 2 cols */}
+                    <motion.div variants={item} className="md:col-span-2 glass-card p-0 flex flex-col">
+                        <div className="p-6 border-b border-black/5 dark:border-white/5 flex items-center justify-between">
+                            <h3 className="font-black text-black dark:text-white flex items-center gap-2">
+                                <Activity className="w-5 h-5 text-black dark:text-white" />
+                                Live Feed
+                            </h3>
+                            <button onClick={() => navigate('/stats')} className="text-xs font-black text-black dark:text-white hover:underline transition-colors uppercase tracking-widest">
+                                VIEW REPORT
+                            </button>
+                        </div>
+                        <div className="flex-1 p-2">
+                            {isLoading ? (
+                                <div className="h-40 flex items-center justify-center">
+                                    <Loader2 className="w-6 h-6 animate-spin text-black dark:text-white" />
+                                </div>
+                            ) : recentBlocks.length === 0 ? (
+                                <div className="h-40 flex flex-col items-center justify-center text-gray-400 dark:text-bastion-muted gap-2 font-bold">
+                                    <Shield className="w-8 h-8 opacity-20" />
+                                    <p className="text-sm">No activity recorded yet</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-1">
+                                    {recentBlocks.map((block) => (
+                                        <div key={block.id} className="flex items-center justify-between p-3 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition-colors group">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-2 h-2 rounded-full bg-black dark:bg-white shadow-md shadow-black/10 dark:shadow-white/50" />
+                                                <div>
+                                                    <p className="font-mono text-sm text-black dark:text-white font-bold transition-colors">
+                                                        {block.target}
+                                                    </p>
+                                                </div>
                                             </div>
+                                            <span className="text-xs font-mono text-gray-400 dark:text-bastion-muted font-bold">
+                                                {formatBlockTime(block.blocked_at)}
+                                            </span>
                                         </div>
-                                        <span className="text-xs font-mono text-gray-400 dark:text-bastion-muted font-bold">
-                                            {formatBlockTime(block.blocked_at)}
-                                        </span>
-                                    </div>
-                                ))}
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </motion.div>
+
+                    {/* Quick Actions 2x2 */}
+                    <motion.div variants={item} className="col-span-1 md:col-span-2 grid grid-cols-2 gap-6">
+                        <motion.div
+                            whileHover={{ y: -5 }}
+                            className="glass-card-interactive p-6 flex flex-col justify-center items-start gap-4"
+                            onClick={() => navigate('/pomodoro')}
+                        >
+                            <Timer className="w-8 h-8 text-black dark:text-white" />
+                            <div>
+                                <h3 className="font-black text-black dark:text-white">Pomodoro</h3>
+                                <p className="text-xs text-gray-500 dark:text-bastion-muted mt-1 font-bold">Cycle focus & breaks</p>
                             </div>
-                        )}
-                    </div>
-                </motion.div>
+                        </motion.div>
 
-                {/* Quick Actions 2x1 */}
-                <motion.div variants={item} className="col-span-1 md:col-span-2 grid grid-cols-2 gap-6">
-                    <motion.div
-                        whileHover={{ y: -5 }}
-                        className="glass-card-interactive p-6 flex flex-col justify-center items-start gap-4"
-                        onClick={() => navigate('/pomodoro')}
-                    >
-                        <Timer className="w-8 h-8 text-black dark:text-white" />
-                        <div>
-                            <h3 className="font-black text-black dark:text-white">Pomodoro</h3>
-                            <p className="text-xs text-gray-500 dark:text-bastion-muted mt-1 font-bold">Cycle focus & breaks</p>
-                        </div>
-                    </motion.div>
-
-                    <motion.div
-                        whileHover={{ y: -5 }}
-                        className="glass-card-interactive p-6 flex flex-col justify-center items-start gap-4"
-                        onClick={() => navigate('/blocks')}
-                    >
-                        <Lock className="w-8 h-8 text-black dark:text-white" />
-                        <div>
-                            <h3 className="font-black text-black dark:text-white">Manage Blocks</h3>
-                            <p className="text-xs text-gray-500 dark:text-bastion-muted mt-1 font-bold">Configure firewall</p>
-                        </div>
+                        <motion.div
+                            whileHover={{ y: -5 }}
+                            className="glass-card-interactive p-6 flex flex-col justify-center items-start gap-4"
+                            onClick={() => navigate('/blocks')}
+                        >
+                            <Lock className="w-8 h-8 text-black dark:text-white" />
+                            <div>
+                                <h3 className="font-black text-black dark:text-white">Manage Blocks</h3>
+                                <p className="text-xs text-gray-500 dark:text-bastion-muted mt-1 font-bold">Configure firewall</p>
+                            </div>
+                        </motion.div>
                     </motion.div>
                 </motion.div>
-            </motion.div>
+            </div>
 
             {/* Start Session Modal */}
             <AnimatePresence>
@@ -330,7 +337,7 @@ export default function Dashboard() {
                                 <div className="flex items-center justify-between mb-8">
                                     <h2 className="heading-title flex items-center gap-2">
                                         <Zap className="w-6 h-6 text-black dark:text-white" />
-                                        Initiate Focus
+                                        Start Focus Session
                                     </h2>
                                     <button
                                         onClick={() => setShowStartModal(false)}
@@ -347,7 +354,7 @@ export default function Dashboard() {
                                             type="text"
                                             value={sessionName}
                                             onChange={(e) => setSessionName(e.target.value)}
-                                            className="glass-input text-lg" // Larger input
+                                            className="glass-input text-lg"
                                             placeholder="What are you working on?"
                                         />
                                     </div>
@@ -368,7 +375,6 @@ export default function Dashboard() {
                                                 </button>
                                             ))}
                                         </div>
-                                        {/* Custom duration slider could go here */}
                                     </div>
 
                                     <div className="flex items-center justify-between p-4 rounded-xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5">
@@ -401,7 +407,7 @@ export default function Dashboard() {
                                             <Loader2 className="w-6 h-6 animate-spin" />
                                         ) : (
                                             <>
-                                                ENGAGE PROTOCOL
+                                                START SESSION
                                                 <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                                             </>
                                         )}

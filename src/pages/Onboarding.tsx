@@ -121,11 +121,11 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
                 {/* Logo */}
                 <div className="text-center mb-8">
                     <motion.div
-                        className="w-16 h-16 rounded-2xl overflow-hidden flex items-center justify-center mx-auto mb-4 shadow-lg border border-white/10"
+                        className="w-16 h-16 rounded-2xl overflow-hidden flex items-center justify-center mx-auto mb-4 shadow-lg border border-white/10 p-2"
                         animate={{ boxShadow: ['0 0 20px rgba(255, 255, 255, 0.05)', '0 0 40px rgba(255, 255, 255, 0.1)', '0 0 20px rgba(255, 255, 255, 0.05)'] }}
                         transition={{ duration: 2, repeat: Infinity }}
                     >
-                        <img src={logo} alt="Bastion Logo" className="w-full h-full object-cover" />
+                        <img src={logo} alt="Bastion Logo" className="w-full h-full object-contain" />
                     </motion.div>
                     <h1 className="text-3xl font-black tracking-tighter text-white uppercase">Bastion</h1>
                     <p className="text-bastion-muted mt-1 font-bold">Unbreakable focus for those who need it.</p>
@@ -240,9 +240,9 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
                         {step === 2 && (
                             <div className="space-y-6">
                                 <div className="text-center mb-6">
-                                    <h2 className="text-xl font-black text-white mb-1 uppercase tracking-tight">Targets Identified</h2>
+                                    <h2 className="text-xl font-black text-white mb-1 uppercase tracking-tight">Initial Setup</h2>
                                     <p className="text-xs text-bastion-muted font-bold uppercase tracking-widest">
-                                        Select distractions to neutralize
+                                        Select common distractions to block
                                     </p>
                                 </div>
 
@@ -275,7 +275,7 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
                                 )}
 
                                 <p className="text-[10px] text-center text-bastion-muted font-bold uppercase tracking-tight">
-                                    Configure additional masks in your console anytime
+                                    You can configure more blocks in the settings anytime
                                 </p>
                             </div>
                         )}
@@ -291,7 +291,7 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
                             }`}
                     >
                         <ArrowLeft className="w-4 h-4" />
-                        Abort
+                        Back
                     </button>
 
                     <button
@@ -306,7 +306,7 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
                             </>
                         ) : (
                             <>
-                                <span className="text-xs font-black uppercase tracking-widest">{step === steps.length - 1 ? 'Deploy Bastion' : 'Proceed'}</span>
+                                <span className="text-xs font-black uppercase tracking-widest">{step === steps.length - 1 ? 'Finish Setup' : 'Proceed'}</span>
                                 <ArrowRight className="w-4 h-4" />
                             </>
                         )}

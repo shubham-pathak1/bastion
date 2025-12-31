@@ -39,21 +39,12 @@ export default function Blocks() {
     const [newCategory, setNewCategory] = useState<Category>('other');
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
-    const [scrolled, setScrolled] = useState(false);
 
     const [websites, setWebsites] = useState<BlockedSite[]>([]);
     const [applications, setApplications] = useState<BlockedApp[]>([]);
 
     const [isAdmin, setIsAdmin] = useState(true);
     const [isFixingBrowsers, setIsFixingBrowsers] = useState(false);
-
-    useEffect(() => {
-        const handleScroll = () => {
-            setScrolled(window.scrollY > 20);
-        };
-        window.addEventListener('scroll', handleScroll);
-        return () => window.removeEventListener('scroll', handleScroll);
-    }, []);
 
     const checkAdmin = async () => {
         try {
@@ -179,17 +170,17 @@ export default function Blocks() {
     };
 
     return (
-        <div className="max-w-5xl mx-auto min-h-screen pb-20">
-            {/* Header */}
-            <div className={`sticky top-0 z-30 transition-all duration-200 ${scrolled ? 'py-4 bg-white/80 dark:bg-black/50 backdrop-blur-xl border-b border-black/5 dark:border-white/5' : 'py-8'}`}>
-                <div className="flex items-center justify-between px-2">
+        <div className="flex flex-col h-full">
+            {/* Header - Fixed */}
+            <div className="flex-shrink-0 px-8 pt-8 pb-6 bg-black z-20 border-b border-white/5">
+                <div className="flex items-center justify-between">
                     <div>
                         <motion.h1
                             initial={{ opacity: 0, x: -20 }}
                             animate={{ opacity: 1, x: 0 }}
                             className="heading-hero"
                         >
-                            Defense Matrix
+                            Blocked Items
                         </motion.h1>
                         <motion.p
                             initial={{ opacity: 0 }}
@@ -197,7 +188,7 @@ export default function Blocks() {
                             transition={{ delay: 0.1 }}
                             className="text-gray-500 dark:text-bastion-muted mt-2 font-bold"
                         >
-                            Manage your digital perimeter
+                            Manage website and application blocks.
                         </motion.p>
                     </div>
 
@@ -217,13 +208,13 @@ export default function Blocks() {
                             className="btn-primary flex items-center gap-2 pl-4 pr-6"
                         >
                             <Plus className="w-5 h-5" />
-                            Add Target
+                            Add Block
                         </motion.button>
                     </div>
                 </div>
 
                 {/* Controls Bar */}
-                <div className="mt-8 flex items-center justify-between gap-6 px-2">
+                <div className="mt-8 flex items-center justify-between gap-6">
                     {/* Tabs */}
                     <div className="p-1.5 bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5 rounded-2xl flex gap-1">
                         <button
@@ -269,173 +260,178 @@ export default function Blocks() {
                 </div>
             </div>
 
-            {/* Warnings */}
-            <AnimatePresence>
-                {!isAdmin && (
-                    <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        className="mt-6 mx-2 overflow-hidden"
-                    >
-                        <div className="p-4 rounded-xl bg-black/5 dark:bg-white/10 border border-black/5 dark:border-white/20 flex items-start gap-4 shadow-lg">
-                            <div className="p-2 rounded-lg bg-black/5 dark:bg-white/20">
-                                <AlertTriangle className="w-6 h-6 text-black dark:text-white" />
-                            </div>
-                            <div>
-                                <h3 className="font-black text-black dark:text-white text-lg">System Access Required</h3>
-                                <p className="text-gray-500 dark:text-bastion-muted mt-1 font-bold">
-                                    Bastion requires elevated privileges to modify system firewalls. Please restart as Administrator.
-                                </p>
-                            </div>
-                        </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-
-            {/* Browser Policy Helper */}
-            <div className="mx-2 mt-6 mb-8 group">
-                <div className="glass-panel p-6 border border-black/5 dark:border-white/5 hover:border-black/10 dark:hover:border-bastion-accent/30 transition-colors duration-300">
-                    <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-                        <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-xl bg-black/5 dark:bg-white/10 flex items-center justify-center">
-                                <RefreshCw className="w-6 h-6 text-black dark:text-white" />
-                            </div>
-                            <div>
-                                <p className="font-black text-black dark:text-white transition-colors uppercase tracking-tight text-lg">Inconsistent Blocking?</p>
-                                <p className="text-sm text-gray-500 dark:text-bastion-muted font-bold max-w-md">
-                                    Chromium browsers (Thorium/Chrome) can bypass blocks using persistent connections or DNS-over-HTTPS.
-                                </p>
-                            </div>
-                        </div>
-                        <div className="flex flex-wrap gap-3 w-full md:w-auto">
-                            <button
-                                onClick={fixBrowsers}
-                                disabled={isFixingBrowsers}
-                                className="flex-1 md:flex-none px-6 py-3 rounded-xl bg-black/5 dark:bg-white/5 text-black dark:text-white hover:bg-black/10 dark:hover:bg-white/10 border border-black/10 dark:border-white/10 transition-all duration-300 text-xs font-black uppercase tracking-widest"
-                            >
-                                {isFixingBrowsers ? "Polices Applied" : "1. Harden Policies"}
-                            </button>
-                            <button
-                                onClick={async () => {
-                                    if (confirm("This will close all open browsers to reset connections. Save your work first! Continue?")) {
-                                        await systemApi.killBrowsers();
-                                        alert("Browsers terminated. Re-open to see blocking in effect.");
-                                    }
-                                }}
-                                className="flex-1 md:flex-none px-6 py-3 rounded-xl bg-black dark:bg-white text-white dark:text-black hover:bg-black/90 dark:hover:bg-white/90 border border-transparent transition-all duration-300 text-xs font-black uppercase tracking-widest shadow-lg"
-                            >
-                                2. Hardcore Reset
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Content List */}
-            <div className="mx-2 space-y-3">
-                {isLoading ? (
-                    <div className="h-64 flex flex-col items-center justify-center gap-4">
-                        <Loader2 className="w-8 h-8 animate-spin text-black dark:text-white" />
-                        <p className="text-gray-400 dark:text-bastion-muted font-bold animate-pulse">Scanning defenses...</p>
-                    </div>
-                ) : (
-                    <AnimatePresence mode="popLayout">
-                        {filteredItems.length === 0 ? (
+            {/* Content - Scrollable */}
+            <div className="flex-1 overflow-y-auto px-8 py-8">
+                <div className="max-w-5xl mx-auto space-y-6 pb-8">
+                    {/* Warnings */}
+                    <AnimatePresence>
+                        {!isAdmin && (
                             <motion.div
-                                initial={{ opacity: 0, scale: 0.95 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                className="h-64 glass-panel flex flex-col items-center justify-center text-center gap-4 border-dashed border-black/10 dark:border-white/10"
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: 'auto', opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                className="mt-6 mx-2 overflow-hidden"
                             >
-                                <div className="w-16 h-16 rounded-full bg-black/5 dark:bg-white/5 flex items-center justify-center">
-                                    <Globe className="w-8 h-8 text-gray-400 dark:text-bastion-muted opacity-50" />
+                                <div className="p-4 rounded-xl bg-black/5 dark:bg-white/10 border border-black/5 dark:border-white/20 flex items-start gap-4 shadow-lg">
+                                    <div className="p-2 rounded-lg bg-black/5 dark:bg-white/20">
+                                        <AlertTriangle className="w-6 h-6 text-black dark:text-white" />
+                                    </div>
+                                    <div>
+                                        <h3 className="font-black text-black dark:text-white text-lg">System Access Required</h3>
+                                        <p className="text-gray-500 dark:text-bastion-muted mt-1 font-bold">
+                                            Bastion requires elevated privileges to modify system firewalls. Please restart as Administrator.
+                                        </p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <h3 className="text-xl font-black text-black dark:text-white mb-2">Perimeter Clear</h3>
-                                    <p className="text-gray-500 dark:text-bastion-muted max-w-sm mx-auto font-bold">
-                                        No {activeTab} blocked. Add distractions to your blocklist to maintain focus.
-                                    </p>
-                                </div>
-                                <button onClick={() => setShowAddModal(true)} className="text-black dark:text-white hover:underline font-black uppercase tracking-widest text-xs">
-                                    Add your first block
-                                </button>
                             </motion.div>
-                        ) : (
-                            filteredItems.map((item, i) => {
-                                const name = activeTab === 'websites'
-                                    ? (item as BlockedSite).domain
-                                    : (item as BlockedApp).name;
-                                const category = (item.category || 'other') as Category;
+                        )}
+                    </AnimatePresence>
 
-                                return (
-                                    <motion.div
-                                        key={item.id}
-                                        layout
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        exit={{ opacity: 0, scale: 0.95 }}
-                                        transition={{ delay: i * 0.05 }}
-                                        className="group relative"
+                    {/* Browser Policy Helper */}
+                    <div className="mx-2 mt-6 mb-8 group">
+                        <div className="glass-panel p-6 border border-black/5 dark:border-white/5 hover:border-black/10 dark:hover:border-bastion-accent/30 transition-colors duration-300">
+                            <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-12 h-12 rounded-xl bg-black/5 dark:bg-white/10 flex items-center justify-center">
+                                        <RefreshCw className="w-6 h-6 text-black dark:text-white" />
+                                    </div>
+                                    <div>
+                                        <p className="font-black text-black dark:text-white transition-colors uppercase tracking-tight text-lg">Inconsistent Blocking?</p>
+                                        <p className="text-sm text-gray-500 dark:text-bastion-muted font-bold max-w-md">
+                                            Chromium browsers (Thorium/Chrome) can bypass blocks using persistent connections or DNS-over-HTTPS.
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="flex flex-wrap gap-3 w-full md:w-auto">
+                                    <button
+                                        onClick={fixBrowsers}
+                                        disabled={isFixingBrowsers}
+                                        className="flex-1 md:flex-none px-6 py-3 rounded-xl bg-black/5 dark:bg-white/5 text-black dark:text-white hover:bg-black/10 dark:hover:bg-white/10 border border-black/10 dark:border-white/10 transition-all duration-300 text-xs font-black uppercase tracking-widest"
                                     >
-                                        <div className={`
+                                        {isFixingBrowsers ? "Polices Applied" : "1. Harden Policies"}
+                                    </button>
+                                    <button
+                                        onClick={async () => {
+                                            if (confirm("This will close all open browsers to reset connections. Save your work first! Continue?")) {
+                                                await systemApi.killBrowsers();
+                                                alert("Browsers terminated. Re-open to see blocking in effect.");
+                                            }
+                                        }}
+                                        className="flex-1 md:flex-none px-6 py-3 rounded-xl bg-black dark:bg-white text-white dark:text-black hover:bg-black/90 dark:hover:bg-white/90 border border-transparent transition-all duration-300 text-xs font-black uppercase tracking-widest shadow-lg"
+                                    >
+                                        2. Hardcore Reset
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Content List */}
+                    <div className="mx-2 space-y-3">
+                        {isLoading ? (
+                            <div className="h-64 flex flex-col items-center justify-center gap-4">
+                                <Loader2 className="w-8 h-8 animate-spin text-black dark:text-white" />
+                                <p className="text-gray-400 dark:text-bastion-muted font-bold animate-pulse">Loading...</p>
+                            </div>
+                        ) : (
+                            <AnimatePresence mode="popLayout">
+                                {filteredItems.length === 0 ? (
+                                    <motion.div
+                                        initial={{ opacity: 0, scale: 0.95 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        className="h-64 glass-panel flex flex-col items-center justify-center text-center gap-4 border-dashed border-black/10 dark:border-white/10"
+                                    >
+                                        <div className="w-16 h-16 rounded-full bg-black/5 dark:bg-white/5 flex items-center justify-center">
+                                            <Globe className="w-8 h-8 text-gray-400 dark:text-bastion-muted opacity-50" />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-xl font-black text-black dark:text-white mb-2">No items blocked</h3>
+                                            <p className="text-gray-500 dark:text-bastion-muted max-w-sm mx-auto font-bold">
+                                                No {activeTab} blocked. Add distractions to your blocklist to maintain focus.
+                                            </p>
+                                        </div>
+                                        <button onClick={() => setShowAddModal(true)} className="text-black dark:text-white hover:underline font-black uppercase tracking-widest text-xs">
+                                            Add your first block
+                                        </button>
+                                    </motion.div>
+                                ) : (
+                                    filteredItems.map((item, i) => {
+                                        const name = activeTab === 'websites'
+                                            ? (item as BlockedSite).domain
+                                            : (item as BlockedApp).name;
+                                        const category = (item.category || 'other') as Category;
+
+                                        return (
+                                            <motion.div
+                                                key={item.id}
+                                                layout
+                                                initial={{ opacity: 0, y: 10 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                exit={{ opacity: 0, scale: 0.95 }}
+                                                transition={{ delay: i * 0.05 }}
+                                                className="group relative"
+                                            >
+                                                <div className={`
                                             absolute inset-0 bg-gradient-to-r from-black/5 dark:from-white/10 to-transparent opacity-0 
                                             transition-opacity duration-300 rounded-xl pointer-events-none
                                             ${item.enabled ? 'group-hover:opacity-10' : ''}
                                         `} />
 
-                                        <div className="glass-panel p-4 flex items-center justify-between border border-black/5 dark:border-white/5 hover:border-black/10 dark:hover:border-white/10 transition-all duration-300">
-                                            <div className="flex items-center gap-5">
-                                                <button
-                                                    onClick={() => toggleItem(item.id)}
-                                                    className={`w-12 h-7 rounded-full transition-all duration-300 relative shadow-inner ${item.enabled
-                                                        ? 'bg-black dark:bg-white shadow-lg'
-                                                        : 'bg-black/10 dark:bg-white/10'
-                                                        }`}
-                                                >
-                                                    <motion.div
-                                                        layout
-                                                        className="w-5 h-5 rounded-full bg-white dark:bg-black absolute top-1 shadow-sm"
-                                                        animate={{ left: item.enabled ? 24 : 4 }}
-                                                        transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                                                    />
-                                                </button>
+                                                <div className="glass-panel p-4 flex items-center justify-between border border-black/5 dark:border-white/5 hover:border-black/10 dark:hover:border-white/10 transition-all duration-300">
+                                                    <div className="flex items-center gap-5">
+                                                        <button
+                                                            onClick={() => toggleItem(item.id)}
+                                                            className={`w-12 h-7 rounded-full transition-all duration-300 relative shadow-inner ${item.enabled
+                                                                ? 'bg-black dark:bg-white shadow-lg'
+                                                                : 'bg-black/10 dark:bg-white/10'
+                                                                }`}
+                                                        >
+                                                            <motion.div
+                                                                layout
+                                                                className="w-5 h-5 rounded-full bg-white dark:bg-black absolute top-1 shadow-sm"
+                                                                animate={{ left: item.enabled ? 24 : 4 }}
+                                                                transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                                                            />
+                                                        </button>
 
-                                                <div>
-                                                    <p className={`font-mono text-base transition-colors ${item.enabled ? 'text-black dark:text-white font-black' : 'text-gray-400 dark:text-bastion-muted font-bold'}`}>
-                                                        {name}
-                                                    </p>
-                                                    <div className="flex items-center gap-2 mt-1">
-                                                        <span className={`text-[10px] uppercase font-black tracking-widest px-2 py-0.5 rounded-md ${categoryColors[category]}`}>
-                                                            {category}
-                                                        </span>
-                                                        {item.enabled && (
-                                                            <span className="text-[10px] text-black dark:text-white flex items-center gap-1 font-black uppercase tracking-widest">
-                                                                <div className="w-1 h-1 rounded-full bg-black dark:bg-white animate-pulse" />
-                                                                Active
-                                                            </span>
-                                                        )}
+                                                        <div>
+                                                            <p className={`font-mono text-base transition-colors ${item.enabled ? 'text-black dark:text-white font-black' : 'text-gray-400 dark:text-bastion-muted font-bold'}`}>
+                                                                {name}
+                                                            </p>
+                                                            <div className="flex items-center gap-2 mt-1">
+                                                                <span className={`text-[10px] uppercase font-black tracking-widest px-2 py-0.5 rounded-md ${categoryColors[category]}`}>
+                                                                    {category}
+                                                                </span>
+                                                                {item.enabled && (
+                                                                    <span className="text-[10px] text-black dark:text-white flex items-center gap-1 font-black uppercase tracking-widest">
+                                                                        <div className="w-1 h-1 rounded-full bg-black dark:bg-white animate-pulse" />
+                                                                        Active
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                                        <button className="p-2.5 rounded-xl hover:bg-black/5 dark:hover:bg-white/10 text-gray-400 dark:text-bastion-muted hover:text-black dark:hover:text-white transition-colors">
+                                                            <Tag className="w-4 h-4" />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => deleteItem(item.id)}
+                                                            className="p-2.5 rounded-xl hover:bg-black/5 dark:hover:bg-white/10 text-gray-400 dark:text-bastion-muted hover:text-black dark:hover:text-white transition-colors"
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </button>
                                                     </div>
                                                 </div>
-                                            </div>
-
-                                            <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                                                <button className="p-2.5 rounded-xl hover:bg-black/5 dark:hover:bg-white/10 text-gray-400 dark:text-bastion-muted hover:text-black dark:hover:text-white transition-colors">
-                                                    <Tag className="w-4 h-4" />
-                                                </button>
-                                                <button
-                                                    onClick={() => deleteItem(item.id)}
-                                                    className="p-2.5 rounded-xl hover:bg-black/5 dark:hover:bg-white/10 text-gray-400 dark:text-bastion-muted hover:text-black dark:hover:text-white transition-colors"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </motion.div>
-                                );
-                            })
+                                            </motion.div>
+                                        );
+                                    })
+                                )}
+                            </AnimatePresence>
                         )}
-                    </AnimatePresence>
-                )}
+                    </div>
+                </div>
             </div>
 
             {/* Modal */}

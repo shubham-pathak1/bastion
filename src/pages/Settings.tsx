@@ -7,14 +7,16 @@ import {
     RefreshCw as RefreshIcon,
     ExternalLink as LinkIcon,
     Github as GithubIcon,
-    Heart as HeartIcon,
     Zap as ZapIcon,
     AlertTriangle as AlertIcon,
     LogOut as LogoutIcon,
-    Check as CheckIcon
+    Check as CheckIcon,
+    FileText as LicenseIcon
 } from 'lucide-react';
+import { openUrl } from '@tauri-apps/plugin-opener';
 import { settingsApi, securityApi } from '../lib/api';
 import { enable, disable, isEnabled } from '@tauri-apps/plugin-autostart';
+import logo from '../assets/bastion_logo.png';
 
 type Tab = 'general' | 'security' | 'hardcore' | 'advanced' | 'about';
 
@@ -23,7 +25,7 @@ const tabs = [
     { id: 'security', label: 'Security', icon: ShieldIcon },
     { id: 'hardcore', label: 'Hardcore', icon: LockIcon },
     { id: 'advanced', label: 'Advanced', icon: ZapIcon },
-    { id: 'about', label: 'About', icon: HeartIcon },
+    { id: 'about', label: 'About', icon: LicenseIcon },
 ] as const;
 
 export default function Settings() {
@@ -33,7 +35,6 @@ export default function Settings() {
     const [showNotifications, setShowNotifications] = useState(true);
     const [hardcoreEnabled, setHardcoreEnabled] = useState(false);
     const [emergencyOverride, setEmergencyOverride] = useState(false);
-    const [scrolled, setScrolled] = useState(false);
 
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
@@ -42,11 +43,6 @@ export default function Settings() {
     const [passwordSuccess, setPasswordSuccess] = useState('');
 
     useEffect(() => {
-        const handleScroll = () => {
-            setScrolled(window.scrollY > 20);
-        };
-        window.addEventListener('scroll', handleScroll);
-
         // Load settings
         const loadSettings = async () => {
             try {
@@ -67,8 +63,6 @@ export default function Settings() {
             }
         };
         loadSettings();
-
-        return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
     const toggleStartOnBoot = async () => {
@@ -137,7 +131,7 @@ export default function Settings() {
         <button
             onClick={onChange}
             className={`w-12 h-7 rounded-full transition-all duration-300 relative ${enabled
-                ? 'bg-black dark:bg-white shadow-[0_0_15px_rgba(255,255,255,0.4)]'
+                ? 'bg-black dark:bg-white'
                 : 'bg-black/10 dark:bg-white/10 hover:bg-black/20 dark:hover:bg-white/20'
                 }`}
         >
@@ -165,10 +159,10 @@ export default function Settings() {
     );
 
     return (
-        <div className="max-w-5xl mx-auto min-h-screen pb-20">
-            {/* Header */}
-            <div className={`sticky top-0 z-30 transition-all duration-200 ${scrolled ? 'py-4 bg-white/80 dark:bg-black/50 backdrop-blur-xl border-b border-black/5 dark:border-white/5' : 'py-8'}`}>
-                <div className="flex items-center justify-between px-2">
+        <div className="flex flex-col h-full">
+            {/* Header - Fixed */}
+            <div className="flex-shrink-0 px-8 pt-8 pb-6 bg-black z-20 border-b border-white/5">
+                <div className="flex items-center justify-between">
                     <div>
                         <motion.h1
                             initial={{ opacity: 0, x: -20 }}
@@ -189,7 +183,7 @@ export default function Settings() {
                 </div>
             </div>
 
-            <div className="flex flex-col lg:flex-row gap-8 px-2 items-start">
+            <div className="flex-1 overflow-hidden flex flex-col lg:flex-row gap-8 px-8 py-8 items-start">
                 {/* Sidebar Navigation */}
                 <div className="w-full lg:w-64 flex-shrink-0">
                     <nav className="p-2 space-y-1 bg-black/5 dark:bg-black/20 backdrop-blur-md rounded-2xl border border-black/5 dark:border-white/5">
@@ -217,8 +211,8 @@ export default function Settings() {
                     </nav>
                 </div>
 
-                {/* Content Area */}
-                <div className="flex-1 glass-panel p-8 border border-black/5 dark:border-white/5 min-h-[500px]">
+                {/* Content Area - Scrollable */}
+                <div className="flex-1 h-full overflow-y-auto glass-panel p-8 border border-black/5 dark:border-white/5">
                     <AnimatePresence mode="wait">
                         <motion.div
                             key={activeTab}
@@ -386,8 +380,8 @@ export default function Settings() {
 
                             {activeTab === 'about' && (
                                 <div className="text-center py-12">
-                                    <div className="w-24 h-24 rounded-3xl bg-black dark:bg-white shadow-xl flex items-center justify-center mx-auto mb-6 transform rotate-3">
-                                        <ShieldIcon className="w-12 h-12 text-white dark:text-black" />
+                                    <div className="w-24 h-24 rounded-3xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 shadow-2xl flex items-center justify-center mx-auto mb-6 overflow-hidden">
+                                        <img src={logo} alt="Bastion Logo" className="w-16 h-16 object-contain" />
                                     </div>
                                     <h3 className="text-4xl font-black text-black dark:text-white mb-2 tracking-tight">Bastion</h3>
                                     <p className="text-black/60 dark:text-white/60 font-mono text-sm mb-6">v1.0.0 (Prism Alpha)</p>
@@ -397,12 +391,20 @@ export default function Settings() {
                                     </p>
 
                                     <div className="flex justify-center gap-4">
-                                        <a href="#" className="p-3 rounded-xl bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-black dark:text-white transition-colors border border-black/5 dark:border-white/5">
+                                        <button
+                                            onClick={() => openUrl('https://github.com/shubham-pathak1/bastion')}
+                                            className="p-3 rounded-xl bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-black dark:text-white transition-colors border border-black/5 dark:border-white/5"
+                                            title="View GitHub Repository"
+                                        >
                                             <GithubIcon className="w-6 h-6" />
-                                        </a>
-                                        <a href="#" className="p-3 rounded-xl bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-pink-500 transition-colors border border-black/5 dark:border-white/5 hover:border-pink-500/20">
-                                            <HeartIcon className="w-6 h-6" />
-                                        </a>
+                                        </button>
+                                        <button
+                                            onClick={() => openUrl('https://github.com/shubham-pathak1/bastion/blob/main/LICENSE')}
+                                            className="p-3 rounded-xl bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-black dark:text-white transition-colors border border-black/5 dark:border-white/5"
+                                            title="License Information"
+                                        >
+                                            <LicenseIcon className="w-6 h-6" />
+                                        </button>
                                     </div>
                                 </div>
                             )}

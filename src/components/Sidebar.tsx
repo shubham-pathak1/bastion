@@ -9,8 +9,6 @@ import {
     BarChart3,
     Settings,
     ChevronLeft,
-    ShieldCheck,
-    ShieldAlert,
 } from 'lucide-react';
 import { sessionsApi, blockedSitesApi } from '../lib/api';
 import logo from '../assets/bastion_logo.png';
@@ -65,8 +63,8 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
             {/* Logo Area */}
             <div className="h-20 flex items-center px-5 mb-2">
                 <div className="flex items-center gap-3 overflow-hidden">
-                    <div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center flex-shrink-0 shadow-lg border border-black/5 dark:border-white/10">
-                        <img src={logo} alt="Bastion Logo" className="w-full h-full object-cover" />
+                    <div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center flex-shrink-0 shadow-lg border border-black/5 dark:border-white/10 p-1">
+                        <img src={logo} alt="Bastion Logo" className="w-full h-full object-contain" />
                     </div>
                     {!collapsed && (
                         <motion.div
@@ -128,21 +126,25 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
             <div className="p-4 mt-auto space-y-4">
                 {/* Status Card */}
                 <div className={`
-                    relative overflow-hidden rounded-2xl p-3 transition-all duration-300 border
+                    relative overflow-hidden rounded-2xl p-2 transition-all duration-300 border
                     ${isProtected
                         ? 'bg-black/10 dark:bg-white/10 border-black/10 dark:border-white/20'
                         : 'bg-black/5 dark:bg-white/5 border-black/5 dark:border-white/10'}
                 `}>
                     <div className="flex items-center gap-3">
-                        <div className={`p-2 rounded-lg flex-shrink-0 ${isProtected ? 'bg-black dark:bg-white text-white dark:text-black' : 'bg-black/5 dark:bg-white/5 text-black dark:text-white'}`}>
-                            {isProtected ? <ShieldCheck className="w-5 h-5" /> : <ShieldAlert className="w-5 h-5" />}
+                        <div className={`w-9 h-9 p-2 rounded-lg flex-shrink-0 flex items-center justify-center ${isProtected ? 'bg-black dark:bg-white' : 'bg-black/5 dark:bg-white/5 opacity-50'}`}>
+                            <img
+                                src={logo}
+                                alt="Status"
+                                className={`w-full h-full object-contain ${isProtected ? 'invert dark:invert-0' : ''}`}
+                            />
                         </div>
                         {!collapsed && (
                             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="overflow-hidden">
-                                <p className={`text-sm font-black ${isProtected ? 'text-black dark:text-white' : 'text-black/40 dark:text-white/60'}`}>
-                                    {isProtected ? 'Protected' : 'Vulnerable'}
+                                <p className={`text-[11px] font-black uppercase tracking-wider ${isProtected ? 'text-black dark:text-white' : 'text-black/40 dark:text-white/60'}`}>
+                                    {isProtected ? 'Active' : 'Inactive'}
                                 </p>
-                                <p className="text-xs text-gray-500 dark:text-bastion-muted truncate font-bold">
+                                <p className="text-[10px] text-gray-500 dark:text-bastion-muted truncate font-bold">
                                     {isProtected ? 'Focus Active' : 'No blocks active'}
                                 </p>
                             </motion.div>

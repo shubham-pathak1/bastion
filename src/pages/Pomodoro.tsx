@@ -27,15 +27,6 @@ export default function Pomodoro() {
     const [isRunning, setIsRunning] = useState(false);
     const [completedSessions, setCompletedSessions] = useState(0);
     const [showSettings, setShowSettings] = useState(false);
-    const [scrolled, setScrolled] = useState(false);
-
-    useEffect(() => {
-        const handleScroll = () => {
-            setScrolled(window.scrollY > 20);
-        };
-        window.addEventListener('scroll', handleScroll);
-        return () => window.removeEventListener('scroll', handleScroll);
-    }, []);
 
     const getPhaseTime = useCallback((p: Phase) => {
         switch (p) {
@@ -121,19 +112,16 @@ export default function Pomodoro() {
         work: {
             color: '#FFFFFF',
             bg: 'from-white/20 to-transparent',
-            glow: 'shadow-[0_0_50px_rgba(255,255,255,0.2)]',
             icon: Brain
         },
         break: {
             color: '#FFFFFF',
             bg: 'from-white/10 to-transparent',
-            glow: 'shadow-[0_0_50px_rgba(255,255,255,0.1)]',
             icon: Coffee
         },
         longBreak: {
             color: '#FFFFFF',
             bg: 'from-white/5 to-transparent',
-            glow: 'shadow-[0_0_50px_rgba(255,255,255,0.05)]',
             icon: Coffee
         },
     };
@@ -141,10 +129,10 @@ export default function Pomodoro() {
     const CurrentIcon = phaseConfig[phase].icon;
 
     return (
-        <div className="max-w-4xl mx-auto min-h-screen pb-20 overflow-hidden">
-            {/* Header */}
-            <div className={`sticky top-0 z-30 transition-all duration-200 ${scrolled ? 'py-4 bg-white/80 dark:bg-black/50 backdrop-blur-xl border-b border-black/5 dark:border-white/5' : 'py-8'}`}>
-                <div className="flex items-center justify-between px-4">
+        <div className="flex flex-col h-full">
+            {/* Header - Fixed */}
+            <div className="flex-shrink-0 px-8 pt-8 pb-6 bg-black z-20 border-b border-white/5">
+                <div className="flex items-center justify-between">
                     <div>
                         <motion.h1
                             initial={{ opacity: 0, x: -20 }}
@@ -168,7 +156,7 @@ export default function Pomodoro() {
                 </div>
             </div>
 
-            <div className="flex flex-col lg:flex-row gap-8 px-4 items-start">
+            <div className="flex-1 overflow-hidden flex flex-col lg:flex-row gap-8 px-8 py-8 items-start">
                 {/* Main Timer Area */}
                 <div className="flex-1 w-full">
                     {/* Phase Tabs */}
@@ -282,15 +270,15 @@ export default function Pomodoro() {
                             whileHover={{ scale: 1.1 }}
                             whileTap={{ scale: 0.9 }}
                             onClick={() => setIsRunning(!isRunning)}
-                            className={`w-24 h-24 rounded-full flex items-center justify-center transition-all ${isRunning
+                            className={`w-16 h-16 rounded-full flex items-center justify-center transition-all ${isRunning
                                 ? 'bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10'
                                 : `bg-black dark:bg-white text-white dark:text-black shadow-lg`
                                 }`}
                         >
                             {isRunning ? (
-                                <Pause className="w-10 h-10 text-black dark:text-white fill-current" />
+                                <Pause className="w-6 h-6 text-black dark:text-white fill-current" />
                             ) : (
-                                <Play className="w-10 h-10 text-white dark:text-black fill-current ml-1" />
+                                <Play className="w-6 h-6 text-white dark:text-black fill-current ml-1" />
                             )}
                         </motion.button>
 
@@ -336,9 +324,9 @@ export default function Pomodoro() {
                                     {(completedSessions * settings.workDuration) % 60}m
                                 </p>
                             </div>
-                            <div className="p-3 rounded-xl bg-black/5 dark:bg-white/5">
-                                <p className="text-xs text-gray-500 dark:text-bastion-muted">Daily Goal</p>
-                                <p className="text-lg font-black text-black/40 dark:text-white/40 mt-1">4h 00m</p>
+                            <div className="p-3 rounded-xl bg-black/5 dark:bg-white/5 opacity-50">
+                                <p className="text-xs text-gray-500 dark:text-bastion-muted">Goal</p>
+                                <p className="text-lg font-black text-black dark:text-white mt-1">--</p>
                             </div>
                         </div>
                     </div>

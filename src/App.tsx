@@ -68,7 +68,7 @@ function App() {
                 />
 
                 <main className="flex-1 relative z-10 glass-panel rounded-3xl overflow-hidden flex flex-col border border-white/5">
-                    <div className="flex-1 overflow-y-auto overflow-x-hidden p-8 scroll-smooth">
+                    <div className="flex-1 overflow-hidden flex flex-col">
                         <Routes>
                             <Route path="/" element={<Dashboard />} />
                             <Route path="/blocks" element={<Blocks />} />
