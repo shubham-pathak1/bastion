@@ -10,19 +10,9 @@ import {
     Loader2,
     ChevronRight,
     Rocket,
-    Calendar,
-    Radar,
-    Spline
+    Radar
 } from 'lucide-react';
-import {
-    AreaChart,
-    Area,
-    XAxis,
-    YAxis,
-    Tooltip,
-    ResponsiveContainer
-} from 'recharts';
-import { statsApi, sessionsApi, blockedSitesApi, BlockEvent, FocusStats } from '../lib/api';
+import { statsApi, sessionsApi, blockedSitesApi, BlockEvent } from '../lib/api';
 
 export default function Dashboard() {
     const navigate = useNavigate();
@@ -38,7 +28,6 @@ export default function Dashboard() {
     const [sessionDuration, setSessionDuration] = useState(60);
     const [hardcoreMode, setHardcoreMode] = useState(false);
     const [isStarting, setIsStarting] = useState(false);
-    const [weeklyStats, setWeeklyStats] = useState<FocusStats[]>([]);
 
     useEffect(() => {
         loadDashboardData();
@@ -64,11 +53,10 @@ export default function Dashboard() {
     const loadDashboardData = async () => {
         setIsLoading(true);
         try {
-            const [blocks, sites, stats, weekly] = await Promise.all([
+            const [blocks, sites, stats] = await Promise.all([
                 statsApi.getRecentBlocks(5),
                 blockedSitesApi.getAll(),
                 statsApi.getFocusStats(1),
-                statsApi.getFocusStats(7),
             ]);
 
             setRecentBlocks(blocks);
@@ -82,7 +70,6 @@ export default function Dashboard() {
                     totalBlocks: today.blocks_count
                 });
             }
-            setWeeklyStats(weekly);
         } catch (err) {
             console.error('Failed to load dashboard:', err);
         } finally {
@@ -184,7 +171,7 @@ export default function Dashboard() {
                     animate="show"
                     className="grid grid-cols-1 md:grid-cols-4 gap-6"
                 >
-                    {/* Main Stat Card - Spans 2 cols */}
+                    {/* Focus Time Card */}
                     <motion.div variants={item} className="md:col-span-2 glass-card p-8 flex flex-col justify-between group relative overflow-hidden">
                         <div className="absolute top-0 right-0 p-32 bg-black/5 dark:bg-white/5 blur-[80px] rounded-full pointer-events-none group-hover:bg-black/10 dark:group-hover:bg-white/10 transition-colors duration-500" />
 
@@ -254,96 +241,7 @@ export default function Dashboard() {
                         </div>
                     </motion.div>
 
-                    {/* Weekly Trajectory Chart - Spans 4 cols */}
-                    <motion.div id="weekly-trajectory" variants={item} className="md:col-span-4 glass-panel p-8 border border-white/5 relative overflow-hidden bg-zinc-950/20">
-                        <div className="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-white/5 to-transparent pointer-events-none" />
-
-                        <div className="flex items-center justify-between mb-8 relative z-10">
-                            <div>
-                                <h2 className="text-2xl font-black text-black dark:text-white tracking-tight">Weekly Trajectory</h2>
-                                <p className="text-sm text-gray-500 dark:text-bastion-muted font-bold">Deep work intensity performance</p>
-                            </div>
-                            <div className="p-3 rounded-2xl bg-black dark:bg-white border border-black dark:border-white shadow-2xl">
-                                <Spline className="w-6 h-6 text-white dark:text-black" />
-                            </div>
-                        </div>
-
-                        <div className="h-[300px] w-full mt-4 relative z-10">
-                            {isLoading ? (
-                                <div className="h-full flex items-center justify-center">
-                                    <Loader2 className="w-8 h-8 animate-spin text-black dark:text-white" />
-                                </div>
-                            ) : weeklyStats.length === 0 ? (
-                                <div className="h-full flex flex-col items-center justify-center text-zinc-500 gap-3 border border-dashed border-zinc-500/20 rounded-2xl">
-                                    <Calendar className="w-8 h-8 opacity-20" />
-                                    <p className="font-bold uppercase tracking-widest text-[10px]">No activity benchmarks yet</p>
-                                </div>
-                            ) : (
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <AreaChart data={weeklyStats.map((s, i) => ({
-                                        date: s.date.split('-').slice(1).join('/'),
-                                        hours: Math.round((s.minutes_protected / 60) * 10) / 10,
-                                        // Mock benchmark data for the "layered" dope look
-                                        benchmark: Math.max(0, (Math.round((s.minutes_protected / 60) * 10) / 10) - (Math.sin(i) * 0.5))
-                                    })).reverse()}>
-                                        <defs>
-                                            <linearGradient id="colorHours" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor="var(--chart-line, #fff)" stopOpacity={0.15} />
-                                                <stop offset="95%" stopColor="var(--chart-line, #fff)" stopOpacity={0} />
-                                            </linearGradient>
-                                            <linearGradient id="colorBenchmark" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor="#71717a" stopOpacity={0.1} />
-                                                <stop offset="95%" stopColor="#71717a" stopOpacity={0} />
-                                            </linearGradient>
-                                        </defs>
-                                        <XAxis
-                                            dataKey="date"
-                                            axisLine={false}
-                                            tickLine={false}
-                                            tick={{ fill: 'rgba(150,150,150,0.3)', fontSize: 10, fontWeight: 900 }}
-                                            dy={10}
-                                        />
-                                        <YAxis
-                                            hide={true}
-                                        />
-                                        <Tooltip
-                                            contentStyle={{
-                                                backgroundColor: 'rgba(0,0,0,0.9)',
-                                                border: '1px solid rgba(255,255,255,0.1)',
-                                                borderRadius: '16px',
-                                                backdropFilter: 'blur(20px)',
-                                                fontSize: '11px',
-                                                fontWeight: '900',
-                                                boxShadow: '0 20px 50px rgba(0,0,0,0.5)'
-                                            }}
-                                            itemStyle={{ padding: '2px 0' }}
-                                            cursor={{ stroke: 'rgba(255,255,255,0.05)', strokeWidth: 2 }}
-                                        />
-                                        <Area
-                                            type="monotone"
-                                            dataKey="benchmark"
-                                            stroke="#3f3f46"
-                                            strokeWidth={2}
-                                            fillOpacity={1}
-                                            fill="url(#colorBenchmark)"
-                                            activeDot={false}
-                                        />
-                                        <Area
-                                            type="monotone"
-                                            dataKey="hours"
-                                            stroke="var(--chart-line, #fff)"
-                                            strokeWidth={4}
-                                            fillOpacity={1}
-                                            fill="url(#colorHours)"
-                                            activeDot={{ r: 6, strokeWidth: 2, stroke: '#000', fill: '#fff' }}
-                                        />
-                                    </AreaChart>
-                                </ResponsiveContainer>
-                            )}
-                        </div>
-                    </motion.div>
-
-                    {/* Recent Activity Feed - Spans 2 cols */}
+                    {/* Live Feed */}
                     <motion.div variants={item} className="md:col-span-2 glass-card p-0 flex flex-col">
                         <div className="p-6 border-b border-black/5 dark:border-white/5 flex items-center justify-between">
                             <h3 className="font-black text-black dark:text-white flex items-center gap-2">
@@ -383,7 +281,7 @@ export default function Dashboard() {
                         </div>
                     </motion.div>
 
-                    {/* Quick Actions 2x2 */}
+                    {/* Quick Actions */}
                     <motion.div variants={item} className="col-span-1 md:col-span-2 grid grid-cols-2 gap-6">
                         <motion.div
                             whileHover={{ y: -5 }}
@@ -429,7 +327,6 @@ export default function Dashboard() {
                             onClick={(e) => e.stopPropagation()}
                             className="glass-panel w-full max-w-lg rounded-3xl p-8 border border-white/10 shadow-2xl relative overflow-hidden"
                         >
-                            {/* Decorative Glow */}
                             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-64 bg-white/5 blur-[100px] rounded-full pointer-events-none" />
 
                             <div className="relative z-10">
@@ -517,6 +414,6 @@ export default function Dashboard() {
                     </motion.div>
                 )}
             </AnimatePresence>
-        </div >
+        </div>
     );
 }
