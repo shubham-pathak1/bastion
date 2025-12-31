@@ -1,45 +1,42 @@
 # Bastion
 
-**Unbreakable focus for deep work.**
+**Focused workstation shell for deep work.**
 
-Bastion is a privacy-first, high-performance productivity shell designed to neutralize digital distractions. Built with Tauri and React, it provides a hardcore environment for professionals who require absolute concentration.
+> [!IMPORTANT]
+> **Status: Under Development**
+> Bastion is currently in active development. Features and APIs are subject to change.
 
-## Core Features
+Bastion is a privacy-first, high-performance productivity interface designed to minimize digital distractions. Built with Tauri and Rust, it provides a stable and secure environment for long-term concentration.
 
-### 🛡️ Defense Perimeter
-- **Zero-Bypass Blocking**: Block websites at the system level via an integrated Rust-powered blocking engine.
-- **Protocol Templates**: Pre-configured blocking profiles for Social Media, Entertainment, and custom categories.
-- **Hardcore Mode**: Permanent session locking. Once established, the defense cannot be breached until the timer expires.
+## Key Features
 
-### 📊 Tactical Analytics
-- **Intensity Heatmap**: Visualize daily focus depth and consistency.
-- **Trajectory Tracking**: Monitor focus hours and distraction prevention metrics over time.
-- **Privacy-First**: All data is stored locally. Zero telemetry, zero accounts, zero external dependencies.
+### 🛡️ Website & Application Blocking
+- **System-Level Control**: Integrated Rust-powered engine for reliable blocking of web domains.
+- **Session Locking**: Optional "Hardcore" mode which prevents session termination or blocklist modification during active focus periods.
+- **Custom Schedules**: Define automated focus intervals and recurring blocking profiles.
 
-### ⚡ Performance & UX
-- **Monochromatic Aesthetic**: A premium, high-contrast dark theme designed to minimize visual fatigue.
-- **Tauri 2.0 Backend**: Lightweight system resource usage with a secure Rust foundation.
-- **Integrated Pomodoro**: A customized timer system for structured deep work intervals.
+### 📊 Performance Analytics
+- **Local Statistics**: Track focus duration, blocked distractions, and session consistency over time.
+- **Privacy Centric**: All session data and statistics are stored locally. There is no telemetry, cloud dependency, or external data tracking.
+- **Visual Heatmap**: Monitor activity depth and historical trends directly within the application.
 
-## Tech Stack
+### ⚡ Technical Design
+- **Minimalist Aesthetic**: Premium monochromatic dark interface designed for clarity and reduced visual fatigue.
+- **Lightweight Architecture**: Built on Tauri 2.0 and Rust to ensure low system resource impact.
+- **Integrated Timer**: Native Pomodoro-based timer system with customizable intervals.
 
-- **Frontend**: React 18, TypeScript, Tailwind CSS, Framer Motion, Recharts.
-- **Backend**: Tauri 2.0 (Rust), tokio, axum.
-- **Styling**: Premium monochromatic design system with glassmorphism components.
-
-## Getting Started
+## Development Setup
 
 ### Prerequisites
-
 - [Rust](https://www.rust-lang.org/tools/install)
 - [Node.js](https://nodejs.org/) (v18+)
 - [WebView2](https://developer.microsoft.com/en-us/microsoft-edge/webview2/) (Windows only)
 
-### Installation
+### Local Installation
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/bastion.git
+   git clone https://github.com/shubham-pathak1/bastion.git
    cd bastion
    ```
 
@@ -53,10 +50,10 @@ Bastion is a privacy-first, high-performance productivity shell designed to neut
    npm run tauri dev
    ```
 
-## Architecture
-
-Bastion operates as a secure bridge between a modern web interface and a robust Rust core. The backend manages low-level system operations (blocking, file I/O), while the React frontend handles the tactical user interface.
+## Tech Stack
+- **Interface**: React 18, TypeScript, Tailwind CSS, Framer Motion.
+- **Core Engine**: Tauri 2.0 (Rust), Tokio, Axum for low-level system communication.
+- **Storage**: SQLite (Local) for session history and application configuration.
 
 ## License
-
 MIT
