@@ -8,7 +8,6 @@ import {
     Calendar,
     Loader2,
     RefreshCw,
-    Share2,
     Info,
     ArrowUpRight
 } from 'lucide-react';
@@ -124,14 +123,6 @@ export default function Stats() {
                             </div>
                         </div>
 
-                        <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            className="btn-secondary px-4 flex items-center gap-2"
-                        >
-                            <Share2 className="w-4 h-4" />
-                            <span className="hidden sm:inline">Share</span>
-                        </motion.button>
                     </div>
                 </div>
             </div>

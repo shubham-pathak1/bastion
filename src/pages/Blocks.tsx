@@ -16,7 +16,8 @@ import {
     Newspaper,
     ShoppingBag,
     Briefcase,
-    Layers
+    Layers,
+    ShieldCheck
 } from 'lucide-react';
 import { blockedSitesApi, blockedAppsApi, systemApi, BlockedSite, BlockedApp } from '../lib/api';
 
@@ -66,6 +67,12 @@ export default function Blocks() {
     const [installedApps, setInstalledApps] = useState<{ name: string; id: string }[]>([]);
     const [runningProcesses, setRunningProcesses] = useState<{ pid: number; name: string }[]>([]);
     const [isScanning, setIsScanning] = useState(false);
+    const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+    const showNotification = (message: string, type: 'success' | 'error' = 'success') => {
+        setNotification({ message, type });
+        setTimeout(() => setNotification(null), 5000);
+    };
 
     const scanApps = async () => {
         setIsScanning(true);
@@ -96,10 +103,10 @@ export default function Blocks() {
         setIsFixingBrowsers(true);
         try {
             await systemApi.fixBrowserPolicies();
-            alert('Browser security policies updated! Please restart Firefox/Chrome/Thorium to apply changes.');
+            showNotification('Browser security policies updated! Please restart Firefox/Chrome/Thorium to apply changes.');
         } catch (err) {
             console.error('Failed to fix browser policies:', err);
-            alert('Failed to configure browser policies. Make sure you are running as Administrator.');
+            showNotification('Failed to configure browser policies. Make sure you are running as Administrator.', 'error');
         } finally {
             setIsFixingBrowsers(false);
         }
@@ -206,7 +213,7 @@ export default function Blocks() {
             } else {
                 const procName = newItem.trim();
                 if (applications.some(a => a.process_name.toLowerCase() === procName.toLowerCase())) {
-                    alert('This application is already blocked.');
+                    showNotification('This application is already blocked.', 'error');
                     setIsSaving(false);
                     return;
                 }
@@ -342,42 +349,67 @@ export default function Blocks() {
                     </AnimatePresence>
 
                     {/* Browser Policy Helper */}
-                    <div className="mx-2 mt-6 mb-8 group">
-                        <div className="glass-panel p-6 border border-black/5 dark:border-white/5 hover:border-black/10 dark:hover:border-bastion-accent/30 transition-colors duration-300">
-                            <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 rounded-xl bg-black/5 dark:bg-white/10 flex items-center justify-center">
-                                        <RefreshCw className="w-6 h-6 text-black dark:text-white" />
+                    <div className="mx-2 mt-6 mb-8">
+                        <div className="relative group">
+                            <div className="absolute -inset-0.5 bg-gradient-to-r from-indigo-500/20 via-indigo-500/10 to-transparent rounded-2xl blur opacity-0 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"></div>
+                            <div className="relative glass-panel p-6 border border-white/5 dark:border-white/5 hover:border-indigo-500/30 transition-all duration-500 bg-black/20">
+                                <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
+                                    <div className="flex items-start gap-5">
+                                        <div className="w-14 h-14 rounded-2xl bg-indigo-500/10 flex items-center justify-center flex-shrink-0 group-hover:bg-indigo-500/20 transition-colors duration-500">
+                                            <ShieldCheck className="w-7 h-7 text-indigo-500" />
+                                        </div>
+                                        <div>
+                                            <div className="flex items-center gap-3">
+                                                <p className="font-black text-white transition-colors uppercase tracking-tight text-xl">Leak Prevention</p>
+                                                <div className="px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-400 text-[10px] font-black uppercase tracking-widest border border-indigo-500/20">Security Layer</div>
+                                            </div>
+                                            <p className="text-sm text-zinc-400 font-bold max-w-xl leading-relaxed mt-1">
+                                                Force browser protection by hardening security policies and purging persistent socket connections.
+                                            </p>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <p className="font-black text-black dark:text-white transition-colors uppercase tracking-tight text-lg">Inconsistent Blocking?</p>
-                                        <p className="text-sm text-gray-500 dark:text-bastion-muted font-bold max-w-md">
-                                            Chromium browsers (Thorium/Chrome) can bypass blocks using persistent connections or DNS-over-HTTPS.
-                                        </p>
+
+                                    <div className="flex items-center p-1.5 bg-black/40 border border-white/5 rounded-2xl shadow-2xl">
+                                        <button
+                                            onClick={fixBrowsers}
+                                            disabled={isFixingBrowsers}
+                                            className={`
+                                                relative px-6 py-3 rounded-xl font-black uppercase tracking-widest text-[10px] transition-all duration-300 min-w-[180px]
+                                                ${isFixingBrowsers
+                                                    ? 'bg-indigo-500/20 text-indigo-400 cursor-default'
+                                                    : 'bg-white text-black hover:bg-zinc-200 hover:scale-[1.02] active:scale-95 shadow-lg'}
+                                            `}
+                                        >
+                                            <div className="flex items-center justify-center gap-2">
+                                                {isFixingBrowsers ? <ShieldCheck className="w-3.5 h-3.5" /> : <RefreshCw className="w-3.5 h-3.5" />}
+                                                <span>{isFixingBrowsers ? "Policies Fixed" : "Harden Policies"}</span>
+                                            </div>
+                                        </button>
+
+                                        <div className="w-px h-8 bg-white/10 mx-2" />
+
+                                        <button
+                                            onClick={async () => {
+                                                if (window.confirm("This will close all open browsers to reset connections. Save your work first! Continue?")) {
+                                                    await systemApi.killBrowsers();
+                                                    showNotification("Browsers terminated. Re-open to see blocking in effect.");
+                                                }
+                                            }}
+                                            className="px-6 py-3 rounded-xl text-zinc-400 hover:text-white hover:bg-white/5 transition-all duration-300 font-black uppercase tracking-widest text-[10px]"
+                                        >
+                                            <div className="flex items-center gap-2">
+                                                <X className="w-3.5 h-3.5" />
+                                                Hardcore Reset
+                                            </div>
+                                        </button>
                                     </div>
-                                </div>
-                                <div className="flex flex-wrap gap-3 w-full md:w-auto">
-                                    <button
-                                        onClick={fixBrowsers}
-                                        disabled={isFixingBrowsers}
-                                        className="flex-1 md:flex-none px-6 py-3 rounded-xl bg-black/5 dark:bg-white/5 text-black dark:text-white hover:bg-black/10 dark:hover:bg-white/10 border border-black/10 dark:border-white/10 transition-all duration-300 text-xs font-black uppercase tracking-widest"
-                                    >
-                                        {isFixingBrowsers ? "Polices Applied" : "1. Harden Policies"}
-                                    </button>
-                                    <button
-                                        onClick={async () => {
-                                            if (confirm("This will close all open browsers to reset connections. Save your work first! Continue?")) {
-                                                await systemApi.killBrowsers();
-                                                alert("Browsers terminated. Re-open to see blocking in effect.");
-                                            }
-                                        }}
-                                        className="flex-1 md:flex-none px-6 py-3 rounded-xl bg-black dark:bg-white text-white dark:text-black hover:bg-black/90 dark:hover:bg-white/90 border border-transparent transition-all duration-300 text-xs font-black uppercase tracking-widest shadow-lg"
-                                    >
-                                        2. Hardcore Reset
-                                    </button>
                                 </div>
                             </div>
                         </div>
+                        <p className="mt-3 ml-4 text-[9px] text-zinc-600 font-black uppercase tracking-widest flex items-center gap-2">
+                            <div className="w-1 h-1 rounded-full bg-zinc-700" />
+                            Policy hardening requires system administrator privileges
+                        </p>
                     </div>
 
                     {/* Content List */}
@@ -488,7 +520,44 @@ export default function Blocks() {
                 </div>
             </div>
 
-            {/* Modal */}
+            {/* Aesthetic Notification Toast */}
+            <AnimatePresence>
+                {notification && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 50, scale: 0.9 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 50, scale: 0.9 }}
+                        className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[100] min-w-[320px] max-w-md"
+                    >
+                        <div className={`
+                            glass-panel p-4 flex items-center gap-4 border shadow-2xl
+                            ${notification.type === 'error' ? 'border-red-500/50 bg-red-500/10' : 'border-white/10 bg-black/40'}
+                        `}>
+                            <div className={`
+                                w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0
+                                ${notification.type === 'error' ? 'bg-red-500' : 'bg-white'}
+                            `}>
+                                {notification.type === 'error' ? (
+                                    <AlertTriangle className="w-4 h-4 text-white" />
+                                ) : (
+                                    <ShieldCheck className="w-4 h-4 text-black" />
+                                )}
+                            </div>
+                            <div className="flex-1">
+                                <p className={`text-sm font-black uppercase tracking-tight ${notification.type === 'error' ? 'text-red-500' : 'text-white'}`}>
+                                    {notification.type === 'error' ? 'System Error' : 'Policy Update'}
+                                </p>
+                                <p className="text-xs text-gray-400 dark:text-bastion-muted font-bold leading-relaxed mt-0.5">
+                                    {notification.message}
+                                </p>
+                            </div>
+                            <button onClick={() => setNotification(null)} className="p-1 hover:bg-white/5 rounded-full transition-colors self-start">
+                                <X className="w-4 h-4 text-gray-500" />
+                            </button>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
             <AnimatePresence>
                 {showAddModal && (
                     <motion.div
@@ -641,7 +710,7 @@ export default function Blocks() {
 
                                                                         // Check for duplicates
                                                                         if (applications.some(a => a.process_name.toLowerCase() === procName.toLowerCase())) {
-                                                                            alert('This application is already blocked.');
+                                                                            showNotification('This application is already blocked.', 'error');
                                                                             return;
                                                                         }
 
@@ -652,7 +721,7 @@ export default function Blocks() {
                                                                             setShowAddModal(false);
                                                                         } catch (err) {
                                                                             console.error('Failed to add app:', err);
-                                                                            alert('Failed to add application.');
+                                                                            showNotification('Failed to add application.', 'error');
                                                                         } finally {
                                                                             setIsSaving(false);
                                                                         }
