@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, Pause, RotateCcw, Coffee, Brain, Settings2, Volume2, VolumeX, Maximize2 } from 'lucide-react';
+import { Play, Pause, RotateCcw, Waves, Brain, Settings2, Volume2, VolumeX, Maximize2 } from 'lucide-react';
 import { sessionsApi } from '../lib/api';
 
 type Phase = 'work' | 'break' | 'longBreak';
@@ -117,12 +117,12 @@ export default function Pomodoro() {
         break: {
             color: '#FFFFFF',
             bg: 'from-white/10 to-transparent',
-            icon: Coffee
+            icon: Waves
         },
         longBreak: {
             color: '#FFFFFF',
             bg: 'from-white/5 to-transparent',
-            icon: Coffee
+            icon: Waves
         },
     };
 

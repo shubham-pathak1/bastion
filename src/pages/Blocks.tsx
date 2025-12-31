@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Globe,
-    AppWindow,
+    Box,
     Search,
     Plus,
     Trash2,
@@ -10,7 +10,13 @@ import {
     X,
     Loader2,
     RefreshCw,
-    AlertTriangle
+    AlertTriangle,
+    MessageSquare,
+    Play,
+    Newspaper,
+    ShoppingBag,
+    Briefcase,
+    Layers
 } from 'lucide-react';
 import { blockedSitesApi, blockedAppsApi, systemApi, BlockedSite, BlockedApp } from '../lib/api';
 
@@ -30,6 +36,15 @@ const popularSites = [
     'twitter.com', 'x.com', 'youtube.com', 'instagram.com', 'reddit.com',
     'tiktok.com', 'facebook.com', 'fb.com', 'messenger.com', 'netflix.com'
 ];
+
+const categoryIcons: Record<Category, any> = {
+    social: MessageSquare,
+    entertainment: Play,
+    news: Newspaper,
+    shopping: ShoppingBag,
+    work: Briefcase,
+    other: Layers,
+};
 
 export default function Blocks() {
     const [activeTab, setActiveTab] = useState<TabType>('websites');
@@ -276,7 +291,7 @@ export default function Blocks() {
                             {activeTab === 'applications' && (
                                 <motion.div layoutId="tab-bg" className="absolute inset-0 bg-black dark:bg-white rounded-xl shadow-lg" transition={{ type: "spring", bounce: 0.2, duration: 0.6 }} />
                             )}
-                            <AppWindow className="w-4 h-4 relative z-10" />
+                            <Box className="w-3.5 h-3.5" />
                             <span className="relative z-10">Apps</span>
                             <span className={`relative z-10 ml-2 text-[10px] py-0.5 px-2 rounded-full font-black ${activeTab === 'applications' ? 'bg-white/20 dark:bg-black/20 text-white dark:text-black' : 'bg-black/10 dark:bg-white/10'}`}>
                                 {applications.length}
@@ -516,7 +531,7 @@ export default function Blocks() {
                                 {activeTab === 'applications' && (
                                     <div className="flex gap-1 p-1 bg-white/5 rounded-xl mb-6">
                                         {[
-                                            { id: 'installed', label: 'Installed', icon: AppWindow },
+                                            { id: 'installed', label: 'Installed', icon: Box },
                                             { id: 'running', label: 'Running', icon: RefreshCw },
                                             { id: 'manual', label: 'Manual', icon: Plus },
                                         ].map((t) => (
@@ -560,11 +575,15 @@ export default function Blocks() {
                                                         <button
                                                             key={cat}
                                                             onClick={() => setNewCategory(cat as Category)}
-                                                            className={`py-2 px-3 rounded-lg border text-[10px] font-black transition-all capitalize uppercase tracking-widest ${newCategory === cat
+                                                            className={`py-2 px-3 rounded-lg border text-[10px] font-black transition-all capitalize uppercase tracking-widest flex items-center justify-center gap-2 ${newCategory === cat
                                                                 ? 'bg-white text-black border-transparent shadow-lg'
                                                                 : 'bg-white/5 border-white/5 text-zinc-500 hover:bg-white/10 hover:text-white'
                                                                 }`}
                                                         >
+                                                            {(() => {
+                                                                const Icon = categoryIcons[cat as Category];
+                                                                return <Icon className="w-3 h-3" />;
+                                                            })()}
                                                             {cat}
                                                         </button>
                                                     ))}

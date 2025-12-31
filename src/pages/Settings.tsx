@@ -380,8 +380,8 @@ export default function Settings() {
 
                             {activeTab === 'about' && (
                                 <div className="text-center py-12">
-                                    <div className="w-24 h-24 rounded-3xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 shadow-2xl flex items-center justify-center mx-auto mb-6 overflow-hidden">
-                                        <img src={logo} alt="Bastion Logo" className="w-16 h-16 object-contain" />
+                                    <div className="w-24 h-24 flex items-center justify-center mx-auto mb-6 overflow-hidden">
+                                        <img src={logo} alt="Bastion Logo" className="w-20 h-20 object-contain" />
                                     </div>
                                     <h3 className="text-4xl font-black text-black dark:text-white mb-2 tracking-tight">Bastion</h3>
                                     <p className="text-black/60 dark:text-white/60 font-mono text-sm mb-6">v1.0.0 (Prism Alpha)</p>

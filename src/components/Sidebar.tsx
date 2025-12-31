@@ -2,12 +2,12 @@ import { useState, useEffect } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
-    LayoutDashboard,
-    Ban,
-    Calendar,
-    Timer,
-    BarChart3,
-    Settings,
+    Home,
+    ShieldOff,
+    Target,
+    Brain,
+    LineChart,
+    SlidersHorizontal,
     ChevronLeft,
 } from 'lucide-react';
 import { sessionsApi, blockedSitesApi } from '../lib/api';
@@ -19,12 +19,12 @@ interface SidebarProps {
 }
 
 const navItems = [
-    { path: '/', icon: LayoutDashboard, label: 'Dashboard' },
-    { path: '/blocks', icon: Ban, label: 'Blocks' },
-    { path: '/sessions', icon: Calendar, label: 'Sessions' },
-    { path: '/pomodoro', icon: Timer, label: 'Pomodoro' },
-    { path: '/stats', icon: BarChart3, label: 'Stats' },
-    { path: '/settings', icon: Settings, label: 'Settings' },
+    { path: '/', icon: Home, label: 'Dashboard' },
+    { path: '/blocks', icon: ShieldOff, label: 'Blocks' },
+    { path: '/sessions', icon: Target, label: 'Sessions' },
+    { path: '/pomodoro', icon: Brain, label: 'Pomodoro' },
+    { path: '/stats', icon: LineChart, label: 'Stats' },
+    { path: '/settings', icon: SlidersHorizontal, label: 'Settings' },
 ];
 
 export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
@@ -62,8 +62,8 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
         >
             {/* Logo Area */}
             <div className={`h-24 flex items-center transition-all duration-300 ${collapsed ? 'justify-center px-0' : 'px-6'}`}>
-                <div className="flex items-center gap-3 overflow-hidden">
-                    <div className="w-10 h-10 rounded-2xl bg-black dark:bg-white flex items-center justify-center flex-shrink-0 shadow-2xl p-2 relative group cursor-pointer">
+                <div className="flex items-center gap-4 overflow-hidden">
+                    <div className="w-14 h-14 flex items-center justify-center flex-shrink-0 group cursor-pointer">
                         <img src={logo} alt="Bastion Logo" className="w-full h-full object-contain invert dark:invert-0" />
                     </div>
                     {!collapsed && (
@@ -133,7 +133,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
                         : 'bg-black/5 dark:bg-white/5'}
                 `}>
                     <div className={`flex items-center ${collapsed ? 'justify-center' : 'gap-3 px-2 py-1'}`}>
-                        <div className={`w-8 h-8 p-2 rounded-xl flex-shrink-0 transition-all duration-500 ${isProtected ? 'bg-black dark:bg-white' : 'bg-black/10 dark:bg-white/10'}`}>
+                        <div className={`w-8 h-8 flex-shrink-0 transition-all duration-500`}>
                             <img
                                 src={logo}
                                 alt="Status"
@@ -166,6 +166,6 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
                     </motion.div>
                 </button>
             </div>
-        </motion.aside>
+        </motion.aside >
     );
 }

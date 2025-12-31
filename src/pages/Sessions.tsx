@@ -2,16 +2,16 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Plus,
-    Clock,
-    Shield,
+    Briefcase,
+    ShieldCheck,
     Trash2,
     X,
     Loader2,
-    Calendar,
+    Target,
     AlertTriangle,
-    Zap,
-    Repeat,
-    Sparkles
+    Flame,
+    AlarmClock,
+    Moon
 } from 'lucide-react';
 import { sessionsApi, Session } from '../lib/api';
 
@@ -24,7 +24,7 @@ const presetTemplates = [
         endTime: '17:00',
         days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
         hardcore: false,
-        icon: Clock,
+        icon: Briefcase,
         color: 'text-black dark:text-white'
     },
     {
@@ -33,7 +33,7 @@ const presetTemplates = [
         endTime: '12:00',
         days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
         hardcore: true,
-        icon: Zap,
+        icon: Flame,
         color: 'text-black dark:text-white'
     },
     {
@@ -42,7 +42,7 @@ const presetTemplates = [
         endTime: '22:00',
         days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
         hardcore: false,
-        icon: Sparkles,
+        icon: Moon,
         color: 'text-black dark:text-white'
     },
 ];
@@ -235,7 +235,7 @@ export default function Sessions() {
                                 animate={{ opacity: 1 }}
                                 className="glass-panel p-12 text-center border-dashed border-black/10 dark:border-white/10 mx-2"
                             >
-                                <Calendar className="w-12 h-12 mx-auto mb-4 text-gray-400 dark:text-bastion-muted opacity-30" />
+                                <Target className="w-12 h-12 mx-auto mb-4 text-gray-400 dark:text-bastion-muted opacity-30" />
                                 <h3 className="text-lg font-black text-black dark:text-white mb-1 uppercase tracking-tight">No Active Schedules</h3>
                                 <p className="text-gray-500 dark:text-bastion-muted max-w-sm mx-auto font-bold">
                                     Configure automated sessions to protect your focus hours automatically.
@@ -260,9 +260,9 @@ export default function Sessions() {
                                                     : 'bg-black/5 dark:bg-white/10 text-black dark:text-white shadow-none'
                                                     }`}>
                                                     {session.hardcore ? (
-                                                        <Shield className="w-7 h-7" />
+                                                        <ShieldCheck className="w-7 h-7" />
                                                     ) : (
-                                                        <Repeat className="w-7 h-7" />
+                                                        <AlarmClock className="w-7 h-7" />
                                                     )}
                                                 </div>
 
@@ -399,7 +399,7 @@ export default function Sessions() {
                                     <div className="flex items-center justify-between p-4 rounded-xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5">
                                         <div className="flex items-center gap-3">
                                             <div className={`p-2 rounded-lg ${formData.hardcore ? 'bg-black dark:bg-white text-white dark:text-black' : 'bg-black/5 dark:bg-white/10 text-gray-400 dark:text-bastion-muted'}`}>
-                                                <Shield className="w-5 h-5" />
+                                                <ShieldCheck className="w-5 h-5" />
                                             </div>
                                             <div>
                                                 <p className={`font-black uppercase tracking-widest text-xs ${formData.hardcore ? 'text-black dark:text-white' : 'text-gray-400 dark:text-bastion-secondary'}`}>Hardcore Mode</p>

@@ -2,14 +2,14 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import {
-    Shield,
-    Timer,
+    ShieldCheck,
+    Brain,
     Lock,
-    Clock,
+    Flame,
     X,
     Loader2,
     ChevronRight,
-    Zap,
+    Rocket,
     Activity
 } from 'lucide-react';
 import { statsApi, sessionsApi, blockedSitesApi, BlockEvent } from '../lib/api';
@@ -178,7 +178,7 @@ export default function Dashboard() {
                         <div className="flex items-start justify-between relative z-10">
                             <div>
                                 <p className="text-gray-500 dark:text-bastion-secondary font-bold mb-1 flex items-center gap-2">
-                                    <Clock className="w-4 h-4 text-black dark:text-white" />
+                                    <Flame className="w-4 h-4 text-black dark:text-white" />
                                     Focus Time
                                 </p>
                                 <div className="flex items-baseline gap-2">
@@ -216,7 +216,7 @@ export default function Dashboard() {
                     {/* Quick Start Card */}
                     <motion.div variants={item} className="glass-card-interactive p-6 flex flex-col items-center justify-center text-center gap-4 group" onClick={() => setShowStartModal(true)}>
                         <div className="w-16 h-16 rounded-full bg-black/5 dark:bg-white/5 flex items-center justify-center group-hover:scale-110 group-hover:shadow-xl transition-all duration-300 border border-black/5 dark:border-white/5">
-                            <Zap className="w-8 h-8 text-black dark:text-white" />
+                            <Rocket className="w-8 h-8 text-black dark:text-white" />
                         </div>
                         <div>
                             <h3 className="text-xl font-black text-black dark:text-white">Focus Now</h3>
@@ -230,7 +230,7 @@ export default function Dashboard() {
 
                         <div className="flex items-center justify-between mb-4">
                             <p className="text-gray-500 dark:text-bastion-secondary font-bold flex items-center gap-2">
-                                <Shield className="w-4 h-4 text-black dark:text-white" />
+                                <ShieldCheck className="w-4 h-4 text-black dark:text-white" />
                                 Active Blocks
                             </p>
                             <span className="text-xs font-mono bg-black/5 dark:bg-white/5 px-2 py-1 rounded text-black/40 dark:text-bastion-muted font-bold">{blockedCount} Active</span>
@@ -259,7 +259,7 @@ export default function Dashboard() {
                                 </div>
                             ) : recentBlocks.length === 0 ? (
                                 <div className="h-40 flex flex-col items-center justify-center text-gray-400 dark:text-bastion-muted gap-2 font-bold">
-                                    <Shield className="w-8 h-8 opacity-20" />
+                                    <ShieldCheck className="w-8 h-8 opacity-20" />
                                     <p className="text-sm">No activity recorded yet</p>
                                 </div>
                             ) : (
@@ -291,7 +291,7 @@ export default function Dashboard() {
                             className="glass-card-interactive p-6 flex flex-col justify-center items-start gap-4"
                             onClick={() => navigate('/pomodoro')}
                         >
-                            <Timer className="w-8 h-8 text-black dark:text-white" />
+                            <Brain className="w-8 h-8 text-black dark:text-white" />
                             <div>
                                 <h3 className="font-black text-black dark:text-white">Pomodoro</h3>
                                 <p className="text-xs text-gray-500 dark:text-bastion-muted mt-1 font-bold">Cycle focus & breaks</p>
@@ -336,7 +336,7 @@ export default function Dashboard() {
                             <div className="relative z-10">
                                 <div className="flex items-center justify-between mb-8">
                                     <h2 className="heading-title flex items-center gap-2">
-                                        <Zap className="w-6 h-6 text-black dark:text-white" />
+                                        <Rocket className="w-6 h-6 text-black dark:text-white" />
                                         Start Focus Session
                                     </h2>
                                     <button
