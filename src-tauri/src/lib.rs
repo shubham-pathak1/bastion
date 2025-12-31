@@ -7,7 +7,7 @@ mod session;
 mod storage;
 mod server;
 
-use blocking::RunningProcess;
+use blocking::{RunningProcess, InstalledApp};
 // use security::SecurityError;
 use session::{ActiveSession, PomodoroState, SessionManager};
 use storage::{BlockedApp, BlockedSite, BlockEvent, Database, FocusStats, Session};
@@ -115,6 +115,11 @@ fn toggle_blocked_app(state: State<Arc<AppState>>, id: i64, enabled: bool) -> Re
 #[tauri::command]
 fn delete_blocked_app(state: State<Arc<AppState>>, id: i64) -> Result<(), String> {
     state.db.delete_blocked_app(id).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn get_installed_applications() -> Vec<InstalledApp> {
+    blocking::get_installed_applications()
 }
 
 #[tauri::command]
@@ -367,6 +372,7 @@ pub fn run() {
             get_blocked_apps,
             toggle_blocked_app,
             delete_blocked_app,
+            get_installed_applications,
             get_running_processes,
             enforce_app_blocks,
             // Sessions

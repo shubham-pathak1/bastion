@@ -8,7 +8,7 @@ import Pomodoro from './pages/Pomodoro';
 import Stats from './pages/Stats';
 import Settings from './pages/Settings';
 import Onboarding from './pages/Onboarding';
-import { securityApi } from './lib/api';
+import { securityApi, blockedAppsApi } from './lib/api';
 import { Loader2 } from 'lucide-react';
 
 function App() {
@@ -23,12 +23,24 @@ function App() {
                 setIsOnboarded(onboarded);
             } catch (err) {
                 console.error('Failed to check onboarding status:', err);
-                // Fallback to localStorage for dev/testing
                 const localOnboarded = localStorage.getItem('bastion_onboarded');
                 setIsOnboarded(localOnboarded === 'true');
             }
         };
         checkOnboarding();
+
+        // Background Enforcement Loop
+        const interval = setInterval(async () => {
+            try {
+                // Only enforce if not on onboarding and session logic permits (later)
+                // For now, always enforce enabled blocks
+                await blockedAppsApi.enforceBlocks();
+            } catch (err) {
+                console.error('Failed to enforce blocks:', err);
+            }
+        }, 3000);
+
+        return () => clearInterval(interval);
     }, []);
 
     const completeOnboarding = () => {

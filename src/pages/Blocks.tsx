@@ -46,6 +46,27 @@ export default function Blocks() {
     const [isAdmin, setIsAdmin] = useState(true);
     const [isFixingBrowsers, setIsFixingBrowsers] = useState(false);
 
+    // App Scanning State
+    const [scanTab, setScanTab] = useState<'manual' | 'installed' | 'running'>('manual');
+    const [installedApps, setInstalledApps] = useState<{ name: string; id: string }[]>([]);
+    const [runningProcesses, setRunningProcesses] = useState<{ pid: number; name: string }[]>([]);
+    const [isScanning, setIsScanning] = useState(false);
+
+    const scanApps = async () => {
+        setIsScanning(true);
+        try {
+            const [installed, running] = await Promise.all([
+                blockedAppsApi.getInstalledApplications(),
+                blockedAppsApi.getRunningProcesses()
+            ]);
+            setInstalledApps(installed);
+            setRunningProcesses(running);
+        } catch (err) {
+            console.error('Failed to scan apps:', err);
+        } finally {
+            setIsScanning(false);
+        }
+    };
     const checkAdmin = async () => {
         try {
             const admin = await systemApi.isAdmin();
@@ -90,6 +111,14 @@ export default function Blocks() {
         loadData();
     }, []);
 
+    useEffect(() => {
+        if (showAddModal && activeTab === 'applications') {
+            setScanTab('installed');
+            setNewItem('');
+            scanApps();
+        }
+    }, [showAddModal, activeTab]);
+
     const items = activeTab === 'websites' ? websites : applications;
 
     const filteredItems = items.filter(item => {
@@ -98,6 +127,10 @@ export default function Blocks() {
             : (item as BlockedApp).name;
         return name.toLowerCase().includes(searchQuery.toLowerCase());
     });
+
+    const filteredScannedApps = (scanTab === 'installed' ? installedApps : runningProcesses).filter(app =>
+        app && app.name && app.name.toLowerCase().includes((newItem || '').toLowerCase())
+    );
 
     const toggleItem = async (id: number) => {
         const item = items.find(i => i.id === id);
@@ -156,7 +189,13 @@ export default function Blocks() {
                     await blockedSitesApi.add('cdninstagram.com', newCategory);
                 }
             } else {
-                await blockedAppsApi.add(newItem.trim(), newItem.trim(), newCategory);
+                const procName = newItem.trim();
+                if (applications.some(a => a.process_name.toLowerCase() === procName.toLowerCase())) {
+                    alert('This application is already blocked.');
+                    setIsSaving(false);
+                    return;
+                }
+                await blockedAppsApi.add(procName, procName, newCategory);
             }
             setNewItem('');
             setNewCategory('other');
@@ -449,84 +488,188 @@ export default function Blocks() {
                             animate={{ scale: 1, opacity: 1, y: 0 }}
                             exit={{ scale: 0.9, opacity: 0, y: 20 }}
                             onClick={(e) => e.stopPropagation()}
-                            className="glass-panel w-full max-w-lg rounded-3xl p-8 border border-black/5 dark:border-white/10 shadow-2xl relative overflow-hidden"
+                            className="bg-zinc-950 w-full max-w-2xl rounded-3xl p-8 border border-white/5 shadow-2xl relative overflow-hidden flex flex-col h-[600px] max-h-[85vh]"
                         >
-                            <div className="absolute top-0 right-0 p-32 bg-black/5 dark:bg-white/5 blur-[80px] rounded-full pointer-events-none" />
+                            <div className="absolute top-0 right-0 p-32 bg-white/5 blur-[80px] rounded-full pointer-events-none" />
 
-                            <div className="relative z-10">
+                            <div className="relative z-10 flex flex-col h-full">
                                 <div className="flex items-center justify-between mb-8">
-                                    <h2 className="heading-title text-black dark:text-white">
-                                        Add {activeTab === 'websites' ? 'Website' : 'Application'}
-                                    </h2>
+                                    <div>
+                                        <h2 className="text-2xl font-black text-white">
+                                            Add {activeTab === 'websites' ? 'Website' : 'Application'}
+                                        </h2>
+                                        <p className="text-sm text-zinc-500 font-bold mt-1">
+                                            {activeTab === 'websites'
+                                                ? 'Block distracting domains'
+                                                : 'Choose applications to restrict'
+                                            }
+                                        </p>
+                                    </div>
                                     <button
                                         onClick={() => setShowAddModal(false)}
-                                        className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-full transition-colors"
+                                        className="p-2 hover:bg-white/5 rounded-full transition-colors"
                                     >
-                                        <X className="w-5 h-5 text-gray-400 dark:text-bastion-muted hover:text-black dark:hover:text-white" />
+                                        <X className="w-5 h-5 text-zinc-500 hover:text-white" />
                                     </button>
                                 </div>
 
-                                <div className="space-y-6">
-                                    <div>
-                                        <label className="text-xs font-black text-gray-400 dark:text-bastion-secondary mb-2 block uppercase tracking-widest">
-                                            {activeTab === 'websites' ? 'Domain URL' : 'Application Name'}
-                                        </label>
-                                        <input
-                                            type="text"
-                                            placeholder={activeTab === 'websites' ? 'e.g. twitter.com' : 'e.g. Discord.exe'}
-                                            value={newItem}
-                                            onChange={(e) => setNewItem(e.target.value)}
-                                            onKeyDown={(e) => e.key === 'Enter' && addItem()}
-                                            autoFocus
-                                            className="glass-input text-lg font-black"
-                                        />
+                                {activeTab === 'applications' && (
+                                    <div className="flex gap-1 p-1 bg-white/5 rounded-xl mb-6">
+                                        {[
+                                            { id: 'installed', label: 'Installed', icon: AppWindow },
+                                            { id: 'running', label: 'Running', icon: RefreshCw },
+                                            { id: 'manual', label: 'Manual', icon: Plus },
+                                        ].map((t) => (
+                                            <button
+                                                key={t.id}
+                                                onClick={() => setScanTab(t.id as any)}
+                                                className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${scanTab === t.id
+                                                    ? 'bg-white text-black shadow-lg'
+                                                    : 'text-zinc-500 hover:text-white hover:bg-white/5'
+                                                    }`}
+                                            >
+                                                <t.icon className="w-3.5 h-3.5" />
+                                                {t.label}
+                                            </button>
+                                        ))}
                                     </div>
+                                )}
 
-                                    <div>
-                                        <label className="text-xs font-black text-gray-400 dark:text-bastion-secondary mb-2 block uppercase tracking-widest">Category</label>
-                                        <div className="grid grid-cols-3 gap-2">
-                                            {Object.keys(categoryColors).map(cat => (
-                                                <button
-                                                    key={cat}
-                                                    onClick={() => setNewCategory(cat as Category)}
-                                                    className={`py-2 px-3 rounded-xl border text-xs font-black transition-all capitalize ${newCategory === cat
-                                                        ? 'bg-black dark:bg-white text-white dark:text-black border-transparent shadow-lg'
-                                                        : 'bg-black/5 dark:bg-white/5 border-black/5 dark:border-white/5 text-gray-500 dark:text-bastion-muted hover:bg-black/10 dark:hover:bg-white/10 hover:text-black dark:hover:text-white'
-                                                        }`}
-                                                >
-                                                    {cat}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    {activeTab === 'websites' && (
-                                        <div>
-                                            <p className="text-[10px] font-black text-gray-400 dark:text-bastion-muted uppercase tracking-widest mb-3">Popular Targets</p>
-                                            <div className="flex flex-wrap gap-2">
-                                                {popularSites.slice(0, 6).map((site) => (
-                                                    <button
-                                                        key={site}
-                                                        onClick={() => setNewItem(site)}
-                                                        className="px-3 py-1.5 rounded-lg text-xs font-black bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5 hover:border-black dark:hover:border-white hover:text-black dark:hover:text-white text-gray-400 dark:text-bastion-muted transition-all uppercase tracking-widest"
-                                                    >
-                                                        {site}
-                                                    </button>
-                                                ))}
+                                <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar min-h-0">
+                                    {(activeTab === 'websites' || scanTab === 'manual') ? (
+                                        <div className="space-y-6">
+                                            <div>
+                                                <label className="text-[10px] font-black text-zinc-500 mb-2 block uppercase tracking-[0.2em]">
+                                                    {activeTab === 'websites' ? 'Domain URL' : 'Process Name'}
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    placeholder={activeTab === 'websites' ? 'e.g. twitter.com' : 'e.g. Discord.exe'}
+                                                    value={newItem}
+                                                    onChange={(e) => setNewItem(e.target.value)}
+                                                    onKeyDown={(e) => e.key === 'Enter' && addItem()}
+                                                    autoFocus
+                                                    className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-white font-black placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-white/20 transition-all"
+                                                />
                                             </div>
+
+                                            <div>
+                                                <label className="text-[10px] font-black text-zinc-500 mb-2 block uppercase tracking-[0.2em]">Category</label>
+                                                <div className="grid grid-cols-3 gap-2">
+                                                    {Object.keys(categoryColors).map(cat => (
+                                                        <button
+                                                            key={cat}
+                                                            onClick={() => setNewCategory(cat as Category)}
+                                                            className={`py-2 px-3 rounded-lg border text-[10px] font-black transition-all capitalize uppercase tracking-widest ${newCategory === cat
+                                                                ? 'bg-white text-black border-transparent shadow-lg'
+                                                                : 'bg-white/5 border-white/5 text-zinc-500 hover:bg-white/10 hover:text-white'
+                                                                }`}
+                                                        >
+                                                            {cat}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            {activeTab === 'websites' && (
+                                                <div>
+                                                    <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-3">Suggested Targets</p>
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {popularSites.slice(0, 8).map((site) => (
+                                                            <button
+                                                                key={site}
+                                                                onClick={() => setNewItem(site)}
+                                                                className="px-3 py-1.5 rounded-lg text-[10px] font-black bg-white/5 border border-white/5 hover:border-white hover:text-white text-zinc-500 transition-all uppercase tracking-widest"
+                                                            >
+                                                                {site}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-4">
+                                            {isScanning ? (
+                                                <div className="py-12 flex flex-col items-center justify-center gap-4">
+                                                    <Loader2 className="w-8 h-8 animate-spin text-white/20" />
+                                                    <p className="text-zinc-500 font-bold animate-pulse uppercase tracking-widest text-[10px]">Scanning System...</p>
+                                                </div>
+                                            ) : (
+                                                <div className="flex flex-col gap-4">
+                                                    <div className="relative">
+                                                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
+                                                        <input
+                                                            type="text"
+                                                            placeholder={`Search ${scanTab} apps...`}
+                                                            value={newItem}
+                                                            onChange={(e) => setNewItem(e.target.value)}
+                                                            className="w-full bg-white/5 border border-white/5 rounded-xl pl-11 pr-4 py-3 text-white font-black placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-white/20 transition-all text-sm"
+                                                        />
+                                                    </div>
+                                                    <div className="grid grid-cols-1 gap-2">
+                                                        {filteredScannedApps.length === 0 ? (
+                                                            <p className="text-center py-8 text-zinc-500 font-bold uppercase tracking-widest text-[10px]">No matches found</p>
+                                                        ) : (
+                                                            filteredScannedApps.map((app, idx) => (
+                                                                <button
+                                                                    key={`${scanTab}-${idx}`}
+                                                                    onClick={async () => {
+                                                                        if (!app || !app.name) return;
+                                                                        const procName = (scanTab === 'running'
+                                                                            ? app.name
+                                                                            : app.name.toLowerCase().includes('steam') ? 'steam.exe' : `${app.name.replace(/\s+/g, '')}.exe`).trim();
+
+                                                                        // Check for duplicates
+                                                                        if (applications.some(a => a.process_name.toLowerCase() === procName.toLowerCase())) {
+                                                                            alert('This application is already blocked.');
+                                                                            return;
+                                                                        }
+
+                                                                        setIsSaving(true);
+                                                                        try {
+                                                                            await blockedAppsApi.add(app.name, procName, newCategory);
+                                                                            await loadData();
+                                                                            setShowAddModal(false);
+                                                                        } catch (err) {
+                                                                            console.error('Failed to add app:', err);
+                                                                            alert('Failed to add application.');
+                                                                        } finally {
+                                                                            setIsSaving(false);
+                                                                        }
+                                                                    }}
+                                                                    className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/20 transition-all group"
+                                                                >
+                                                                    <div className="flex items-center gap-3">
+                                                                        <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-xs font-black text-white/20 group-hover:text-white transition-colors">
+                                                                            {app.name[0]}
+                                                                        </div>
+                                                                        <span className="text-sm font-black text-zinc-300 group-hover:text-white transition-colors">
+                                                                            {app.name}
+                                                                        </span>
+                                                                    </div>
+                                                                    <Plus className="w-4 h-4 text-zinc-500 group-hover:text-white transition-colors" />
+                                                                </button>
+                                                            ))
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
                                     )}
+                                </div>
 
-                                    <div className="pt-4 flex justify-end gap-3">
-                                        <button
-                                            onClick={() => setShowAddModal(false)}
-                                            className="px-6 py-3 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 text-gray-400 dark:text-bastion-muted hover:text-black dark:hover:text-white transition-colors font-black uppercase tracking-widest text-xs"
-                                        >
-                                            Cancel
-                                        </button>
+                                <div className="pt-8 flex justify-end gap-3 border-t border-white/5 mt-6">
+                                    <button
+                                        onClick={() => setShowAddModal(false)}
+                                        className="px-6 py-3 rounded-xl hover:bg-white/5 text-zinc-500 hover:text-white transition-colors font-black uppercase tracking-widest text-xs"
+                                    >
+                                        Cancel
+                                    </button>
+                                    {(activeTab === 'websites' || scanTab === 'manual') && (
                                         <button
                                             onClick={addItem}
-                                            disabled={isSaving}
+                                            disabled={isSaving || !newItem}
                                             className="btn-primary px-8"
                                         >
                                             {isSaving ? (
@@ -535,7 +678,7 @@ export default function Blocks() {
                                                 'Add Block'
                                             )}
                                         </button>
-                                    </div>
+                                    )}
                                 </div>
                             </div>
                         </motion.div>

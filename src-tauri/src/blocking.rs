@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use std::fs::{self, OpenOptions};
 use std::io::{Read, Write};
 use std::path::PathBuf;
-use sysinfo::{System, Signal};
+use sysinfo::{System, Signal, ProcessesToUpdate};
 
 #[cfg(target_os = "windows")]
 const HOSTS_PATH: &str = "C:\\Windows\\System32\\drivers\\etc\\hosts";
@@ -225,30 +225,79 @@ pub fn flush_dns() -> Result<(), BlockingError> {
 /// Application Blocking via process monitoring
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct InstalledApp {
+    #[serde(alias = "Name")]
+    pub name: String,
+    #[serde(alias = "AppID")]
+    pub id: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RunningProcess {
     pub pid: u32,
     pub name: String,
 }
 
+/// Get all installed applications using PowerShell
+pub fn get_installed_applications() -> Vec<InstalledApp> {
+    #[cfg(target_os = "windows")]
+    {
+        use std::process::Command;
+        
+        let output = Command::new("powershell")
+            .args(&["-Command", "Get-StartApps | Where-Object { $_.Name -notmatch '^Windows ' -and $_.AppID -notmatch 'Windows' } | Select-Object @{N='Name';E={$_.Name}}, @{N='AppID';E={$_.AppID}} | ConvertTo-Json -Compress"])
+            .output();
+
+        if let Ok(output) = output {
+            let stdout = String::from_utf8_lossy(&output.stdout);
+            if !stdout.trim().is_empty() {
+                if let Ok(apps) = serde_json::from_str::<Vec<InstalledApp>>(&stdout) {
+                    return apps;
+                }
+                // Fallback for single object output
+                if let Ok(app) = serde_json::from_str::<InstalledApp>(&stdout) {
+                    return vec![app];
+                }
+            }
+        }
+    }
+    
+    // Fallback/Common apps for manual discovery or if PowerShell fails
+    vec![
+        InstalledApp { name: "Discord".to_string(), id: "Discord.exe".to_string() },
+        InstalledApp { name: "Spotify".to_string(), id: "Spotify.exe".to_string() },
+        InstalledApp { name: "Firefox".to_string(), id: "firefox.exe".to_string() },
+        InstalledApp { name: "Chrome".to_string(), id: "chrome.exe".to_string() },
+        InstalledApp { name: "Steam".to_string(), id: "steam.exe".to_string() },
+        InstalledApp { name: "VS Code".to_string(), id: "Code.exe".to_string() },
+    ]
+}
+
 /// Get all running processes
 pub fn get_running_processes() -> Vec<RunningProcess> {
-    let mut system = System::new_all();
-    system.refresh_all();
+    let mut system = System::new();
+    system.refresh_processes(ProcessesToUpdate::All, true);
     
-    system
+    let mut processes: Vec<RunningProcess> = system
         .processes()
         .iter()
         .map(|(pid, process)| RunningProcess {
             pid: pid.as_u32(),
             name: process.name().to_string_lossy().to_string(),
         })
-        .collect()
+        .collect();
+
+    // Sort by name and remove duplicates
+    processes.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
+    processes.dedup_by(|a, b| a.name.to_lowercase() == b.name.to_lowercase());
+    
+    processes
 }
 
 /// Check if a process is running by name
 pub fn is_process_running(process_name: &str) -> bool {
-    let mut system = System::new_all();
-    system.refresh_all();
+    let mut system = System::new();
+    system.refresh_processes(ProcessesToUpdate::All, true);
     
     system
         .processes()
@@ -258,8 +307,8 @@ pub fn is_process_running(process_name: &str) -> bool {
 
 /// Kill a process by name (returns number of processes killed)
 pub fn kill_process_by_name(process_name: &str) -> Result<u32, BlockingError> {
-    let mut system = System::new_all();
-    system.refresh_all();
+    let mut system = System::new();
+    system.refresh_processes(ProcessesToUpdate::All, true);
     
     let mut killed = 0u32;
     let process_name_lower = process_name.to_lowercase();

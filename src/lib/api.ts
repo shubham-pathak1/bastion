@@ -125,6 +125,9 @@ export const blockedAppsApi = {
     getRunningProcesses: () =>
         invoke<RunningProcess[]>('get_running_processes'),
 
+    getInstalledApplications: () =>
+        invoke<{ name: string; id: string }[]>('get_installed_applications'),
+
     enforceBlocks: () =>
         invoke<string[]>('enforce_app_blocks'),
 };
