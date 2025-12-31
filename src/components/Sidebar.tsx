@@ -6,7 +6,6 @@ import {
     ShieldOff,
     Target,
     Brain,
-    LineChart,
     SlidersHorizontal,
     ChevronLeft,
 } from 'lucide-react';
@@ -23,7 +22,6 @@ const navItems = [
     { path: '/blocks', icon: ShieldOff, label: 'Blocks' },
     { path: '/sessions', icon: Target, label: 'Sessions' },
     { path: '/pomodoro', icon: Brain, label: 'Pomodoro' },
-    { path: '/stats', icon: LineChart, label: 'Stats' },
     { path: '/settings', icon: SlidersHorizontal, label: 'Settings' },
 ];
 

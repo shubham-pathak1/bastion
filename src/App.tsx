@@ -5,7 +5,6 @@ import Dashboard from './pages/Dashboard';
 import Blocks from './pages/Blocks';
 import Sessions from './pages/Sessions';
 import Pomodoro from './pages/Pomodoro';
-import Stats from './pages/Stats';
 import Settings from './pages/Settings';
 import Onboarding from './pages/Onboarding';
 import { securityApi, blockedAppsApi } from './lib/api';
@@ -86,7 +85,6 @@ function App() {
                             <Route path="/blocks" element={<Blocks />} />
                             <Route path="/sessions" element={<Sessions />} />
                             <Route path="/pomodoro" element={<Pomodoro />} />
-                            <Route path="/stats" element={<Stats />} />
                             <Route path="/settings" element={<Settings />} />
                             <Route path="*" element={<Navigate to="/" replace />} />
                         </Routes>
