@@ -42,15 +42,19 @@ export default function Settings() {
     const [passwordError, setPasswordError] = useState('');
     const [passwordSuccess, setPasswordSuccess] = useState('');
 
+    // Custom Warning Text
+    const [customWarningText, setCustomWarningText] = useState('');
+
     useEffect(() => {
         // Load settings
         const loadSettings = async () => {
             try {
-                const [boot, tray, notify, autostart] = await Promise.all([
+                const [boot, tray, notify, autostart, warningText] = await Promise.all([
                     settingsApi.get('start_on_boot'),
                     settingsApi.get('minimize_to_tray'),
                     settingsApi.get('show_notifications'),
-                    isEnabled()
+                    isEnabled(),
+                    settingsApi.get('custom_warning_text')
                 ]);
 
                 if (boot !== null) setStartOnBoot(boot === 'true');
@@ -58,6 +62,7 @@ export default function Settings() {
 
                 if (tray !== null) setMinimizeToTray(tray === 'true');
                 if (notify !== null) setShowNotifications(notify === 'true');
+                if (warningText !== null) setCustomWarningText(warningText);
             } catch (err) {
                 console.error('Failed to load settings:', err);
             }
@@ -94,6 +99,15 @@ export default function Settings() {
             await settingsApi.set('show_notifications', String(newValue));
         } catch (err) {
             console.error('Failed to update notifications:', err);
+        }
+    };
+
+    const updateWarningText = async (text: string) => {
+        setCustomWarningText(text);
+        try {
+            await settingsApi.set('custom_warning_text', text);
+        } catch (err) {
+            console.error('Failed to update warning text:', err);
         }
     };
 
@@ -236,6 +250,24 @@ export default function Settings() {
                                     <SettingRow label="Notifications" description="Receive alerts for session start/stop and blocks">
                                         <Toggle enabled={showNotifications} onChange={toggleNotifications} />
                                     </SettingRow>
+
+                                    <div className="h-px bg-black/10 dark:bg-white/10 my-4" />
+
+                                    {/* Custom Warning Text */}
+                                    <div className="p-4 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
+                                        <div className="mb-3">
+                                            <p className="font-bold text-black dark:text-white">Custom Warning Message</p>
+                                            <p className="text-sm text-gray-500 dark:text-bastion-muted mt-0.5">Shown when you try to access blocked content</p>
+                                        </div>
+                                        <textarea
+                                            value={customWarningText}
+                                            onChange={(e) => updateWarningText(e.target.value)}
+                                            placeholder="e.g., Is this really worth breaking your focus?"
+                                            className="glass-input w-full min-h-[80px] resize-none"
+                                            maxLength={200}
+                                        />
+                                        <p className="text-xs text-gray-400 dark:text-bastion-muted mt-2 text-right">{customWarningText.length}/200</p>
+                                    </div>
                                 </div>
                             )}
 

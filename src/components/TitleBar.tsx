@@ -1,0 +1,78 @@
+import { useState } from 'react';
+import { Window } from '@tauri-apps/api/window';
+import { Minus, Square, X, Copy } from 'lucide-react';
+
+const appWindow = Window.getCurrent();
+
+export default function TitleBar() {
+    const [isMaximized, setIsMaximized] = useState(false);
+
+    const handleMinimize = () => appWindow.minimize();
+
+    const handleMaximize = async () => {
+        const maximized = await appWindow.isMaximized();
+        if (maximized) {
+            await appWindow.unmaximize();
+            setIsMaximized(false);
+        } else {
+            await appWindow.maximize();
+            setIsMaximized(true);
+        }
+    };
+
+    const handleClose = () => appWindow.close();
+
+    return (
+        <div
+            data-tauri-drag-region
+            className="h-8 bg-black flex items-center justify-between select-none shrink-0"
+        >
+            {/* Left side - App title */}
+            <div
+                data-tauri-drag-region
+                className="flex items-center gap-2 pl-4"
+            >
+                <span
+                    data-tauri-drag-region
+                    className="text-xs font-bold text-white/40 uppercase tracking-widest"
+                >
+                    Bastion
+                </span>
+            </div>
+
+            {/* Right side - Window controls */}
+            <div className="flex items-center h-full">
+                {/* Minimize */}
+                <button
+                    onClick={handleMinimize}
+                    className="h-full px-4 flex items-center justify-center hover:bg-white/5 transition-colors group"
+                    title="Minimize"
+                >
+                    <Minus className="w-3.5 h-3.5 text-white/40 group-hover:text-white/70 transition-colors" />
+                </button>
+
+                {/* Maximize/Restore */}
+                <button
+                    onClick={handleMaximize}
+                    className="h-full px-4 flex items-center justify-center hover:bg-white/5 transition-colors group"
+                    title={isMaximized ? "Restore" : "Maximize"}
+                >
+                    {isMaximized ? (
+                        <Copy className="w-3 h-3 text-white/40 group-hover:text-white/70 transition-colors rotate-180" />
+                    ) : (
+                        <Square className="w-3 h-3 text-white/40 group-hover:text-white/70 transition-colors" />
+                    )}
+                </button>
+
+                {/* Close */}
+                <button
+                    onClick={handleClose}
+                    className="h-full px-4 flex items-center justify-center hover:bg-red-500/80 transition-colors group"
+                    title="Close"
+                >
+                    <X className="w-3.5 h-3.5 text-white/40 group-hover:text-white transition-colors" />
+                </button>
+            </div>
+        </div>
+    );
+}

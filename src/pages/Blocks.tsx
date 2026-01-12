@@ -17,9 +17,10 @@ import {
     ShoppingBag,
     Briefcase,
     Layers,
-    ShieldCheck
+    ShieldCheck,
+    MessageCircle
 } from 'lucide-react';
-import { blockedSitesApi, blockedAppsApi, systemApi, BlockedSite, BlockedApp } from '../lib/api';
+import { blockedSitesApi, blockedAppsApi, systemApi, settingsApi, BlockedSite, BlockedApp } from '../lib/api';
 
 type TabType = 'websites' | 'applications';
 type Category = 'social' | 'entertainment' | 'news' | 'shopping' | 'work' | 'other';
@@ -61,6 +62,10 @@ export default function Blocks() {
 
     const [isAdmin, setIsAdmin] = useState(true);
     const [isFixingBrowsers, setIsFixingBrowsers] = useState(false);
+
+    // Custom Warning Text
+    const [customWarningText, setCustomWarningText] = useState('');
+    const [isEditingWarning, setIsEditingWarning] = useState(false);
 
     // App Scanning State
     const [scanTab, setScanTab] = useState<'manual' | 'installed' | 'running'>('manual');
@@ -131,6 +136,16 @@ export default function Blocks() {
     useEffect(() => {
         checkAdmin();
         loadData();
+        // Load custom warning text
+        const loadWarningText = async () => {
+            try {
+                const text = await settingsApi.get('custom_warning_text');
+                if (text) setCustomWarningText(text);
+            } catch (err) {
+                console.error('Failed to load warning text:', err);
+            }
+        };
+        loadWarningText();
     }, []);
 
     useEffect(() => {
@@ -410,6 +425,84 @@ export default function Blocks() {
                             <div className="w-1 h-1 rounded-full bg-zinc-700" />
                             Policy hardening requires system administrator privileges
                         </p>
+                    </div>
+
+                    {/* Custom Warning Message Card */}
+                    <div className="mx-2 mb-8">
+                        <div className="relative group">
+                            <div className="absolute -inset-0.5 bg-gradient-to-r from-amber-500/20 via-amber-500/10 to-transparent rounded-2xl blur opacity-0 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"></div>
+                            <div className="relative glass-panel p-6 border border-white/5 dark:border-white/5 hover:border-amber-500/30 transition-all duration-500 bg-black/20">
+                                <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+                                    <div className="flex items-start gap-5">
+                                        <div className="w-14 h-14 rounded-2xl bg-amber-500/10 flex items-center justify-center flex-shrink-0 group-hover:bg-amber-500/20 transition-colors duration-500">
+                                            <MessageCircle className="w-7 h-7 text-amber-500" />
+                                        </div>
+                                        <div className="flex-1">
+                                            <div className="flex items-center gap-3">
+                                                <p className="font-black text-white transition-colors uppercase tracking-tight text-xl">Block Warning</p>
+                                                <div className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-400 text-[10px] font-black uppercase tracking-widest border border-amber-500/20">Personalized</div>
+                                            </div>
+                                            <p className="text-sm text-zinc-400 font-bold max-w-xl leading-relaxed mt-1">
+                                                This message will be shown when you try to access blocked content.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Warning Text Input */}
+                                <div className="mt-6">
+                                    {isEditingWarning ? (
+                                        <div className="space-y-3">
+                                            <textarea
+                                                value={customWarningText}
+                                                onChange={(e) => setCustomWarningText(e.target.value)}
+                                                placeholder="e.g., Is this really worth breaking your focus? You have a deadline tomorrow!"
+                                                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-medium placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-amber-500/30 transition-all min-h-[80px] resize-none"
+                                                maxLength={200}
+                                                autoFocus
+                                            />
+                                            <div className="flex items-center justify-between">
+                                                <p className="text-xs text-zinc-500">{customWarningText.length}/200 characters</p>
+                                                <div className="flex gap-2">
+                                                    <button
+                                                        onClick={() => setIsEditingWarning(false)}
+                                                        className="px-4 py-2 rounded-lg text-zinc-400 hover:text-white hover:bg-white/5 transition-all text-xs font-black uppercase tracking-widest"
+                                                    >
+                                                        Cancel
+                                                    </button>
+                                                    <button
+                                                        onClick={async () => {
+                                                            try {
+                                                                await settingsApi.set('custom_warning_text', customWarningText);
+                                                                setIsEditingWarning(false);
+                                                                showNotification('Warning message updated!');
+                                                            } catch (err) {
+                                                                showNotification('Failed to save warning message', 'error');
+                                                            }
+                                                        }}
+                                                        className="px-6 py-2 rounded-lg bg-amber-500 text-black font-black uppercase tracking-widest text-xs hover:bg-amber-400 transition-all"
+                                                    >
+                                                        Save
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div
+                                            onClick={() => setIsEditingWarning(true)}
+                                            className="p-4 rounded-xl bg-white/5 border border-white/5 hover:border-amber-500/30 cursor-pointer transition-all group/msg"
+                                        >
+                                            <p className={`text-sm font-medium leading-relaxed ${customWarningText ? 'text-white' : 'text-zinc-500 italic'}`}>
+                                                {customWarningText || 'Click to add a personalized warning message...'}
+                                            </p>
+                                            <p className="text-[10px] text-zinc-600 mt-2 uppercase tracking-widest font-black group-hover/msg:text-amber-500 transition-colors">
+                                                Click to edit
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     {/* Content List */}

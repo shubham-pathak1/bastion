@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, Pause, RotateCcw, Waves, Brain, Settings2, Volume2, VolumeX, Maximize2 } from 'lucide-react';
+import { Play, Pause, RotateCcw, Waves, Brain, Settings2, Volume2, VolumeX, Maximize2, SkipForward } from 'lucide-react';
 import { sessionsApi } from '../lib/api';
 
 type Phase = 'work' | 'break' | 'longBreak';
@@ -96,6 +96,12 @@ export default function Pomodoro() {
         setPhase(newPhase);
         setTimeLeft(getPhaseTime(newPhase));
         setIsRunning(false);
+    };
+
+    const skipBreak = () => {
+        setPhase('work');
+        setTimeLeft(settings.workDuration * 60);
+        setIsRunning(true);
     };
 
     const formatTime = (seconds: number) => {
@@ -293,6 +299,21 @@ export default function Pomodoro() {
                         >
                             <Settings2 className={`w-6 h-6 ${showSettings ? 'text-white dark:text-black' : 'text-gray-400 dark:text-bastion-muted'}`} />
                         </motion.button>
+
+                        {/* Skip Break Button - Only visible during break phases */}
+                        {phase !== 'work' && (
+                            <motion.button
+                                initial={{ opacity: 0, scale: 0.8 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                whileHover={{ scale: 1.1 }}
+                                whileTap={{ scale: 0.9 }}
+                                onClick={skipBreak}
+                                className="w-16 h-16 rounded-full bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 border border-black/5 dark:border-white/5 hover:border-black/20 dark:hover:border-white/20 flex items-center justify-center transition-colors group"
+                                title="Skip Break"
+                            >
+                                <SkipForward className="w-6 h-6 text-gray-500 dark:text-bastion-muted group-hover:text-black dark:group-hover:text-white transition-colors" />
+                            </motion.button>
+                        )}
                     </div>
                 </div>
 
