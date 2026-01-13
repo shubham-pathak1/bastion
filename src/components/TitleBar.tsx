@@ -1,26 +1,54 @@
-import { useState } from 'react';
-import { Window } from '@tauri-apps/api/window';
+import { useState, useEffect } from 'react';
+import { getCurrentWindow } from '@tauri-apps/api/window';
 import { Minus, Square, X, Copy } from 'lucide-react';
-
-const appWindow = Window.getCurrent();
 
 export default function TitleBar() {
     const [isMaximized, setIsMaximized] = useState(false);
+    const appWindow = getCurrentWindow();
 
-    const handleMinimize = () => appWindow.minimize();
+    useEffect(() => {
+        // Check initial maximized state
+        const checkMaximized = async () => {
+            try {
+                const maximized = await appWindow.isMaximized();
+                setIsMaximized(maximized);
+            } catch (err) {
+                console.error('Failed to check maximized state:', err);
+            }
+        };
+        checkMaximized();
+    }, []);
 
-    const handleMaximize = async () => {
-        const maximized = await appWindow.isMaximized();
-        if (maximized) {
-            await appWindow.unmaximize();
-            setIsMaximized(false);
-        } else {
-            await appWindow.maximize();
-            setIsMaximized(true);
+    const handleMinimize = async () => {
+        try {
+            await appWindow.minimize();
+        } catch (err) {
+            console.error('Failed to minimize:', err);
         }
     };
 
-    const handleClose = () => appWindow.close();
+    const handleMaximize = async () => {
+        try {
+            const maximized = await appWindow.isMaximized();
+            if (maximized) {
+                await appWindow.unmaximize();
+                setIsMaximized(false);
+            } else {
+                await appWindow.maximize();
+                setIsMaximized(true);
+            }
+        } catch (err) {
+            console.error('Failed to maximize:', err);
+        }
+    };
+
+    const handleClose = async () => {
+        try {
+            await appWindow.close();
+        } catch (err) {
+            console.error('Failed to close:', err);
+        }
+    };
 
     return (
         <div
@@ -76,3 +104,4 @@ export default function TitleBar() {
         </div>
     );
 }
+
