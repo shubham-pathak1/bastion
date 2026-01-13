@@ -13,13 +13,15 @@ use session::{ActiveSession, PomodoroState, SessionManager};
 use storage::{BlockedApp, BlockedSite, BlockEvent, Database, FocusStats, Session};
 
 use std::sync::Arc;
-use tauri::{Manager, State};
+use tauri::{Manager, State, WebviewWindowBuilder, WebviewUrl};
+use tauri::Emitter;
 use tauri::menu::{MenuBuilder, MenuItemBuilder};
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
 
 pub struct AppState {
     pub db: Database,
     pub session_manager: SessionManager,
+    pub app_handle: std::sync::Mutex<Option<tauri::AppHandle>>,
 }
 
 // ============= Security Commands =============
@@ -294,7 +296,9 @@ pub fn run() {
                     .unwrap_or("true".to_string()) == "true";
 
                 if minimize_to_tray {
-                    let _ = window.hide();
+                    // In Headless mode, we close the window to free up WebView2 memory
+                    // The background loop in setup() keeps the logic running
+                    window.close().unwrap();
                     api.prevent_close();
                 }
             }
@@ -304,13 +308,57 @@ pub fn run() {
             let db = Database::new(data_dir).expect("Failed to initialize database");
             let session_manager = SessionManager::new();
             
-            let state = Arc::new(AppState { db, session_manager });
+            let state = Arc::new(AppState { 
+                db, 
+                session_manager,
+                app_handle: std::sync::Mutex::new(Some(app.handle().clone())),
+            });
             app.manage(state.clone());
             
             // Start blocking stats listener
             let server_state = state.clone();
             tauri::async_runtime::spawn(async move {
                 server::start_block_server(server_state).await;
+            });
+
+            // Master Background Loop (The "Heartbeat" of Bastion)
+            let background_state = state.clone();
+            tauri::async_runtime::spawn(async move {
+                let mut timer_interval = tokio::time::interval(std::time::Duration::from_secs(1));
+                let mut enforcement_counter = 0;
+
+                loop {
+                    timer_interval.tick().await;
+
+                    // 1. Tick Pomodoro (every second)
+                    let _ = background_state.session_manager.pomodoro_tick();
+
+                    // 2. Enforce App Blocks (every 3 seconds)
+                    enforcement_counter += 1;
+                    if enforcement_counter >= 3 {
+                        enforcement_counter = 0;
+                        if let Ok(apps) = background_state.db.get_blocked_apps() {
+                            let blocked_process_names: Vec<String> = apps
+                                .into_iter()
+                                .filter(|a| a.enabled)
+                                .map(|a| a.process_name)
+                                .collect();
+                            
+                            let killed = blocking::enforce_app_blocks(&blocked_process_names);
+                            
+                            // Log block events and notify frontend
+                            if !killed.is_empty() {
+                                for app in &killed {
+                                    let _ = background_state.db.log_block_event(app, "app");
+                                }
+                                // Emit event to all windows if any apps were killed
+                                if let Some(handle) = background_state.app_handle.lock().unwrap().as_ref() {
+                                    let _ = handle.emit("blocked-apps", killed);
+                                }
+                            }
+                        }
+                    }
+                }
             });
             
             // Tray Menu
@@ -331,10 +379,7 @@ pub fn run() {
                             std::process::exit(0);
                         }
                         "show" => {
-                            if let Some(window) = app.get_webview_window("main") {
-                                let _ = window.show();
-                                let _ = window.set_focus();
-                            }
+                            ensure_window(app);
                         }
                         _ => {}
                     }
@@ -346,11 +391,7 @@ pub fn run() {
                         ..
                     } = event
                     {
-                        let app = tray.app_handle();
-                        if let Some(window) = app.get_webview_window("main") {
-                            let _ = window.show();
-                            let _ = window.set_focus();
-                        }
+                        ensure_window(tray.app_handle());
                     }
                 })
                 .build(app)?;
@@ -403,4 +444,26 @@ pub fn run() {
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+}
+
+fn ensure_window(app: &tauri::AppHandle) {
+    if let Some(window) = app.get_webview_window("main") {
+        let _ = window.show();
+        let _ = window.set_focus();
+    } else {
+        // Create new window with the same specs as tauri.conf.json
+        let _window = WebviewWindowBuilder::new(
+            app,
+            "main",
+            WebviewUrl::App("index.html".into())
+        )
+        .title("bastion")
+        .inner_size(1000.0, 700.0)
+        .min_inner_size(800.0, 600.0)
+        .decorations(false)
+        .transparent(true)
+        .center()
+        .build()
+        .unwrap();
+    }
 }

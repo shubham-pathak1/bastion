@@ -53,20 +53,10 @@ export default function TitleBar() {
     return (
         <div
             data-tauri-drag-region
-            className="h-8 bg-black flex items-center justify-between select-none shrink-0"
+            className="h-8 bg-black flex items-center justify-end select-none shrink-0"
         >
-            {/* Left side - App title */}
-            <div
-                data-tauri-drag-region
-                className="flex items-center gap-2 pl-4"
-            >
-                <span
-                    data-tauri-drag-region
-                    className="text-xs font-bold text-white/40 uppercase tracking-widest"
-                >
-                    Bastion
-                </span>
-            </div>
+            {/* Draggable area */}
+            <div data-tauri-drag-region className="flex-1 h-full" />
 
             {/* Right side - Window controls */}
             <div className="flex items-center h-full">

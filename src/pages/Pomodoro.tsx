@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Play, Pause, RotateCcw, Waves, Brain, Settings2, Volume2, VolumeX, Maximize2, SkipForward } from 'lucide-react';
-import { sessionsApi } from '../lib/api';
+import { pomodoroApi } from '../lib/api';
 
 type Phase = 'work' | 'break' | 'longBreak';
 
@@ -23,10 +23,36 @@ export default function Pomodoro() {
     });
 
     const [phase, setPhase] = useState<Phase>('work');
-    const [timeLeft, setTimeLeft] = useState(settings.workDuration * 60);
+    const [timeLeft, setTimeLeft] = useState(25 * 60);
     const [isRunning, setIsRunning] = useState(false);
     const [completedSessions, setCompletedSessions] = useState(0);
     const [showSettings, setShowSettings] = useState(false);
+
+    // Initial load and Polling
+    useEffect(() => {
+        const syncState = async () => {
+            try {
+                const state = await pomodoroApi.getState();
+                setPhase(state.phase.toLowerCase() as Phase);
+                setTimeLeft(state.time_remaining);
+                setIsRunning(state.is_running);
+                setCompletedSessions(state.completed_sessions);
+                setSettings(s => ({
+                    ...s,
+                    workDuration: Math.floor(state.work_duration / 60),
+                    breakDuration: Math.floor(state.break_duration / 60),
+                    longBreakDuration: Math.floor(state.long_break_duration / 60),
+                    sessionsUntilLongBreak: state.sessions_until_long_break
+                }));
+            } catch (err) {
+                console.error('Failed to sync pomodoro state:', err);
+            }
+        };
+
+        syncState();
+        const interval = setInterval(syncState, 1000);
+        return () => clearInterval(interval);
+    }, []);
 
     const getPhaseTime = useCallback((p: Phase) => {
         switch (p) {
@@ -36,72 +62,75 @@ export default function Pomodoro() {
         }
     }, [settings]);
 
-    useEffect(() => {
-        setTimeLeft(getPhaseTime(phase));
-    }, [settings, phase, getPhaseTime]);
-
-    useEffect(() => {
-        let interval: ReturnType<typeof setInterval> | null = null;
-
-        if (isRunning && timeLeft > 0) {
-            interval = setInterval(() => {
-                setTimeLeft((t) => t - 1);
-            }, 1000);
-        } else if (timeLeft === 0) {
-            handlePhaseComplete();
-        }
-
-        return () => {
-            if (interval) clearInterval(interval);
-        };
-    }, [isRunning, timeLeft]);
-
-    const handlePhaseComplete = async () => {
-        setIsRunning(false);
-        // Play sound if enabled (mock)
-        if (settings.soundEnabled) {
-            // new Audio('/sounds/bell.mp3').play().catch(() => {}); 
-        }
-
-        if (phase === 'work') {
-            const newCount = completedSessions + 1;
-            setCompletedSessions(newCount);
-
-            // Record focus time
-            try {
-                await sessionsApi.startFocus('Pomodoro', settings.workDuration, false);
-            } catch (err) {
-                console.error('Failed to record pomodoro:', err);
-            }
-
-            if (newCount % settings.sessionsUntilLongBreak === 0) {
-                setPhase('longBreak');
-                setTimeLeft(settings.longBreakDuration * 60);
+    const toggleTimer = async () => {
+        try {
+            if (isRunning) {
+                await pomodoroApi.pause();
             } else {
-                setPhase('break');
-                setTimeLeft(settings.breakDuration * 60);
+                await pomodoroApi.start();
             }
-        } else {
-            setPhase('work');
-            setTimeLeft(settings.workDuration * 60);
+            setIsRunning(!isRunning);
+        } catch (err) {
+            console.error('Failed to toggle timer:', err);
         }
     };
 
-    const reset = () => {
-        setIsRunning(false);
-        setTimeLeft(getPhaseTime(phase));
+    const reset = async () => {
+        try {
+            await pomodoroApi.reset();
+            const state = await pomodoroApi.getState();
+            setTimeLeft(state.time_remaining);
+            setIsRunning(false);
+        } catch (err) {
+            console.error('Failed to reset timer:', err);
+        }
     };
 
-    const switchPhase = (newPhase: Phase) => {
-        setPhase(newPhase);
-        setTimeLeft(getPhaseTime(newPhase));
-        setIsRunning(false);
+    const switchPhase = async (newPhase: Phase) => {
+        try {
+            const work = newPhase === 'work' ? settings.workDuration : settings.workDuration;
+            const sBreak = newPhase === 'break' ? settings.breakDuration : settings.breakDuration;
+            const lBreak = newPhase === 'longBreak' ? settings.longBreakDuration : settings.longBreakDuration;
+
+            // This is a bit of a hack since Rust doesn't have switchPhase, 
+            // but we can just use setSettings-like logic
+            await pomodoroApi.configure(
+                work * 60,
+                sBreak * 60,
+                lBreak * 60,
+                settings.sessionsUntilLongBreak
+            );
+            setPhase(newPhase);
+        } catch (err) {
+            console.error('Failed to switch phase:', err);
+        }
     };
 
-    const skipBreak = () => {
-        setPhase('work');
-        setTimeLeft(settings.workDuration * 60);
-        setIsRunning(true);
+    const skipBreak = async () => {
+        try {
+            // Configure with current settings to reset to work phase if needed
+            // Or add a 'skip' command to Rust. 
+            // For now, let's just trigger a reset and start if it was a break.
+            await pomodoroApi.reset();
+            await pomodoroApi.start();
+        } catch (err) {
+            console.error('Failed to skip break:', err);
+        }
+    };
+
+    const updateSettings = async (newSettings: Partial<PomodoroSettings>) => {
+        const s = { ...settings, ...newSettings };
+        setSettings(s);
+        try {
+            await pomodoroApi.configure(
+                s.workDuration * 60,
+                s.breakDuration * 60,
+                s.longBreakDuration * 60,
+                s.sessionsUntilLongBreak
+            );
+        } catch (err) {
+            console.error('Failed to configure pomodoro:', err);
+        }
     };
 
     const formatTime = (seconds: number) => {
@@ -275,7 +304,7 @@ export default function Pomodoro() {
                         <motion.button
                             whileHover={{ scale: 1.1 }}
                             whileTap={{ scale: 0.9 }}
-                            onClick={() => setIsRunning(!isRunning)}
+                            onClick={toggleTimer}
                             className={`w-16 h-16 rounded-full flex items-center justify-center transition-all ${isRunning
                                 ? 'bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10'
                                 : `bg-black dark:bg-white text-white dark:text-black shadow-lg`
@@ -369,7 +398,7 @@ export default function Pomodoro() {
                                             {[15, 25, 45, 60].map(v => (
                                                 <button
                                                     key={v}
-                                                    onClick={() => setSettings(s => ({ ...s, workDuration: v }))}
+                                                    onClick={() => updateSettings({ workDuration: v })}
                                                     className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${settings.workDuration === v
                                                         ? 'bg-white dark:bg-white/20 text-black dark:text-white shadow-sm'
                                                         : 'text-gray-400 dark:text-bastion-muted hover:text-black dark:hover:text-white'
@@ -386,7 +415,7 @@ export default function Pomodoro() {
                                             <label className="text-xs text-gray-400 dark:text-bastion-muted mb-1.5 block font-bold">Short Break</label>
                                             <select
                                                 value={settings.breakDuration}
-                                                onChange={(e) => setSettings(s => ({ ...s, breakDuration: Number(e.target.value) }))}
+                                                onChange={(e) => updateSettings({ breakDuration: Number(e.target.value) })}
                                                 className="bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl w-full py-2 px-3 text-sm text-black dark:text-white appearance-none cursor-pointer outline-none focus:border-black dark:focus:border-white transition-all"
                                             >
                                                 {[3, 5, 10, 15].map(v => (
@@ -398,7 +427,7 @@ export default function Pomodoro() {
                                             <label className="text-xs text-gray-400 dark:text-bastion-muted mb-1.5 block font-bold">Long Break</label>
                                             <select
                                                 value={settings.longBreakDuration}
-                                                onChange={(e) => setSettings(s => ({ ...s, longBreakDuration: Number(e.target.value) }))}
+                                                onChange={(e) => updateSettings({ longBreakDuration: Number(e.target.value) })}
                                                 className="bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl w-full py-2 px-3 text-sm text-black dark:text-white appearance-none cursor-pointer outline-none focus:border-black dark:focus:border-white transition-all"
                                             >
                                                 {[10, 15, 20, 30].map(v => (

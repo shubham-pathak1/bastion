@@ -9,8 +9,9 @@ import Sessions from './pages/Sessions';
 import Pomodoro from './pages/Pomodoro';
 import Settings from './pages/Settings';
 import Onboarding from './pages/Onboarding';
-import { securityApi, blockedAppsApi, settingsApi } from './lib/api';
+import { securityApi, settingsApi } from './lib/api';
 import { Loader2 } from 'lucide-react';
+import { listen } from '@tauri-apps/api/event';
 
 function App() {
     const [isOnboarded, setIsOnboarded] = useState<boolean | null>(null);
@@ -46,28 +47,24 @@ function App() {
         };
         loadWarningText();
 
-        // Background Enforcement Loop
-        const interval = setInterval(async () => {
-            try {
-                // Only enforce if not on onboarding and session logic permits (later)
-                // For now, always enforce enabled blocks
-                const killed = await blockedAppsApi.enforceBlocks();
+        loadWarningText();
 
-                // Show warning modal if any apps were blocked
-                if (killed && killed.length > 0) {
-                    // Reload warning text in case it was updated
-                    const text = await settingsApi.get('custom_warning_text');
-                    if (text) setCustomWarningText(text);
+        // Listen for blocks from the Rust background loop
+        const unlisten = listen<string[]>('blocked-apps', async (event) => {
+            const killed = event.payload;
+            if (killed && killed.length > 0) {
+                // Reload warning text in case it was updated
+                const text = await settingsApi.get('custom_warning_text');
+                if (text) setCustomWarningText(text);
 
-                    setBlockedItems(killed);
-                    setShowWarning(true);
-                }
-            } catch (err) {
-                console.error('Failed to enforce blocks:', err);
+                setBlockedItems(killed);
+                setShowWarning(true);
             }
-        }, 3000);
+        });
 
-        return () => clearInterval(interval);
+        return () => {
+            unlisten.then(f => f());
+        };
     }, []);
 
     const completeOnboarding = () => {
