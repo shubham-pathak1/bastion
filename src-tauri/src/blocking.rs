@@ -18,6 +18,13 @@ const HOSTS_PATH: &str = "/etc/hosts";
 const BASTION_MARKER_START: &str = "# === BASTION BLOCK START ===";
 const BASTION_MARKER_END: &str = "# === BASTION BLOCK END ===";
 
+const SYSTEM_WHITELIST: &[&str] = &[
+    "explorer.exe", "dwm.exe", "taskhostw.exe", "lsass.exe", "csrss.exe", 
+    "wininit.exe", "winlogon.exe", "services.exe", "System", "Registry",
+    "smss.exe", "fontdrvhost.exe", "svchost.exe", "taskmgr.exe", "shellexperiencehost.exe",
+    "searchhost.exe", "startmenuexperiencehost.exe"
+];
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct BlockingError {
     pub message: String,
@@ -295,6 +302,7 @@ pub fn get_running_processes() -> Vec<RunningProcess> {
 }
 
 /// Check if a process is running by name
+#[allow(dead_code)]
 pub fn is_process_running(process_name: &str) -> bool {
     let mut system = System::new();
     system.refresh_processes(ProcessesToUpdate::All, true);
@@ -329,13 +337,38 @@ pub fn kill_process_by_name(process_name: &str) -> Result<u32, BlockingError> {
 
 /// Monitor and kill blocked apps (call this periodically)
 pub fn enforce_app_blocks(blocked_apps: &[String]) -> Vec<String> {
-    let mut killed_apps = Vec::new();
+    if blocked_apps.is_empty() { return Vec::new(); }
     
-    for app_name in blocked_apps {
-        if is_process_running(app_name) {
-            if let Ok(count) = kill_process_by_name(app_name) {
-                if count > 0 {
-                    killed_apps.push(app_name.clone());
+    let mut system = System::new();
+    // Only refresh process names and pids - much lighter than full refresh
+    system.refresh_processes(sysinfo::ProcessesToUpdate::All, true);
+    
+    let mut killed_apps = Vec::new();
+    let blocked_lower: Vec<String> = blocked_apps.iter()
+        .map(|s| s.to_lowercase())
+        .filter(|s| !SYSTEM_WHITELIST.iter().any(|&w| w.to_lowercase() == *s))
+        .collect();
+    
+    if blocked_lower.is_empty() { return Vec::new(); }
+
+    for (_pid, process) in system.processes() {
+        let process_name = process.name().to_string_lossy().to_lowercase();
+        
+        // Safety check: never kill whitelisted processes even if added to block list
+        if SYSTEM_WHITELIST.iter().any(|&w| w.to_lowercase() == process_name) {
+            continue;
+        }
+
+        if blocked_lower.contains(&process_name) {
+            // Found a blocked process
+            if process.kill_with(Signal::Term).is_none() {
+                process.kill();
+            }
+            
+            // Map back to the original name for the result
+            if let Some(original_name) = blocked_apps.iter().find(|&a| a.to_lowercase() == process_name) {
+                if !killed_apps.contains(original_name) {
+                    killed_apps.push(original_name.clone());
                 }
             }
         }

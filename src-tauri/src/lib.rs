@@ -148,6 +148,21 @@ fn enforce_app_blocks(state: State<Arc<AppState>>) -> Result<Vec<String>, String
     Ok(killed)
 }
 
+#[tauri::command]
+fn reset_all_blocks(state: State<Arc<AppState>>) -> Result<(), String> {
+    let apps = state.db.get_blocked_apps().map_err(|e| e.to_string())?;
+    for app in apps {
+        state.db.delete_blocked_app(app.id).map_err(|e| e.to_string())?;
+    }
+    let sites = state.db.get_blocked_sites().map_err(|e| e.to_string())?;
+    for site in sites {
+        state.db.delete_blocked_site(site.id).map_err(|e| e.to_string())?;
+    }
+    // Restore hosts file to original state
+    let _ = blocking::update_blocked_websites(&[]);
+    Ok(())
+}
+
 // ============= Session Commands =============
 
 #[tauri::command]
@@ -289,17 +304,18 @@ pub fn run() {
         .plugin(tauri_plugin_autostart::init(tauri_plugin_autostart::MacosLauncher::LaunchAgent, Some(vec!["--silent"])))
         .plugin(tauri_plugin_notification::init())
         .on_window_event(|window, event| {
-            if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+            if let tauri::WindowEvent::CloseRequested { api: _api, .. } = event {
                 let state = window.state::<Arc<AppState>>();
                 let minimize_to_tray = state.db.get_setting("minimize_to_tray")
                     .unwrap_or(Some("true".to_string()))
                     .unwrap_or("true".to_string()) == "true";
 
                 if minimize_to_tray {
-                    // In Headless mode, we close the window to free up WebView2 memory
-                    // The background loop in setup() keeps the logic running
-                    window.close().unwrap();
-                    api.prevent_close();
+                    // In Headless mode, we just let the window close itself naturally
+                    // We DO NOT call window.close() here as it triggers this event recursively
+                    // The app stays alive because we have a tray icon and background thread
+                } else {
+                    // If not minimizing to tray, we might want to prevent close or do something else
                 }
             }
         })
@@ -344,6 +360,9 @@ pub fn run() {
                                 .map(|a| a.process_name)
                                 .collect();
                             
+                            // Pass the system object if we refactored it, 
+                            // but for now our revised enforce_app_blocks creates its own efficiently.
+                            // Actually, let's keep it simple for now as I already optimized enforce_app_blocks.
                             let killed = blocking::enforce_app_blocks(&blocked_process_names);
                             
                             // Log block events and notify frontend
@@ -441,9 +460,16 @@ pub fn run() {
             is_app_admin,
             kill_browsers,
             fix_browser_policies,
+            reset_all_blocks,
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application")
+        .run(|_app_handle, event| match event {
+            tauri::RunEvent::ExitRequested { api, .. } => {
+                api.prevent_exit();
+            }
+            _ => {}
+        });
 }
 
 fn ensure_window(app: &tauri::AppHandle) {
