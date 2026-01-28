@@ -4,14 +4,12 @@ import {
     ArrowRight,
     ArrowLeft,
     Check,
-    Eye,
-    EyeOff,
     Sparkles,
     Lock,
     Zap,
     Loader2
 } from 'lucide-react';
-import { securityApi, blockedSitesApi } from '../lib/api';
+import { blockedSitesApi } from '../lib/api';
 import logo from '../assets/bastion_logo.png';
 
 interface OnboardingProps {
@@ -31,36 +29,17 @@ const popularDistractions = [
 
 export default function Onboarding({ onComplete }: OnboardingProps) {
     const [step, setStep] = useState(0);
-    const [password, setPassword] = useState('');
-    const [confirmPassword, setConfirmPassword] = useState('');
-    const [showPassword, setShowPassword] = useState(false);
     const [selectedDistractions, setSelectedDistractions] = useState<string[]>([]);
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
 
     const steps = [
         { title: 'Welcome', subtitle: 'Why Bastion?' },
-        { title: 'Security', subtitle: 'Set Master Password' },
         { title: 'Quick Setup', subtitle: 'Common Distractions' },
     ];
 
-    const validatePassword = () => {
-        if (password.length < 8) {
-            setError('Password must be at least 8 characters');
-            return false;
-        }
-        if (password !== confirmPassword) {
-            setError('Passwords do not match');
-            return false;
-        }
-        setError('');
-        return true;
-    };
 
     const handleNext = async () => {
-        if (step === 1 && !validatePassword()) {
-            return;
-        }
         if (step < steps.length - 1) {
             setStep(step + 1);
         } else {
@@ -68,8 +47,6 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
             setError('');
 
             try {
-                await securityApi.setMasterPassword(password);
-
                 for (const distraction of selectedDistractions) {
                     const category = popularDistractions.find(d => d.name === distraction)?.category || 'other';
                     await blockedSitesApi.add(distraction, category);
@@ -95,22 +72,6 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
     return (
         <div className="h-full w-full flex items-center justify-center bg-black relative overflow-hidden">
             {/* Monochromatic orbs */}
-            <motion.div
-                className="absolute top-20 right-20 w-96 h-96 rounded-full bg-white/5 blur-3xl"
-                animate={{
-                    scale: [1, 1.2, 1],
-                    opacity: [0.1, 0.2, 0.1],
-                }}
-                transition={{ duration: 8, repeat: Infinity }}
-            />
-            <motion.div
-                className="absolute bottom-20 left-20 w-[500px] h-[500px] rounded-full bg-white/5 blur-3xl"
-                animate={{
-                    scale: [1.2, 1, 1.2],
-                    opacity: [0.1, 0.2, 0.1],
-                }}
-                transition={{ duration: 10, repeat: Infinity }}
-            />
 
             {/* Main card */}
             <motion.div
@@ -121,9 +82,7 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
                 {/* Logo */}
                 <div className="text-center mb-8">
                     <motion.div
-                        className="w-16 h-16 rounded-2xl overflow-hidden flex items-center justify-center mx-auto mb-4 shadow-lg border border-white/10 p-2"
-                        animate={{ boxShadow: ['0 0 20px rgba(255, 255, 255, 0.05)', '0 0 40px rgba(255, 255, 255, 0.1)', '0 0 20px rgba(255, 255, 255, 0.05)'] }}
-                        transition={{ duration: 2, repeat: Infinity }}
+                        className="w-16 h-16 rounded-2xl overflow-hidden flex items-center justify-center mx-auto mb-4 border border-white/10 p-2"
                     >
                         <img src={logo} alt="Bastion Logo" className="w-full h-full object-contain" />
                     </motion.div>
@@ -179,65 +138,6 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
                         )}
 
                         {step === 1 && (
-                            <div className="space-y-6">
-                                <div className="text-center mb-6">
-                                    <h2 className="text-xl font-black text-white mb-1 uppercase tracking-tight">Set Master Password</h2>
-                                    <p className="text-xs text-bastion-muted font-bold uppercase tracking-widest">
-                                        Protects settings and allows bypass
-                                    </p>
-                                </div>
-
-                                <div className="space-y-4">
-                                    <div className="relative">
-                                        <input
-                                            type={showPassword ? 'text' : 'password'}
-                                            placeholder="Enter password"
-                                            value={password}
-                                            onChange={(e) => setPassword(e.target.value)}
-                                            className="glass-input pr-12 font-black"
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() => setShowPassword(!showPassword)}
-                                            className="absolute right-4 top-1/2 -translate-y-1/2 text-bastion-muted hover:text-white"
-                                        >
-                                            {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                                        </button>
-                                    </div>
-
-                                    <input
-                                        type={showPassword ? 'text' : 'password'}
-                                        placeholder="Confirm password"
-                                        value={confirmPassword}
-                                        onChange={(e) => setConfirmPassword(e.target.value)}
-                                        className="glass-input font-black"
-                                    />
-
-                                    {error && (
-                                        <p className="text-[10px] text-red-500 font-black uppercase tracking-widest text-center">{error}</p>
-                                    )}
-
-                                    <div className="space-y-2">
-                                        <div className="flex gap-1">
-                                            {[1, 2, 3, 4].map((level) => (
-                                                <div
-                                                    key={level}
-                                                    className={`flex-1 h-1 rounded-full transition-colors ${password.length >= level * 3
-                                                        ? 'bg-white'
-                                                        : 'bg-white/10'
-                                                        }`}
-                                                />
-                                            ))}
-                                        </div>
-                                        <p className="text-[10px] text-bastion-muted font-black uppercase tracking-widest text-right">
-                                            {password.length < 8 ? 'Min 8 chars required' : 'Strong password'}
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {step === 2 && (
                             <div className="space-y-6">
                                 <div className="text-center mb-6">
                                     <h2 className="text-xl font-black text-white mb-1 uppercase tracking-tight">Initial Setup</h2>

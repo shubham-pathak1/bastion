@@ -73,12 +73,6 @@ export interface RunningProcess {
 // ============= Security API =============
 
 export const securityApi = {
-    setMasterPassword: (password: string) =>
-        invoke<void>('set_master_password', { password }),
-
-    verifyMasterPassword: (password: string) =>
-        invoke<boolean>('verify_master_password', { password }),
-
     isOnboarded: () =>
         invoke<boolean>('is_onboarded'),
 };
@@ -147,8 +141,8 @@ export const sessionsApi = {
     startFocus: (name: string, durationMinutes: number, hardcore: boolean) =>
         invoke<ActiveSession>('start_focus_session', { name, durationMinutes, hardcore }),
 
-    endFocus: (password?: string) =>
-        invoke<void>('end_focus_session', { password }),
+    endFocus: () =>
+        invoke<void>('end_focus_session'),
 
     getTimeRemaining: () =>
         invoke<number | null>('get_session_time_remaining'),
@@ -197,6 +191,9 @@ export const settingsApi = {
 
     set: (key: string, value: string) =>
         invoke<void>('set_setting', { key, value }),
+
+    factoryReset: () =>
+        invoke<void>('factory_reset'),
 };
 
 // ============= Combined API =============

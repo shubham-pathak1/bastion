@@ -1,4 +1,4 @@
-//! Blocking module - Website blocking via hosts file and app blocking via process monitoring
+// OS-level blocking logic (Hosts file & Process monitoring)
 
 use serde::{Deserialize, Serialize};
 use std::fs::{self, OpenOptions};
@@ -38,8 +38,7 @@ impl From<std::io::Error> for BlockingError {
     }
 }
 
-/// Website Blocking via hosts file
-
+/// Returns the platform-specific hosts file path.
 pub fn get_hosts_path() -> PathBuf {
     PathBuf::from(HOSTS_PATH)
 }
@@ -141,7 +140,7 @@ pub fn restore_hosts(backup_path: &PathBuf) -> Result<(), BlockingError> {
     Ok(())
 }
 
-/// Check if the application has admin privileges
+/// Verifies if the application has write access to the hosts file.
 pub fn is_admin() -> bool {
     // Try to open hosts file in write mode as a check
     OpenOptions::new()
@@ -187,7 +186,7 @@ pub fn disable_firefox_doh() -> Result<(), BlockingError> {
     Ok(())
 }
 
-/// Disable DNS-over-HTTPS in Chromium-based browsers via Registry Policies
+/// Disables DNS-over-HTTPS for Chromium-based browsers via Registry.
 pub fn disable_chromium_doh() -> Result<(), BlockingError> {
     #[cfg(target_os = "windows")]
     {
@@ -216,7 +215,7 @@ pub fn disable_chromium_doh() -> Result<(), BlockingError> {
     Ok(())
 }
 
-/// Flush system DNS cache to ensure browser picks up hosts changes
+/// Purges system DNS cache.
 pub fn flush_dns() -> Result<(), BlockingError> {
     #[cfg(target_os = "windows")]
     {
@@ -340,7 +339,7 @@ pub fn enforce_app_blocks(blocked_apps: &[String]) -> Vec<String> {
     if blocked_apps.is_empty() { return Vec::new(); }
     
     let mut system = System::new();
-    // Only refresh process names and pids - much lighter than full refresh
+    // Incremental refresh for performance
     system.refresh_processes(sysinfo::ProcessesToUpdate::All, true);
     
     let mut killed_apps = Vec::new();

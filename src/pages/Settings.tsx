@@ -2,31 +2,57 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Settings2 as SettingsIcon,
-    Shield as ShieldIcon,
     Lock as LockIcon,
-    RefreshCw as RefreshIcon,
-    ExternalLink as LinkIcon,
     Github as GithubIcon,
-    Zap as ZapIcon,
     AlertTriangle as AlertIcon,
     LogOut as LogoutIcon,
-    Check as CheckIcon,
-    FileText as LicenseIcon
+    FileText as LicenseIcon,
+    Database as DatabaseIcon
 } from 'lucide-react';
 import { openUrl } from '@tauri-apps/plugin-opener';
-import { settingsApi, securityApi } from '../lib/api';
+import { settingsApi } from '../lib/api';
 import { enable, disable, isEnabled } from '@tauri-apps/plugin-autostart';
 import logo from '../assets/bastion_logo.png';
 
-type Tab = 'general' | 'security' | 'hardcore' | 'advanced' | 'about';
+type Tab = 'general' | 'hardcore' | 'advanced' | 'about';
 
 const tabs = [
     { id: 'general', label: 'General', icon: SettingsIcon },
-    { id: 'security', label: 'Security', icon: ShieldIcon },
     { id: 'hardcore', label: 'Hardcore', icon: LockIcon },
-    { id: 'advanced', label: 'Advanced', icon: ZapIcon },
+    { id: 'advanced', label: 'Advanced', icon: DatabaseIcon },
     { id: 'about', label: 'About', icon: LicenseIcon },
 ] as const;
+
+const Toggle = ({ enabled, onChange }: { enabled: boolean; onChange: () => void }) => (
+    <button
+        onClick={onChange}
+        className={`w-12 h-7 rounded-full transition-all duration-300 relative ${enabled
+            ? 'bg-black dark:bg-white'
+            : 'bg-black/10 dark:bg-white/10 hover:bg-black/20 dark:hover:bg-white/20'
+            }`}
+    >
+        <motion.div
+            layout
+            className="w-5 h-5 rounded-full bg-white dark:bg-black absolute top-1 shadow-sm"
+            animate={{ left: enabled ? 26 : 4 }}
+            transition={{ type: "spring", stiffness: 500, damping: 30 }}
+        />
+    </button>
+);
+
+const SettingRow = ({ label, description, children, danger = false }: { label: string; description?: string; children: React.ReactNode; danger?: boolean }) => (
+    <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className={`flex items-center justify-between p-4 rounded-xl transition-colors ${danger ? 'hover:bg-red-500/10' : 'hover:bg-black/5 dark:hover:bg-white/5'}`}
+    >
+        <div>
+            <p className={`font-bold ${danger ? 'text-white bg-red-600 px-2 py-0.5 rounded text-xs inline-block' : 'text-black dark:text-white'}`}>{label}</p>
+            {description && <p className="text-sm text-gray-500 dark:text-bastion-muted mt-0.5">{description}</p>}
+        </div>
+        {children}
+    </motion.div>
+);
 
 export default function Settings() {
     const [activeTab, setActiveTab] = useState<Tab>('general');
@@ -35,12 +61,6 @@ export default function Settings() {
     const [showNotifications, setShowNotifications] = useState(true);
     const [hardcoreEnabled, setHardcoreEnabled] = useState(false);
     const [emergencyOverride, setEmergencyOverride] = useState(false);
-
-    const [currentPassword, setCurrentPassword] = useState('');
-    const [newPassword, setNewPassword] = useState('');
-    const [confirmPassword, setConfirmPassword] = useState('');
-    const [passwordError, setPasswordError] = useState('');
-    const [passwordSuccess, setPasswordSuccess] = useState('');
 
     // Custom Warning Text
     const [customWarningText, setCustomWarningText] = useState('');
@@ -111,67 +131,6 @@ export default function Settings() {
         }
     };
 
-    const handlePasswordChange = async () => {
-        if (newPassword.length < 8) {
-            setPasswordError('Password must be at least 8 characters');
-            return;
-        }
-        if (newPassword !== confirmPassword) {
-            setPasswordError('Passwords do not match');
-            return;
-        }
-
-        try {
-            const valid = await securityApi.verifyMasterPassword(currentPassword);
-            if (!valid) {
-                setPasswordError('Current password is incorrect');
-                return;
-            }
-
-            await securityApi.setMasterPassword(newPassword);
-            setPasswordSuccess('Password updated successfully');
-            setCurrentPassword('');
-            setNewPassword('');
-            setConfirmPassword('');
-            setPasswordError('');
-
-            setTimeout(() => setPasswordSuccess(''), 3000);
-        } catch (err) {
-            setPasswordError('Failed to update password');
-        }
-    };
-
-    const Toggle = ({ enabled, onChange }: { enabled: boolean; onChange: () => void }) => (
-        <button
-            onClick={onChange}
-            className={`w-12 h-7 rounded-full transition-all duration-300 relative ${enabled
-                ? 'bg-black dark:bg-white'
-                : 'bg-black/10 dark:bg-white/10 hover:bg-black/20 dark:hover:bg-white/20'
-                }`}
-        >
-            <motion.div
-                layout
-                className="w-5 h-5 rounded-full bg-white dark:bg-black absolute top-1 shadow-sm"
-                animate={{ left: enabled ? 26 : 4 }}
-                transition={{ type: "spring", stiffness: 500, damping: 30 }}
-            />
-        </button>
-    );
-
-    const SettingRow = ({ label, description, children, danger = false }: { label: string; description?: string; children: React.ReactNode; danger?: boolean }) => (
-        <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className={`flex items-center justify-between p-4 rounded-xl transition-colors ${danger ? 'hover:bg-red-500/10' : 'hover:bg-black/5 dark:hover:bg-white/5'}`}
-        >
-            <div>
-                <p className={`font-bold ${danger ? 'text-white bg-red-600 px-2 py-0.5 rounded text-xs inline-block' : 'text-black dark:text-white'}`}>{label}</p>
-                {description && <p className="text-sm text-gray-500 dark:text-bastion-muted mt-0.5">{description}</p>}
-            </div>
-            {children}
-        </motion.div>
-    );
-
     return (
         <div className="flex flex-col h-full">
             {/* Header - Fixed */}
@@ -226,7 +185,7 @@ export default function Settings() {
                 </div>
 
                 {/* Content Area - Scrollable */}
-                <div className="flex-1 h-full overflow-y-auto glass-panel p-8 border border-black/5 dark:border-white/5">
+                <div className="flex-1 h-full overflow-y-auto no-scrollbar glass-panel p-8 border border-black/5 dark:border-white/5">
                     <AnimatePresence mode="wait">
                         <motion.div
                             key={activeTab}
@@ -271,81 +230,6 @@ export default function Settings() {
                                 </div>
                             )}
 
-                            {activeTab === 'security' && (
-                                <div className="space-y-6">
-                                    <h2 className="text-xl font-black text-black dark:text-white mb-6">Security & Access</h2>
-
-                                    <div className="p-6 rounded-2xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5 space-y-4">
-                                        <div className="flex items-center gap-4 mb-4">
-                                            <div className="p-3 rounded-full bg-black/10 dark:bg-white/10 border border-black/10 dark:border-white/20">
-                                                <LockIcon className="w-6 h-6 text-black dark:text-white" />
-                                            </div>
-                                            <div>
-                                                <h3 className="font-bold text-black dark:text-white">Master Password</h3>
-                                                <p className="text-sm text-gray-500 dark:text-bastion-muted">Required to modify blocks and stop sessions</p>
-                                            </div>
-                                        </div>
-
-                                        <div className="grid gap-4">
-                                            <div>
-                                                <label className="text-xs font-bold text-gray-400 dark:text-bastion-muted ml-1 mb-1.5 block">Current Password</label>
-                                                <input
-                                                    type="password"
-                                                    value={currentPassword}
-                                                    onChange={(e) => setCurrentPassword(e.target.value)}
-                                                    className="glass-input w-full"
-                                                    placeholder="••••••••"
-                                                />
-                                            </div>
-
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div>
-                                                    <label className="text-xs font-bold text-gray-400 dark:text-bastion-muted ml-1 mb-1.5 block">New Password</label>
-                                                    <input
-                                                        type="password"
-                                                        value={newPassword}
-                                                        onChange={(e) => setNewPassword(e.target.value)}
-                                                        className="glass-input w-full"
-                                                        placeholder="••••••••"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label className="text-xs font-bold text-gray-400 dark:text-bastion-muted ml-1 mb-1.5 block">Confirm Password</label>
-                                                    <input
-                                                        type="password"
-                                                        value={confirmPassword}
-                                                        onChange={(e) => setConfirmPassword(e.target.value)}
-                                                        className="glass-input w-full"
-                                                        placeholder="••••••••"
-                                                    />
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <AnimatePresence>
-                                            {passwordError && (
-                                                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="text-sm text-red-500 bg-red-500/10 px-4 py-2 rounded-lg flex items-center gap-2">
-                                                    <AlertIcon className="w-4 h-4" />
-                                                    {passwordError}
-                                                </motion.div>
-                                            )}
-                                            {passwordSuccess && (
-                                                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="text-sm text-green-500 bg-green-500/10 px-4 py-2 rounded-lg flex items-center gap-2">
-                                                    <CheckIcon className="w-4 h-4" />
-                                                    {passwordSuccess}
-                                                </motion.div>
-                                            )}
-                                        </AnimatePresence>
-
-                                        <div className="flex justify-end pt-2">
-                                            <button onClick={handlePasswordChange} className="btn-primary px-6">
-                                                Update Password
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-
                             {activeTab === 'hardcore' && (
                                 <div className="space-y-4">
                                     <h2 className="text-xl font-black text-black dark:text-white mb-6">Hardcore Mode Configuration</h2>
@@ -355,7 +239,6 @@ export default function Settings() {
                                         animate={{ scale: 1, opacity: 1 }}
                                         className="p-6 rounded-2xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 mb-8 relative overflow-hidden"
                                     >
-                                        <div className="absolute top-0 right-0 p-32 bg-black/5 dark:bg-white/5 blur-[80px] rounded-full pointer-events-none" />
 
                                         <div className="flex gap-4 relative z-10">
                                             <div className="p-3 bg-black/10 dark:bg-white/10 rounded-xl h-fit">
@@ -385,24 +268,21 @@ export default function Settings() {
                                 <div className="space-y-4">
                                     <h2 className="text-xl font-black text-black dark:text-white mb-6">Advanced Actions</h2>
 
-                                    <SettingRow label="Export Configuration" description="Save your blocklists and settings to a file">
-                                        <button className="px-4 py-2 rounded-lg bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-black dark:text-white text-sm font-bold border border-black/10 dark:border-white/10 flex items-center gap-2 transition-colors">
-                                            <LinkIcon className="w-4 h-4" />
-                                            Export JSON
-                                        </button>
-                                    </SettingRow>
-
-                                    <SettingRow label="Import Configuration" description="Restore settings from a backup file">
-                                        <button className="px-4 py-2 rounded-lg bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-black dark:text-white text-sm font-bold border border-black/10 dark:border-white/10 flex items-center gap-2 transition-colors">
-                                            <RefreshIcon className="w-4 h-4" />
-                                            Import JSON
-                                        </button>
-                                    </SettingRow>
-
-                                    <div className="h-px bg-black/10 dark:bg-white/10 my-4" />
-
                                     <SettingRow label="Factory Reset" description="Clear all data and return to initial state" danger>
-                                        <button className="px-4 py-2 rounded-lg bg-red-600/10 hover:bg-red-600/20 text-red-500 text-sm font-medium border border-red-600/20 flex items-center gap-2 transition-colors">
+                                        <button
+                                            onClick={async () => {
+                                                if (confirm('Are you sure you want to reset Bastion? This will delete all blocked sites, apps, sessions, and settings. This action cannot be undone.')) {
+                                                    try {
+                                                        await settingsApi.factoryReset();
+                                                        alert('Bastion has been reset. The app will now reload.');
+                                                        window.location.reload();
+                                                    } catch (err) {
+                                                        alert('Failed to reset: ' + err);
+                                                    }
+                                                }
+                                            }}
+                                            className="px-4 py-2 rounded-lg bg-red-600/10 hover:bg-red-600/20 text-red-500 text-sm font-medium border border-red-600/20 flex items-center gap-2 transition-colors"
+                                        >
                                             <LogoutIcon className="w-4 h-4" />
                                             Reset Bastion
                                         </button>
@@ -416,27 +296,33 @@ export default function Settings() {
                                         <img src={logo} alt="Bastion Logo" className="w-20 h-20 object-contain" />
                                     </div>
                                     <h3 className="text-4xl font-black text-black dark:text-white mb-2 tracking-tight">Bastion</h3>
-                                    <p className="text-black/60 dark:text-white/60 font-mono text-sm mb-6">v1.0.0 (Prism Alpha)</p>
+                                    <p className="text-black/60 dark:text-white/60 font-mono text-sm mb-6 uppercase tracking-wider">v0.1.0 alpha</p>
 
                                     <p className="text-gray-500 dark:text-bastion-muted max-w-md mx-auto mb-8 leading-relaxed font-medium">
-                                        Engineered for uncompromised focus. Bastion acts as your digital fortress, filtering out the noise so you can build what matters.
+                                        Unbreakable focus tool for deep work. Reclaim your attention.
                                     </p>
 
-                                    <div className="flex justify-center gap-4">
-                                        <button
-                                            onClick={() => openUrl('https://github.com/shubham-pathak1/bastion')}
-                                            className="p-3 rounded-xl bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-black dark:text-white transition-colors border border-black/5 dark:border-white/5"
-                                            title="View GitHub Repository"
-                                        >
-                                            <GithubIcon className="w-6 h-6" />
-                                        </button>
-                                        <button
-                                            onClick={() => openUrl('https://github.com/shubham-pathak1/bastion/blob/main/LICENSE')}
-                                            className="p-3 rounded-xl bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-black dark:text-white transition-colors border border-black/5 dark:border-white/5"
-                                            title="License Information"
-                                        >
-                                            <LicenseIcon className="w-6 h-6" />
-                                        </button>
+                                    <div className="flex justify-center gap-8">
+                                        <div className="flex flex-col items-center gap-2">
+                                            <button
+                                                onClick={() => openUrl('https://github.com/shubham-pathak1/bastion')}
+                                                className="p-3 rounded-xl bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-black dark:text-white transition-colors border border-black/5 dark:border-white/5"
+                                                title="View GitHub Repository"
+                                            >
+                                                <GithubIcon className="w-6 h-6" />
+                                            </button>
+                                            <span className="text-[10px] font-mono font-bold text-black/40 dark:text-white/40 tracking-widest uppercase">Github</span>
+                                        </div>
+                                        <div className="flex flex-col items-center gap-2">
+                                            <button
+                                                onClick={() => openUrl('https://github.com/shubham-pathak1/bastion/blob/main/LICENSE')}
+                                                className="p-3 rounded-xl bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-black dark:text-white transition-colors border border-black/5 dark:border-white/5"
+                                                title="License Information"
+                                            >
+                                                <LicenseIcon className="w-6 h-6" />
+                                            </button>
+                                            <span className="text-[10px] font-mono font-bold text-black/40 dark:text-white/40 tracking-widest uppercase">License</span>
+                                        </div>
                                     </div>
                                 </div>
                             )}
@@ -444,6 +330,6 @@ export default function Settings() {
                     </AnimatePresence>
                 </div>
             </div>
-        </div>
+        </div >
     );
 }

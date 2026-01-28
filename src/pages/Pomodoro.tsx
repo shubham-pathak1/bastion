@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Play, Pause, RotateCcw, Waves, Brain, Settings2, Volume2, VolumeX, Maximize2, SkipForward } from 'lucide-react';
-import { pomodoroApi } from '../lib/api';
+import { pomodoroApi, sessionsApi } from '../lib/api';
 
 type Phase = 'work' | 'break' | 'longBreak';
 
@@ -27,6 +27,7 @@ export default function Pomodoro() {
     const [isRunning, setIsRunning] = useState(false);
     const [completedSessions, setCompletedSessions] = useState(0);
     const [showSettings, setShowSettings] = useState(false);
+    const [isLocked, setIsLocked] = useState(false);
 
     // Initial load and Polling
     useEffect(() => {
@@ -51,7 +52,20 @@ export default function Pomodoro() {
 
         syncState();
         const interval = setInterval(syncState, 1000);
-        return () => clearInterval(interval);
+
+        const checkLock = async () => {
+            try {
+                const locked = await sessionsApi.isHardcoreLocked();
+                setIsLocked(locked);
+            } catch { }
+        };
+        checkLock();
+        const lockInterval = setInterval(checkLock, 5000);
+
+        return () => {
+            clearInterval(interval);
+            clearInterval(lockInterval);
+        };
     }, []);
 
     const getPhaseTime = useCallback((p: Phase) => {
@@ -63,6 +77,7 @@ export default function Pomodoro() {
     }, [settings]);
 
     const toggleTimer = async () => {
+        if (isLocked) return;
         try {
             if (isRunning) {
                 await pomodoroApi.pause();
@@ -76,6 +91,7 @@ export default function Pomodoro() {
     };
 
     const reset = async () => {
+        if (isLocked) return;
         try {
             await pomodoroApi.reset();
             const state = await pomodoroApi.getState();
@@ -87,6 +103,7 @@ export default function Pomodoro() {
     };
 
     const switchPhase = async (newPhase: Phase) => {
+        if (isLocked) return;
         try {
             const work = newPhase === 'work' ? settings.workDuration : settings.workDuration;
             const sBreak = newPhase === 'break' ? settings.breakDuration : settings.breakDuration;
@@ -146,17 +163,17 @@ export default function Pomodoro() {
     const phaseConfig = {
         work: {
             color: '#FFFFFF',
-            bg: 'from-white/20 to-transparent',
+            bg: 'bg-black/5 dark:bg-white/5',
             icon: Brain
         },
         break: {
             color: '#FFFFFF',
-            bg: 'from-white/10 to-transparent',
+            bg: 'bg-black/5 dark:bg-white/5',
             icon: Waves
         },
         longBreak: {
             color: '#FFFFFF',
-            bg: 'from-white/5 to-transparent',
+            bg: 'bg-black/5 dark:bg-white/5',
             icon: Waves
         },
     };
@@ -202,7 +219,7 @@ export default function Pomodoro() {
                                 className="absolute top-1.5 bottom-1.5 rounded-xl bg-black/10 dark:bg-white/10 border border-black/5 dark:border-white/5"
                                 layoutId="phase-bg"
                                 initial={false}
-                                transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                                transition={{ type: "spring", stiffness: 500, damping: 30 }}
                                 style={{
                                     left: phase === 'work' ? '6px' : phase === 'break' ? '33.3%' : '66.6%',
                                     width: 'calc(33.3% - 8px)'
@@ -228,12 +245,11 @@ export default function Pomodoro() {
 
                     {/* Timer Circle */}
                     <div className="relative mb-12 group">
-                        <div className={`absolute inset-0 bg-gradient-to-input ${phaseConfig[phase].bg} rounded-full blur-[100px] opacity-40 transition-all duration-1000`} />
 
                         <div className="relative flex justify-center">
                             <div className="relative w-80 h-80 lg:w-96 lg:h-96">
                                 {/* SVG Timer */}
-                                <svg className="w-full h-full -rotate-90 drop-shadow-2xl">
+                                <svg className="w-full h-full -rotate-90">
                                     {/* Track */}
                                     <circle
                                         cx="50%"
@@ -274,7 +290,7 @@ export default function Pomodoro() {
                                         <CurrentIcon className="w-6 h-6 text-black dark:text-white" />
                                     </motion.div>
 
-                                    <div className="text-7xl lg:text-8xl font-mono font-black text-black dark:text-white tracking-tighter tabular-nums drop-shadow-lg">
+                                    <div className="text-7xl lg:text-8xl font-mono font-black text-black dark:text-white tracking-tighter tabular-nums">
                                         {formatTime(timeLeft)}
                                     </div>
 
@@ -293,8 +309,8 @@ export default function Pomodoro() {
                     {/* Controls */}
                     <div className="flex justify-center gap-6">
                         <motion.button
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.9 }}
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
                             onClick={reset}
                             className="w-16 h-16 rounded-full bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 border border-black/5 dark:border-white/5 hover:border-black/20 dark:hover:border-white/20 flex items-center justify-center transition-colors group"
                         >
@@ -302,12 +318,13 @@ export default function Pomodoro() {
                         </motion.button>
 
                         <motion.button
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.9 }}
+                            whileHover={isLocked ? {} : { scale: 1.05 }}
+                            whileTap={isLocked ? {} : { scale: 0.95 }}
                             onClick={toggleTimer}
-                            className={`w-16 h-16 rounded-full flex items-center justify-center transition-all ${isRunning
+                            disabled={isLocked}
+                            className={`w-16 h-16 rounded-full flex items-center justify-center transition-all ${isLocked ? 'opacity-50 grayscale cursor-not-allowed' : ''} ${isRunning
                                 ? 'bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10'
-                                : `bg-black dark:bg-white text-white dark:text-black shadow-lg`
+                                : `bg-black dark:bg-white text-white dark:text-black`
                                 }`}
                         >
                             {isRunning ? (
@@ -318,8 +335,8 @@ export default function Pomodoro() {
                         </motion.button>
 
                         <motion.button
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.9 }}
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
                             onClick={() => setShowSettings(!showSettings)}
                             className={`w-16 h-16 rounded-full border flex items-center justify-center transition-all ${showSettings
                                 ? 'bg-black dark:bg-white text-white dark:text-black border-transparent'
@@ -334,8 +351,8 @@ export default function Pomodoro() {
                             <motion.button
                                 initial={{ opacity: 0, scale: 0.8 }}
                                 animate={{ opacity: 1, scale: 1 }}
-                                whileHover={{ scale: 1.1 }}
-                                whileTap={{ scale: 0.9 }}
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
                                 onClick={skipBreak}
                                 className="w-16 h-16 rounded-full bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 border border-black/5 dark:border-white/5 hover:border-black/20 dark:hover:border-white/20 flex items-center justify-center transition-colors group"
                                 title="Skip Break"
@@ -360,7 +377,7 @@ export default function Pomodoro() {
                                 <div
                                     key={i}
                                     className={`flex-1 rounded-full transition-all duration-500 ${i < completedSessions % settings.sessionsUntilLongBreak
-                                        ? 'bg-black dark:bg-white shadow-md'
+                                        ? 'bg-black dark:bg-white'
                                         : 'bg-black/10 dark:bg-white/10'
                                         }`}
                                 />
@@ -400,7 +417,7 @@ export default function Pomodoro() {
                                                     key={v}
                                                     onClick={() => updateSettings({ workDuration: v })}
                                                     className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${settings.workDuration === v
-                                                        ? 'bg-white dark:bg-white/20 text-black dark:text-white shadow-sm'
+                                                        ? 'bg-white dark:bg-white/20 text-black dark:text-white'
                                                         : 'text-gray-400 dark:text-bastion-muted hover:text-black dark:hover:text-white'
                                                         }`}
                                                 >

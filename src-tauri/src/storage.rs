@@ -347,4 +347,16 @@ impl Database {
         })?;
         stats.collect()
     }
+
+    /// Factory reset - clear all data from the database
+    pub fn factory_reset(&self) -> SqliteResult<()> {
+        let conn = self.conn.lock().unwrap();
+        conn.execute("DELETE FROM blocked_sites", [])?;
+        conn.execute("DELETE FROM blocked_apps", [])?;
+        conn.execute("DELETE FROM sessions", [])?;
+        conn.execute("DELETE FROM block_events", [])?;
+        conn.execute("DELETE FROM focus_stats", [])?;
+        conn.execute("DELETE FROM settings", [])?;
+        Ok(())
+    }
 }

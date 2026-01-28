@@ -18,7 +18,7 @@ interface SidebarProps {
 }
 
 const navItems = [
-    { path: '/', icon: Home, label: 'Dashboard' },
+    { path: '/', icon: Home, label: 'Home' },
     { path: '/blocks', icon: ShieldOff, label: 'Blocks' },
     { path: '/sessions', icon: Target, label: 'Sessions' },
     { path: '/pomodoro', icon: Brain, label: 'Pomodoro' },
@@ -55,11 +55,11 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
         <motion.aside
             initial={false}
             animate={{ width: collapsed ? 84 : 260 }}
-            transition={{ duration: 0.3, type: 'spring', bounce: 0, damping: 20 }}
-            className="h-full glass-panel rounded-3xl flex flex-col relative z-20 border border-white/5"
+            transition={{ duration: 0.2, type: 'spring', bounce: 0, damping: 25, stiffness: 300 }}
+            className="h-full glass-panel rounded-3xl flex flex-col relative z-20 border border-white/5 shadow-2xl"
         >
             {/* Logo Area */}
-            <div className={`h-24 flex items-center transition-all duration-300 ${collapsed ? 'justify-center px-0' : 'px-6'}`}>
+            <div className={`h-24 flex items-center transition-all duration-200 ${collapsed ? 'justify-center px-0' : 'px-6'}`}>
                 <div className="flex items-center gap-4 overflow-hidden">
                     <div className="w-14 h-14 flex items-center justify-center flex-shrink-0 group cursor-pointer">
                         <img src={logo} alt="Bastion Logo" className="w-full h-full object-contain invert dark:invert-0" />
@@ -74,16 +74,13 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
                             <span className="font-display text-xl font-black tracking-tight text-black dark:text-white leading-none">
                                 Bastion
                             </span>
-                            <span className="text-[10px] uppercase tracking-[0.2em] text-black/40 dark:text-white/40 font-bold mt-1">
-                                FOCUS SHELL
-                            </span>
                         </motion.div>
                     )}
                 </div>
             </div>
 
             {/* Navigation */}
-            <nav className={`flex-1 space-y-1.5 transition-all duration-300 ${collapsed ? 'px-4' : 'px-4'}`}>
+            <nav className={`flex-1 space-y-1.5 transition-all duration-200 ${collapsed ? 'px-4' : 'px-4'}`}>
                 {navItems.map((item) => {
                     const isActive = location.pathname === item.path;
                     return (
@@ -93,7 +90,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
                             className="block relative group"
                         >
                             <div className={`
-                                relative flex items-center gap-4 px-3 py-3 rounded-2xl transition-all duration-300
+                                relative flex items-center gap-4 px-3 py-3 rounded-2xl transition-all duration-200
                                 ${isActive
                                     ? 'text-black dark:text-white bg-black/5 dark:bg-white/10 shadow-sm border border-black/5 dark:border-white/5'
                                     : 'text-gray-500 dark:text-bastion-secondary hover:text-black dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5'}
@@ -102,10 +99,10 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
                                     <motion.div
                                         layoutId="sidebar-active-bar"
                                         className="absolute left-0 w-1 h-6 bg-black dark:bg-white rounded-r-full"
-                                        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                                        transition={{ type: "spring", stiffness: 500, damping: 30 }}
                                     />
                                 )}
-                                <item.icon className={`w-5 h-5 flex-shrink-0 transition-all duration-300 ${isActive ? 'scale-110' : 'group-hover:scale-110'}`} />
+                                <item.icon className={`w-5 h-5 flex-shrink-0 transition-all duration-200 ${isActive ? 'scale-105' : 'group-hover:scale-110'}`} />
                                 {!collapsed && (
                                     <motion.span
                                         initial={{ opacity: 0 }}
@@ -127,8 +124,8 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
                 <div className={`
                     relative overflow-hidden rounded-2xl p-1.5 transition-all duration-500
                     ${isProtected
-                        ? 'bg-black/10 dark:bg-white/10 shadow-lg shadow-black/5'
-                        : 'bg-black/5 dark:bg-white/5'}
+                        ? ''
+                        : ''}
                 `}>
                     <div className={`flex items-center ${collapsed ? 'justify-center' : 'gap-3 px-2 py-1'}`}>
                         <div className={`w-8 h-8 flex-shrink-0 transition-all duration-500`}>

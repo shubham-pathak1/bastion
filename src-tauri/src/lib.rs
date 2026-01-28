@@ -1,14 +1,9 @@
-//! Bastion - Unbreakable Focus Blocker
-//! Main library with Tauri commands
-
 mod blocking;
-mod security;
 mod session;
 mod storage;
 mod server;
 
 use blocking::{RunningProcess, InstalledApp};
-// use security::SecurityError;
 use session::{ActiveSession, PomodoroState, SessionManager};
 use storage::{BlockedApp, BlockedSite, BlockEvent, Database, FocusStats, Session};
 
@@ -24,23 +19,7 @@ pub struct AppState {
     pub app_handle: std::sync::Mutex<Option<tauri::AppHandle>>,
 }
 
-// ============= Security Commands =============
-
-#[tauri::command]
-fn set_master_password(state: State<Arc<AppState>>, password: String) -> Result<(), String> {
-    let hash = security::hash_password(&password).map_err(|e| e.message)?;
-    state.db.set_setting("master_password", &hash).map_err(|e| e.to_string())?;
-    state.db.set_setting("onboarded", "true").map_err(|e| e.to_string())?;
-    Ok(())
-}
-
-#[tauri::command]
-fn verify_master_password(state: State<Arc<AppState>>, password: String) -> Result<bool, String> {
-    let hash = state.db.get_setting("master_password")
-        .map_err(|e| e.to_string())?
-        .ok_or("No master password set")?;
-    security::verify_password(&password, &hash).map_err(|e| e.message)
-}
+// --- Security Commands ---
 
 #[tauri::command]
 fn is_onboarded(state: State<Arc<AppState>>) -> Result<bool, String> {
@@ -52,6 +31,9 @@ fn is_onboarded(state: State<Arc<AppState>>) -> Result<bool, String> {
 
 #[tauri::command]
 fn add_blocked_site(state: State<Arc<AppState>>, domain: String, category: String) -> Result<i64, String> {
+    if state.session_manager.is_hardcore_locked.load(std::sync::atomic::Ordering::SeqCst) {
+        return Err("Cannot modify block list during a hardcore session".to_string());
+    }
     let id = state.db.add_blocked_site(&domain, &category).map_err(|e| e.to_string())?;
     sync_blocked_websites(&state)?;
     Ok(id)
@@ -64,12 +46,18 @@ fn get_blocked_sites(state: State<Arc<AppState>>) -> Result<Vec<BlockedSite>, St
 
 #[tauri::command]
 fn toggle_blocked_site(state: State<Arc<AppState>>, id: i64, enabled: bool) -> Result<(), String> {
+    if state.session_manager.is_hardcore_locked.load(std::sync::atomic::Ordering::SeqCst) {
+        return Err("Cannot modify block list during a hardcore session".to_string());
+    }
     state.db.toggle_blocked_site(id, enabled).map_err(|e| e.to_string())?;
     sync_blocked_websites(&state)
 }
 
 #[tauri::command]
 fn delete_blocked_site(state: State<Arc<AppState>>, id: i64) -> Result<(), String> {
+    if state.session_manager.is_hardcore_locked.load(std::sync::atomic::Ordering::SeqCst) {
+        return Err("Cannot modify block list during a hardcore session".to_string());
+    }
     state.db.delete_blocked_site(id).map_err(|e| e.to_string())?;
     sync_blocked_websites(&state)
 }
@@ -101,6 +89,9 @@ fn sync_blocked_websites(state: &State<Arc<AppState>>) -> Result<(), String> {
 
 #[tauri::command]
 fn add_blocked_app(state: State<Arc<AppState>>, name: String, process_name: String, category: String) -> Result<i64, String> {
+    if state.session_manager.is_hardcore_locked.load(std::sync::atomic::Ordering::SeqCst) {
+        return Err("Cannot modify block list during a hardcore session".to_string());
+    }
     state.db.add_blocked_app(&name, &process_name, &category).map_err(|e| e.to_string())
 }
 
@@ -111,11 +102,17 @@ fn get_blocked_apps(state: State<Arc<AppState>>) -> Result<Vec<BlockedApp>, Stri
 
 #[tauri::command]
 fn toggle_blocked_app(state: State<Arc<AppState>>, id: i64, enabled: bool) -> Result<(), String> {
+    if state.session_manager.is_hardcore_locked.load(std::sync::atomic::Ordering::SeqCst) {
+        return Err("Cannot modify block list during a hardcore session".to_string());
+    }
     state.db.toggle_blocked_app(id, enabled).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
 fn delete_blocked_app(state: State<Arc<AppState>>, id: i64) -> Result<(), String> {
+    if state.session_manager.is_hardcore_locked.load(std::sync::atomic::Ordering::SeqCst) {
+        return Err("Cannot modify block list during a hardcore session".to_string());
+    }
     state.db.delete_blocked_app(id).map_err(|e| e.to_string())
 }
 
@@ -163,7 +160,7 @@ fn reset_all_blocks(state: State<Arc<AppState>>) -> Result<(), String> {
     Ok(())
 }
 
-// ============= Session Commands =============
+// --- Session Commands ---
 
 #[tauri::command]
 fn add_session(state: State<Arc<AppState>>, session: Session) -> Result<i64, String> {
@@ -186,13 +183,8 @@ fn start_focus_session(state: State<Arc<AppState>>, name: String, duration_minut
 }
 
 #[tauri::command]
-fn end_focus_session(state: State<Arc<AppState>>, password: Option<String>) -> Result<(), String> {
-    let verified = if let Some(pwd) = password {
-        verify_master_password(state.clone(), pwd).unwrap_or(false)
-    } else {
-        false
-    };
-    state.session_manager.end_session(verified)
+fn end_focus_session(state: State<Arc<AppState>>) -> Result<(), String> {
+    state.session_manager.end_session()
 }
 
 #[tauri::command]
@@ -208,18 +200,30 @@ fn is_hardcore_locked(state: State<Arc<AppState>>) -> bool {
 // ============= Pomodoro Commands =============
 
 #[tauri::command]
-fn pomodoro_start(state: State<Arc<AppState>>) {
+fn pomodoro_start(state: State<Arc<AppState>>) -> Result<(), String> {
+    if state.session_manager.is_hardcore_locked.load(std::sync::atomic::Ordering::SeqCst) {
+        return Err("Cannot control timer during a hardcore session".to_string());
+    }
     state.session_manager.pomodoro_start();
+    Ok(())
 }
 
 #[tauri::command]
-fn pomodoro_pause(state: State<Arc<AppState>>) {
+fn pomodoro_pause(state: State<Arc<AppState>>) -> Result<(), String> {
+    if state.session_manager.is_hardcore_locked.load(std::sync::atomic::Ordering::SeqCst) {
+        return Err("Cannot control timer during a hardcore session".to_string());
+    }
     state.session_manager.pomodoro_pause();
+    Ok(())
 }
 
 #[tauri::command]
-fn pomodoro_reset(state: State<Arc<AppState>>) {
+fn pomodoro_reset(state: State<Arc<AppState>>) -> Result<(), String> {
+    if state.session_manager.is_hardcore_locked.load(std::sync::atomic::Ordering::SeqCst) {
+        return Err("Cannot control timer during a hardcore session".to_string());
+    }
     state.session_manager.pomodoro_reset();
+    Ok(())
 }
 
 #[tauri::command]
@@ -261,6 +265,11 @@ fn set_setting(state: State<Arc<AppState>>, key: String, value: String) -> Resul
     state.db.set_setting(&key, &value).map_err(|e| e.to_string())
 }
 
+#[tauri::command]
+fn factory_reset(state: State<Arc<AppState>>) -> Result<(), String> {
+    state.db.factory_reset().map_err(|e| e.to_string())
+}
+
 // ============= System Commands =============
 
 #[tauri::command]
@@ -295,7 +304,7 @@ fn fix_browser_policies() -> Result<(), String> {
     Ok(())
 }
 
-// ============= App Entry Point =============
+// --- Application Setup ---
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -311,9 +320,7 @@ pub fn run() {
                     .unwrap_or("true".to_string()) == "true";
 
                 if minimize_to_tray {
-                    // In Headless mode, we just let the window close itself naturally
-                    // We DO NOT call window.close() here as it triggers this event recursively
-                    // The app stays alive because we have a tray icon and background thread
+                    // Stay alive in background via tray and background loop
                 } else {
                     // If not minimizing to tray, we might want to prevent close or do something else
                 }
@@ -337,7 +344,7 @@ pub fn run() {
                 server::start_block_server(server_state).await;
             });
 
-            // Master Background Loop (The "Heartbeat" of Bastion)
+            // Core Background Loop
             let background_state = state.clone();
             tauri::async_runtime::spawn(async move {
                 let mut timer_interval = tokio::time::interval(std::time::Duration::from_secs(1));
@@ -347,7 +354,23 @@ pub fn run() {
                     timer_interval.tick().await;
 
                     // 1. Tick Pomodoro (every second)
-                    let _ = background_state.session_manager.pomodoro_tick();
+                    if let Some(completed_phase) = background_state.session_manager.pomodoro_tick() {
+                        // Phase changed, send notification
+                        if let Some(handle) = background_state.app_handle.lock().unwrap().as_ref() {
+                            use tauri_plugin_notification::NotificationExt;
+                            
+                            let (title, body) = match completed_phase {
+                                session::PomodoroPhase::Work => ("Work completed!", "Take a well-deserved break."),
+                                session::PomodoroPhase::Break | session::PomodoroPhase::LongBreak => ("Break over!", "Time to get back into focus."),
+                            };
+                            
+                            let _ = handle.notification()
+                                .builder()
+                                .title(title)
+                                .body(body)
+                                .show();
+                        }
+                    }
 
                     // 2. Enforce App Blocks (every 3 seconds)
                     enforcement_counter += 1;
@@ -380,7 +403,7 @@ pub fn run() {
                 }
             });
             
-            // Tray Menu
+            // Tray Configuration
             let quit_i = MenuItemBuilder::with_id("quit", "Quit Bastion").build(app)?;
             let show_i = MenuItemBuilder::with_id("show", "Show Bastion").build(app)?;
             let menu = MenuBuilder::new(app)
@@ -419,8 +442,6 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             // Security
-            set_master_password,
-            verify_master_password,
             is_onboarded,
             // Blocked Sites
             add_blocked_site,
@@ -456,6 +477,7 @@ pub fn run() {
             // Settings
             get_setting,
             set_setting,
+            factory_reset,
             // System
             is_app_admin,
             kill_browsers,
@@ -464,9 +486,16 @@ pub fn run() {
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
-        .run(|_app_handle, event| match event {
+        .run(|app_handle, event| match event {
             tauri::RunEvent::ExitRequested { api, .. } => {
-                api.prevent_exit();
+                let state = app_handle.state::<Arc<AppState>>();
+                let minimize_to_tray = state.db.get_setting("minimize_to_tray")
+                    .unwrap_or(Some("true".to_string()))
+                    .unwrap_or("true".to_string()) == "true";
+
+                if minimize_to_tray {
+                    api.prevent_exit();
+                }
             }
             _ => {}
         });

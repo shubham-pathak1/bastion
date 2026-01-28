@@ -99,11 +99,11 @@ impl SessionManager {
     }
 
     /// End the current session
-    pub fn end_session(&self, password_verified: bool) -> Result<(), String> {
+    pub fn end_session(&self) -> Result<(), String> {
         let active = self.active_session.lock().unwrap();
         
         if let Some(ref session) = *active {
-            if session.hardcore && !password_verified {
+            if session.hardcore {
                 let now = Local::now().timestamp();
                 if now < session.end_time {
                     return Err("Cannot end hardcore session before time expires".to_string());
@@ -272,7 +272,7 @@ mod tests {
         let session = manager.start_session("Test".to_string(), 30, false);
         assert!(manager.get_time_remaining().is_some());
         
-        assert!(manager.end_session(false).is_ok());
+        assert!(manager.end_session().is_ok());
         assert!(manager.get_time_remaining().is_none());
     }
 

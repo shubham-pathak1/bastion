@@ -1,113 +1,104 @@
-# Bastion
+# 🛡️ Bastion
 
-A system-level distraction blocker for Windows, built with Tauri and Rust.
+**Engineered for Uncompromised Focus.**
+
+Bastion is a high-performance, system-level distraction defense system for Windows. Built with **Tauri 2.0** and **Rust**, it acts as your digital fortress, filtering out the noise so you can build what matters.
 
 ---
 
-## What It Does
+## ✨ Key Features
 
-Bastion blocks distracting websites and applications at the operating system level. Unlike browser extensions, it cannot be bypassed by switching browsers or using incognito mode.
+### 🔒 Unbreakable Hardcore Mode
+Once a hardcore session begins, it **cannot be broken**.
+- **Kernel-Level Enforcement**: API modifications to blocklists and session controls are locked at the Rust core.
+- **Process Protection**: Prevents application exit and uninstallation during active focus periods.
+- **Anti-Bypass Architecture**: Hardens browser security policies to prevent DNS and proxy leaks.
 
-**Core functionality:**
-- Modifies the Windows hosts file to block website domains
-- Monitors and terminates blocked application processes
-- Supports scheduled focus sessions with optional "Hardcore" mode (prevents unblocking during active sessions)
-- Tracks focus statistics locally with zero telemetry
+### 🍅 Precision Pomodoro
+A fully integrated focus timer synchronized with the system tray.
+- **Native Notifications**: Real-time alerts on phase transitions (Work/Break).
+- **Customizable Cycles**: Tailor work and break intervals to your cognitive flow.
 
-## Screenshots
+### 🌐 System-Level Firewall
+Unlike browser extensions, Bastion operates at the OS level.
+- **Global Immunity**: Blocks websites via hosts file modification, covering all browsers and incognito modes.
+- **App Guard**: Monitors and terminates distracting applications with zero-latency detection.
 
-to be added*
+### 🎭 Aesthetic Interceptor
+When you hit a blocked site, Bastion serves a beautiful, minimalist warning screen.
+- **Personalized Nudges**: Display custom warning messages to reinforce your goals.
+- **Premium Design**: Modern, glassmorphic UI that fits into your high-performance workflow.
 
-## Installation
+---
 
-### Download
+## 🧪 Usage Note: Administrator Privileges
 
-Pre-built Windows binaries are available on the [Releases](https://github.com/shubham-pathak1/bastion/releases) page.
+Bastion requires **Administrator privileges** for its system-level website blocking.
+
+**Why is this needed?**
+The application achieves global, browser-independent blocking by modifying the system `hosts` file. This intercepts distracting traffic at the OS level, ensuring no connection can bypass your defense. Since the `hosts` file is a protected system resource on Windows, elevated rights are necessary to apply these changes.
+
+Without Administrator rights, Bastion can still monitor and block **applications**, but website blocking will remain inactive.
+
+---
+
+## 🛠️ Tech Stack
+
+- **Frontend**: React 18, TypeScript, Tailwind CSS, Framer Motion
+- **Backend**: Tauri 2.0, Rust, Tokio (Async Runtime)
+- **Database**: Local SQLite (Zero-latency persistence)
+- **Privacy**: Zero telemetry, 100% local processing, < 30MB idle RAM.
+
+---
+
+## 🚀 Getting Started
+
+### Installation
+Official binaries (MSI/NSIS) are available on the [Releases](https://github.com/shubham-pathak1/bastion/releases) page.
 
 ### Build from Source
-
 **Requirements:**
-- [Rust](https://www.rust-lang.org/tools/install) (1.70+)
-- [Node.js](https://nodejs.org/) (v18+)
-- [WebView2 Runtime](https://developer.microsoft.com/en-us/microsoft-edge/webview2/) (Windows)
+- [Rust](https://www.rust-lang.org/tools/install) (1.75+)
+- [Node.js](https://nodejs.org/) (v20+)
+- [WebView2 Runtime](https://developer.microsoft.com/en-us/microsoft-edge/webview2/)
 
 ```bash
-# Clone
+# Clone the repository
 git clone https://github.com/shubham-pathak1/bastion.git
 cd bastion
 
 # Install dependencies
 npm install
 
-# Run in development mode
+# Run dev environment
 npm run tauri dev
 
-# Build production binary
+# Build production installers
 npm run tauri build
 ```
 
-The compiled binary will be in `src-tauri/target/release/`.
+---
 
-## How It Works
+## 🏗️ Project Structure
 
-### Website Blocking
-Bastion writes entries to the Windows hosts file (`C:\Windows\System32\drivers\etc\hosts`), redirecting blocked domains to `127.0.0.1`. This requires Administrator privileges.
-
-### Application Blocking
-A background loop monitors running processes every 3 seconds. When a blocked application is detected, it is terminated and a warning modal is displayed with your custom message.
-
-### Data Storage
-All data is stored locally in a SQLite database. No cloud sync, no accounts, no tracking.
-
-## Tech Stack
-
-| Layer | Technology |
-|-------|------------|
-| Frontend | React 18, TypeScript, Tailwind CSS, Framer Motion |
-| Backend | Tauri 2.0, Rust, Tokio |
-| Database | SQLite (local) |
-| Blocking | Windows hosts file, process monitoring via `sysinfo` crate |
-
-## Project Structure
-
-```
+```text
 bastion/
-├── src/                    # React frontend
-│   ├── components/         # Reusable UI components
-│   ├── pages/              # Route pages (Dashboard, Blocks, etc.)
-│   └── lib/                # API bindings to Tauri commands
-├── src-tauri/              # Rust backend
-│   └── src/
-│       ├── lib.rs          # Tauri commands
-│       ├── blocking.rs     # Hosts file & process blocking logic
-│       ├── storage.rs      # SQLite database operations
-│       └── session.rs      # Focus session & Pomodoro timer
-└── package.json
+├── src/                    # React Frontend
+│   ├── components/         # Reusable UI Components
+│   └── pages/              # Navigation & Main Views
+├── src-tauri/              # Rust Backend
+│   ├── src/
+│   │   ├── lib.rs          # Core Logic & API Commands
+│   │   ├── blocking.rs     # Process Monitor & Firewall
+│   │   ├── server.rs       # Warning Page Server
+│   │   └── storage.rs      # Persistence Layer
+└── ...
 ```
-
-## Contributing
-
-Contributions are welcome. Please:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/your-feature`)
-3. Commit your changes (`git commit -m 'Add feature'`)
-4. Push to the branch (`git push origin feature/your-feature`)
-5. Open a Pull Request
-
-For bugs, please open an issue with steps to reproduce.
-
-## Current Limitations
-
-- **Windows only** (macOS/Linux support planned)
-- **Requires Administrator privileges** for website blocking
-- Browser DNS caching may delay blocks taking effect (restart browser or use "Leak Prevention" feature)
-
-## License
-
-MIT License. See [LICENSE](LICENSE) for details.
 
 ---
 
-**Note:** This project is under active development. APIs and features may change.
+## 📄 License
 
+Bastion is released under the [MIT License](LICENSE).
+
+---

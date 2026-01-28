@@ -202,7 +202,6 @@ export default function Sessions() {
                                     onClick={() => applyTemplate(template)}
                                     className="glass-panel p-6 text-left group border border-black/5 dark:border-white/5 hover:border-black/10 dark:hover:border-white/10 relative overflow-hidden"
                                 >
-                                    <div className="absolute inset-0 bg-gradient-to-br from-black/5 dark:from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                                     <div className="flex items-start justify-between mb-4 relative z-10">
                                         <div className={`p-3 rounded-xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5 group-hover:border-black/10 dark:group-hover:border-white/10 transition-colors`}>
                                             <template.icon className={`w-6 h-6 ${template.color}`} />
@@ -256,7 +255,7 @@ export default function Sessions() {
                                         >
                                             <div className="flex items-center gap-6">
                                                 <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border border-black/5 dark:border-white/5 ${session.hardcore
-                                                    ? 'bg-black dark:bg-white text-white dark:text-black shadow-lg'
+                                                    ? 'bg-black dark:bg-white text-white dark:text-black'
                                                     : 'bg-black/5 dark:bg-white/10 text-black dark:text-white shadow-none'
                                                     }`}>
                                                     {session.hardcore ? (
@@ -328,9 +327,8 @@ export default function Sessions() {
                             animate={{ scale: 1, opacity: 1, y: 0 }}
                             exit={{ scale: 0.9, opacity: 0, y: 20 }}
                             onClick={(e) => e.stopPropagation()}
-                            className="glass-panel w-full max-w-lg rounded-3xl p-8 border border-black/5 dark:border-white/10 shadow-2xl relative overflow-hidden"
+                            className="glass-panel w-full max-w-lg rounded-3xl p-8 border border-black/5 dark:border-white/10 relative overflow-hidden"
                         >
-                            <div className="absolute top-0 right-0 p-32 bg-black/5 dark:bg-white/5 blur-[80px] rounded-full pointer-events-none" />
                             <div className="relative z-10">
                                 <div className="flex items-center justify-between mb-8">
                                     <h2 className="heading-title text-black dark:text-white">
@@ -386,7 +384,7 @@ export default function Sessions() {
                                                     key={day}
                                                     onClick={() => toggleDay(day)}
                                                     className={`flex-1 h-12 rounded-xl text-xs font-black transition-all relative overflow-hidden uppercase tracking-widest ${formData.days.includes(day)
-                                                        ? 'bg-black dark:bg-white text-white dark:text-black shadow-lg'
+                                                        ? 'bg-black dark:bg-white text-white dark:text-black'
                                                         : 'bg-black/5 dark:bg-white/5 text-gray-500 dark:text-bastion-muted hover:bg-black/10 dark:hover:bg-white/10 hover:text-black dark:hover:text-white'
                                                         }`}
                                                 >
@@ -408,7 +406,7 @@ export default function Sessions() {
                                         </div>
                                         <button
                                             onClick={() => setFormData(prev => ({ ...prev, hardcore: !prev.hardcore }))}
-                                            className={`w-14 h-8 rounded-full transition-all relative ${formData.hardcore ? 'bg-black dark:bg-white shadow-lg' : 'bg-black/10 dark:bg-white/10'}`}
+                                            className={`w-14 h-8 rounded-full transition-all relative ${formData.hardcore ? 'bg-black dark:bg-white' : 'bg-black/10 dark:bg-white/10'}`}
                                         >
                                             <motion.div
                                                 layout
@@ -443,6 +441,6 @@ export default function Sessions() {
                     </motion.div>
                 )}
             </AnimatePresence>
-        </div>
+        </div >
     );
 }

@@ -114,10 +114,93 @@ async fn handle_connection(mut socket: TcpStream, port: u16, state: Arc<AppState
 
             // Send a basic response to close gracefully
             let response = if port == 80 {
-                "HTTP/1.1 403 Forbidden\r\nContent-Type: text/html\r\n\r\n<h1>Blocked by Bastion</h1>"
+                let warning_text = state.db.get_setting("custom_warning_text")
+                    .unwrap_or(None)
+                    .unwrap_or_else(|| "Is this really worth breaking your focus?".to_string());
+
+                let html = format!(r#"
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Blocked by Bastion</title>
+    <style>
+        body {{
+            background-color: #000;
+            color: #fff;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }}
+        .container {{
+            text-align: center;
+            padding: 3rem;
+            border-radius: 2rem;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            max-width: 500px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }}
+        .logo {{
+            width: 64px;
+            height: 64px;
+            background: #fff;
+            border-radius: 1rem;
+            margin: 0 auto 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }}
+        .logo svg {{
+            width: 32px;
+            height: 32px;
+            fill: #000;
+        }}
+        h1 {{
+            font-size: 2rem;
+            font-weight: 900;
+            margin: 0 0 1rem;
+            letter-spacing: -0.025em;
+            text-transform: uppercase;
+        }}
+        p {{
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 1.125rem;
+            line-height: 1.6;
+            margin: 0;
+            font-weight: 500;
+        }}
+        .footer {{
+            margin-top: 2rem;
+            font-size: 0.75rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: rgba(255, 255, 255, 0.3);
+        }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg>
+        </div>
+        <h1>Blocked</h1>
+        <p>{}</p>
+        <div class="footer">Bastion Focus Defense System</div>
+    </div>
+</body>
+</html>
+                "#, warning_text);
+
+                format!("HTTP/1.1 403 Forbidden\r\nContent-Length: {}\r\nContent-Type: text/html\r\nConnection: close\r\n\r\n{}", html.len(), html)
             } else {
                 // For HTTPS, we can't send a valid response without certs, so just close
-                ""
+                "".to_string()
             };
 
             if !response.is_empty() {

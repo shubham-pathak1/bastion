@@ -15,8 +15,9 @@
   html,
   body,
   #root {
-    @apply h-full w-full overflow-hidden bg-black text-white transition-colors duration-300;
+    @apply h-full w-full overflow-hidden bg-black text-white transition-colors duration-200 select-none;
     font-family: 'Inter', sans-serif;
+    user-select: none;
   }
 }
 
@@ -24,7 +25,7 @@
 
   /* The Glass Card - Core Component */
   .glass-card {
-    @apply relative overflow-hidden rounded-2xl border transition-all duration-300;
+    @apply relative overflow-hidden rounded-2xl border transition-all duration-200;
     @apply border-white/5 bg-white/[0.03] backdrop-blur-xl;
     box-shadow: 0 4px 24px -1px rgba(0, 0, 0, 0.2);
   }
@@ -40,7 +41,7 @@
   }
 
   .glass-card-interactive:hover {
-    @apply border-white/30 shadow-glow-sm;
+    @apply border-white/30;
   }
 
   /* Glass Panel (Sidebar, floating elements) */
@@ -50,7 +51,7 @@
 
   /* Inputs */
   .glass-input {
-    @apply w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder-white/30 outline-none transition-all duration-200 focus:border-white/50 focus:bg-white/10 focus:shadow-glow-sm;
+    @apply w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder-white/30 outline-none transition-all duration-150 focus:border-white/50 focus:bg-white/10;
   }
 
   .glass-input::-webkit-calendar-picker-indicator {
@@ -60,7 +61,7 @@
 
   /* Buttons */
   .btn-primary {
-    @apply relative overflow-hidden rounded-xl bg-white px-6 py-3 font-bold text-black transition-all duration-200 hover:shadow-glow-md active:scale-[0.98] border border-transparent;
+    @apply relative overflow-hidden rounded-xl bg-white px-6 py-3 font-bold text-black transition-all duration-150 active:scale-[0.98] border border-transparent;
   }
 
   .btn-primary::after {
@@ -69,7 +70,7 @@
   }
 
   .btn-glass {
-    @apply rounded-xl border border-white/10 bg-white/5 px-4 py-2 font-medium text-white transition-all duration-200 hover:border-white/20 hover:bg-white/10 active:scale-[0.98];
+    @apply rounded-xl border border-white/10 bg-white/5 px-4 py-2 font-medium text-white transition-all duration-150 hover:border-white/20 hover:bg-white/10 active:scale-[0.98];
   }
 
   /* Typography */
@@ -119,4 +120,15 @@
   z-index: 50;
   opacity: 0.03;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
+
+/* Utilities */
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
 }

@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import TitleBar from './components/TitleBar';
 import Sidebar from './components/Sidebar';
 import WarningModal from './components/WarningModal';
-import Dashboard from './pages/Dashboard';
+import Home from './pages/Home';
 import Blocks from './pages/Blocks';
 import Sessions from './pages/Sessions';
 import Pomodoro from './pages/Pomodoro';
@@ -17,7 +17,6 @@ function App() {
     const [isOnboarded, setIsOnboarded] = useState<boolean | null>(null);
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
-    // Warning Modal State
     const [showWarning, setShowWarning] = useState(false);
     const [blockedItems, setBlockedItems] = useState<string[]>([]);
     const [customWarningText, setCustomWarningText] = useState<string>('');
@@ -45,8 +44,6 @@ function App() {
                 console.error('Failed to load warning text:', err);
             }
         };
-        loadWarningText();
-
         loadWarningText();
 
         // Listen for blocks from the Rust background loop
@@ -101,17 +98,12 @@ function App() {
     return (
         <BrowserRouter>
             <div className="h-screen w-screen bg-black overflow-hidden flex flex-col">
-                {/* Custom Title Bar */}
                 <TitleBar />
 
                 {/* Main Content */}
                 <div className="flex-1 flex p-4 gap-4 relative overflow-hidden">
-                    {/* Noise Texture Overlay */}
                     <div className="noise-overlay" />
 
-                    {/* Ambient Background Glows */}
-                    <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-white/5 blur-[120px] rounded-full pointer-events-none" />
-                    <div className="absolute bottom-[-20%] right-[-10%] w-[40%] h-[40%] bg-white/5 blur-[120px] rounded-full pointer-events-none" />
 
                     <Sidebar
                         collapsed={sidebarCollapsed}
@@ -121,7 +113,7 @@ function App() {
                     <main className="flex-1 relative z-10 glass-panel rounded-3xl overflow-hidden flex flex-col border border-white/5">
                         <div className="flex-1 overflow-hidden flex flex-col">
                             <Routes>
-                                <Route path="/" element={<Dashboard />} />
+                                <Route path="/" element={<Home />} />
                                 <Route path="/blocks" element={<Blocks />} />
                                 <Route path="/sessions" element={<Sessions />} />
                                 <Route path="/pomodoro" element={<Pomodoro />} />
@@ -131,7 +123,6 @@ function App() {
                         </div>
                     </main>
 
-                    {/* Warning Modal */}
                     <WarningModal
                         isOpen={showWarning}
                         onClose={() => setShowWarning(false)}
