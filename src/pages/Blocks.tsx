@@ -6,56 +6,30 @@ import {
     Search,
     Plus,
     Trash2,
-    Tag,
     X,
     Loader2,
     RefreshCw,
     AlertTriangle,
-    MessageSquare,
     Play,
-    Newspaper,
-    ShoppingBag,
-    Briefcase,
-    Layers,
     ShieldCheck,
-    MessageCircle,
     Lock,
     Info
 } from 'lucide-react';
-import { blockedSitesApi, blockedAppsApi, systemApi, settingsApi, sessionsApi, BlockedSite, BlockedApp } from '../lib/api';
+import { blockedSitesApi, blockedAppsApi, systemApi, settingsApi, sessionsApi, statsApi, BlockedSite, BlockedApp } from '../lib/api';
+import CustomDialog from '../components/CustomDialog';
+import WarningModal from '../components/WarningModal';
 
 type TabType = 'websites' | 'applications';
-type Category = 'social' | 'entertainment' | 'news' | 'shopping' | 'work' | 'other';
-
-const categoryColors: Record<Category, string> = {
-    social: 'bg-black/5 dark:bg-white/10 text-black dark:text-white border border-black/5 dark:border-white/10',
-    entertainment: 'bg-black/5 dark:bg-white/10 text-black dark:text-white border border-black/5 dark:border-white/10',
-    news: 'bg-black/5 dark:bg-white/10 text-black dark:text-white border border-black/5 dark:border-white/10',
-    shopping: 'bg-black/5 dark:bg-white/10 text-black dark:text-white border border-black/5 dark:border-white/10',
-    work: 'bg-black/5 dark:bg-white/10 text-black dark:text-white border border-black/5 dark:border-white/10',
-    other: 'bg-black/5 dark:bg-white/10 text-black dark:text-white border border-black/5 dark:border-white/10',
-};
-
 const popularSites = [
     'twitter.com', 'x.com', 'youtube.com', 'instagram.com', 'reddit.com',
     'tiktok.com', 'facebook.com', 'fb.com', 'messenger.com', 'netflix.com'
 ];
-
-const categoryIcons: Record<Category, any> = {
-    social: MessageSquare,
-    entertainment: Play,
-    news: Newspaper,
-    shopping: ShoppingBag,
-    work: Briefcase,
-    other: Layers,
-};
 
 export default function Blocks() {
     const [activeTab, setActiveTab] = useState<TabType>('websites');
     const [searchQuery, setSearchQuery] = useState('');
     const [showAddModal, setShowAddModal] = useState(false);
     const [newItem, setNewItem] = useState('');
-    const [newCategory, setNewCategory] = useState<Category>('other');
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [isLocked, setIsLocked] = useState(false);
@@ -69,6 +43,7 @@ export default function Blocks() {
     // Custom Warning Text
     const [customWarningText, setCustomWarningText] = useState('');
     const [isEditingWarning, setIsEditingWarning] = useState(false);
+    const [blockCounts, setBlockCounts] = useState<Record<string, number>>({});
 
     // App Scanning State
     const [scanTab, setScanTab] = useState<'manual' | 'installed' | 'running'>('manual');
@@ -77,6 +52,8 @@ export default function Blocks() {
     const [isScanning, setIsScanning] = useState(false);
     const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
     const [showAdminPrompt, setShowAdminPrompt] = useState(false);
+    const [showKillConfirm, setShowKillConfirm] = useState(false);
+    const [showTestWarning, setShowTestWarning] = useState(false);
 
     const showNotification = (message: string, type: 'success' | 'error' = 'success') => {
         setNotification({ message, type });
@@ -124,12 +101,14 @@ export default function Blocks() {
     const loadData = async () => {
         setIsLoading(true);
         try {
-            const [sites, apps] = await Promise.all([
+            const [sites, apps, counts] = await Promise.all([
                 blockedSitesApi.getAll(),
-                blockedAppsApi.getAll()
+                blockedAppsApi.getAll(),
+                statsApi.getBlockCounts()
             ]);
             setWebsites(sites);
             setApplications(apps);
+            setBlockCounts(counts);
         } catch (err) {
             console.error('Failed to load blocked items:', err);
         } finally {
@@ -181,6 +160,7 @@ export default function Blocks() {
         const name = activeTab === 'websites'
             ? (item as BlockedSite).domain
             : (item as BlockedApp).name;
+
         return name.toLowerCase().includes(searchQuery.toLowerCase());
     });
 
@@ -242,15 +222,15 @@ export default function Blocks() {
 
         try {
             if (activeTab === 'websites') {
-                await blockedSitesApi.add(cleanItem, newCategory);
+                await blockedSitesApi.add(cleanItem);
 
                 // Smart Aliasing for Meta
                 if (cleanItem === 'facebook.com') {
-                    await blockedSitesApi.add('fb.com', newCategory);
-                    await blockedSitesApi.add('facebook.net', newCategory);
+                    await blockedSitesApi.add('fb.com');
+                    await blockedSitesApi.add('facebook.net');
                 }
                 if (cleanItem === 'instagram.com') {
-                    await blockedSitesApi.add('cdninstagram.com', newCategory);
+                    await blockedSitesApi.add('cdninstagram.com');
                 }
             } else {
                 const procName = newItem.trim();
@@ -259,10 +239,9 @@ export default function Blocks() {
                     setIsSaving(false);
                     return;
                 }
-                await blockedAppsApi.add(procName, procName, newCategory);
+                await blockedAppsApi.add(procName, procName);
             }
             setNewItem('');
-            setNewCategory('other');
             setShowAddModal(false);
 
             // Check for first website prompt
@@ -399,7 +378,7 @@ export default function Blocks() {
                                             <div className="relative">
                                                 <div className="absolute -top-5 right-4 w-2 h-2 bg-black border-l border-t border-white/20 rotate-45" />
                                                 <p className="text-[10px] text-zinc-300 leading-relaxed font-bold">
-                                                    Administrative privileges allow Bastion to modify the system <span className="text-white">hosts</span> file. This ensures distractions are intercepted at the OS level across all browsers.
+                                                    Administrative privileges allow Bastion to modify the system <span className="text-white">hosts</span> file. This ensures distractions are blocked at the OS level across all browsers.
                                                 </p>
                                             </div>
                                         </div>
@@ -424,7 +403,7 @@ export default function Blocks() {
                                                 <div className="px-2 py-0.5 rounded bg-white/10 text-zinc-300 text-[9px] font-black uppercase tracking-widest border border-white/10">Security Layer</div>
                                             </div>
                                             <p className="text-[13px] text-zinc-500 font-bold max-w-xl leading-relaxed mt-1.5">
-                                                Force browser protection by hardening security policies and purging persistent socket connections.
+                                                Force browser protection by hardening security policies and flushing DNS caches.
                                             </p>
                                         </div>
                                     </div>
@@ -449,12 +428,7 @@ export default function Blocks() {
                                         <div className="w-px h-8 bg-white/10 mx-2" />
 
                                         <button
-                                            onClick={async () => {
-                                                if (window.confirm("This will close all open browsers to reset connections. Save your work first! Continue?")) {
-                                                    await systemApi.killBrowsers();
-                                                    showNotification("Browsers terminated. Re-open to see blocking in effect.");
-                                                }
-                                            }}
+                                            onClick={() => setShowKillConfirm(true)}
                                             className="px-6 py-3 rounded-xl text-zinc-500 hover:text-white hover:bg-white/5 transition-all duration-300 font-black uppercase tracking-widest text-[10px]"
                                         >
                                             <div className="flex items-center gap-2">
@@ -462,6 +436,19 @@ export default function Blocks() {
                                                 Hardcore Reset
                                             </div>
                                         </button>
+
+                                        <CustomDialog
+                                            isOpen={showKillConfirm}
+                                            onClose={() => setShowKillConfirm(false)}
+                                            onConfirm={async () => {
+                                                await systemApi.killBrowsers();
+                                                showNotification("Browsers terminated. Re-open to see blocking in effect.");
+                                            }}
+                                            title="Terminate Browsers?"
+                                            message="This will close all open browsers to reset connections. Save your work first! Continue?"
+                                            confirmLabel="Terminate All"
+                                            type="danger"
+                                        />
                                     </div>
                                 </div>
                             </div>
@@ -478,20 +465,23 @@ export default function Blocks() {
                             <div className="relative group">
                                 <div className="relative glass-panel p-6 border border-white/5 hover:border-white/20 transition-all duration-500 bg-black/40">
                                     <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-                                        <div className="flex items-start gap-5">
-                                            <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center flex-shrink-0 group-hover:bg-white/10 transition-colors duration-500">
-                                                <MessageCircle className="w-7 h-7 text-white" />
+                                        <div className="flex-1">
+                                            <div className="flex items-center gap-3">
+                                                <p className="font-black text-white transition-colors uppercase tracking-tight text-xl">Block Warning</p>
+                                                <div className="px-2 py-0.5 rounded bg-white/10 text-zinc-300 text-[9px] font-black uppercase tracking-widest border border-white/10">Personalized</div>
                                             </div>
-                                            <div className="flex-1">
-                                                <div className="flex items-center gap-3">
-                                                    <p className="font-black text-white transition-colors uppercase tracking-tight text-xl">Block Warning</p>
-                                                    <div className="px-2 py-0.5 rounded bg-white/10 text-zinc-300 text-[9px] font-black uppercase tracking-widest border border-white/10">Personalized</div>
-                                                </div>
-                                                <p className="text-[13px] text-zinc-500 font-bold max-w-xl leading-relaxed mt-1.5">
-                                                    This message will be shown when you try to access blocked content.
-                                                </p>
-                                            </div>
+                                            <p className="text-[13px] text-zinc-500 font-bold max-w-xl leading-relaxed mt-1.5">
+                                                This message will be shown when you try to access blocked content.
+                                            </p>
                                         </div>
+
+                                        <button
+                                            onClick={() => setShowTestWarning(true)}
+                                            className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-white font-black uppercase tracking-[0.2em] text-[10px] hover:bg-white/10 transition-all flex items-center gap-2"
+                                        >
+                                            <Play className="w-3 h-3" />
+                                            Test Preview
+                                        </button>
                                     </div>
 
                                     {/* Warning Text Input */}
@@ -584,7 +574,6 @@ export default function Blocks() {
                                         const name = activeTab === 'websites'
                                             ? (item as BlockedSite).domain
                                             : (item as BlockedApp).name;
-                                        const category = (item.category || 'other') as Category;
 
                                         return (
                                             <motion.div
@@ -597,10 +586,10 @@ export default function Blocks() {
                                                 className="group relative"
                                             >
                                                 <div className={`
-                                            absolute inset-0 bg-gradient-to-r from-black/5 dark:from-white/10 to-transparent opacity-0 
-                                            transition-opacity duration-300 rounded-xl pointer-events-none
-                                            ${item.enabled ? 'group-hover:opacity-10' : ''}
-                                        `} />
+                                                    absolute inset-0 bg-gradient-to-r from-black/5 dark:from-white/10 to-transparent opacity-0 
+                                                    transition-opacity duration-300 rounded-xl pointer-events-none
+                                                    ${item.enabled ? 'group-hover:opacity-10' : ''}
+                                                `} />
 
                                                 <div className="glass-panel p-4 flex items-center justify-between border border-black/5 dark:border-white/5 hover:border-black/10 dark:hover:border-white/10 transition-all duration-300">
                                                     <div className="flex items-center gap-5">
@@ -624,13 +613,15 @@ export default function Blocks() {
                                                                 {name}
                                                             </p>
                                                             <div className="flex items-center gap-2 mt-1">
-                                                                <span className={`text-[10px] uppercase font-black tracking-widest px-2 py-0.5 rounded-md ${categoryColors[category]}`}>
-                                                                    {category}
-                                                                </span>
                                                                 {item.enabled && (
                                                                     <span className="text-[10px] text-black dark:text-white flex items-center gap-1 font-black uppercase tracking-widest">
                                                                         <div className="w-1 h-1 rounded-full bg-black dark:bg-white animate-pulse" />
                                                                         Active
+                                                                    </span>
+                                                                )}
+                                                                {blockCounts[name] > 0 && (
+                                                                    <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest ml-1">
+                                                                        • {blockCounts[name]} Interceptions
                                                                     </span>
                                                                 )}
                                                             </div>
@@ -638,9 +629,6 @@ export default function Blocks() {
                                                     </div>
 
                                                     <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                                                        <button className="p-2.5 rounded-xl hover:bg-black/5 dark:hover:bg-white/10 text-gray-400 dark:text-bastion-muted hover:text-black dark:hover:text-white transition-colors">
-                                                            <Tag className="w-4 h-4" />
-                                                        </button>
                                                         <button
                                                             onClick={() => deleteItem(item.id)}
                                                             className="p-2.5 rounded-xl hover:bg-black/5 dark:hover:bg-white/10 text-gray-400 dark:text-bastion-muted hover:text-black dark:hover:text-white transition-colors"
@@ -697,6 +685,7 @@ export default function Blocks() {
                     </motion.div>
                 )}
             </AnimatePresence>
+
             <AnimatePresence>
                 {showAddModal && (
                     <motion.div
@@ -775,27 +764,6 @@ export default function Blocks() {
                                                 />
                                             </div>
 
-                                            <div>
-                                                <label className="text-[10px] font-black text-zinc-500 mb-2 block uppercase tracking-[0.2em]">Category</label>
-                                                <div className="grid grid-cols-3 gap-2">
-                                                    {Object.keys(categoryColors).map(cat => (
-                                                        <button
-                                                            key={cat}
-                                                            onClick={() => setNewCategory(cat as Category)}
-                                                            className={`py-2 px-3 rounded-lg border text-[10px] font-black transition-all capitalize uppercase tracking-widest flex items-center justify-center gap-2 ${newCategory === cat
-                                                                ? 'bg-white text-black border-transparent'
-                                                                : 'bg-white/5 border-white/5 text-zinc-500 hover:bg-white/10 hover:text-white'
-                                                                }`}
-                                                        >
-                                                            {(() => {
-                                                                const Icon = categoryIcons[cat as Category];
-                                                                return <Icon className="w-3 h-3" />;
-                                                            })()}
-                                                            {cat}
-                                                        </button>
-                                                    ))}
-                                                </div>
-                                            </div>
 
                                             {activeTab === 'websites' && (
                                                 <div>
@@ -854,7 +822,7 @@ export default function Blocks() {
 
                                                                         setIsSaving(true);
                                                                         try {
-                                                                            await blockedAppsApi.add(app.name, procName, newCategory);
+                                                                            await blockedAppsApi.add(app.name, procName);
                                                                             await loadData();
                                                                             setShowAddModal(false);
                                                                         } catch (err) {
@@ -958,6 +926,13 @@ export default function Blocks() {
                     </motion.div>
                 )}
             </AnimatePresence>
-        </div>
+
+            <WarningModal
+                isOpen={showTestWarning}
+                onClose={() => setShowTestWarning(false)}
+                blockedItems={['test-preview.com', 'Distraction App']}
+                customMessage={customWarningText}
+            />
+        </div >
     );
 }

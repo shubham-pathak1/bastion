@@ -12,6 +12,13 @@ use tauri::{Manager, State, WebviewWindowBuilder, WebviewUrl};
 use tauri::Emitter;
 use tauri::menu::{MenuBuilder, MenuItemBuilder};
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
+use argon2::{
+    password_hash::{
+        rand_core::OsRng,
+        PasswordHash, PasswordHasher, PasswordVerifier, SaltString
+    },
+    Argon2
+};
 
 pub struct AppState {
     pub db: Database,
@@ -253,6 +260,11 @@ fn log_protected_time(state: State<Arc<AppState>>, minutes: i64) -> Result<(), S
     state.db.update_protected_time(minutes).map_err(|e| e.to_string())
 }
 
+#[tauri::command]
+fn get_block_counts(state: State<Arc<AppState>>) -> Result<std::collections::HashMap<String, i64>, String> {
+    state.db.get_block_counts().map_err(|e| e.to_string())
+}
+
 // ============= Settings Commands =============
 
 #[tauri::command]
@@ -268,6 +280,39 @@ fn set_setting(state: State<Arc<AppState>>, key: String, value: String) -> Resul
 #[tauri::command]
 fn factory_reset(state: State<Arc<AppState>>) -> Result<(), String> {
     state.db.factory_reset().map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn set_master_password(state: State<Arc<AppState>>, password: String) -> Result<(), String> {
+    let salt = SaltString::generate(&mut OsRng);
+    let argon2 = Argon2::default();
+    let password_hash = argon2.hash_password(password.as_bytes(), &salt)
+        .map_err(|e| e.to_string())?
+        .to_string();
+    
+    state.db.set_setting("master_password_hash", &password_hash).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn verify_master_password(state: State<Arc<AppState>>, password: String) -> Result<bool, String> {
+    let hash_opt = state.db.get_setting("master_password_hash").map_err(|e| e.to_string())?;
+    
+    if let Some(hash_str) = hash_opt {
+        let parsed_hash = PasswordHash::new(&hash_str).map_err(|e| e.to_string())?;
+        Ok(Argon2::default().verify_password(password.as_bytes(), &parsed_hash).is_ok())
+    } else {
+        Ok(false)
+    }
+}
+
+#[tauri::command]
+fn emergency_unlock(state: State<Arc<AppState>>, password: String) -> Result<(), String> {
+    let valid = verify_master_password(state.clone(), password)?;
+    if valid {
+        state.session_manager.force_end_session()
+    } else {
+        Err("Invalid master password".to_string())
+    }
 }
 
 // ============= System Commands =============
@@ -312,18 +357,14 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_autostart::init(tauri_plugin_autostart::MacosLauncher::LaunchAgent, Some(vec!["--silent"])))
         .plugin(tauri_plugin_notification::init())
-        .on_window_event(|window, event| {
-            if let tauri::WindowEvent::CloseRequested { api: _api, .. } = event {
-                let state = window.state::<Arc<AppState>>();
-                let minimize_to_tray = state.db.get_setting("minimize_to_tray")
-                    .unwrap_or(Some("true".to_string()))
-                    .unwrap_or("true".to_string()) == "true";
-
-                if minimize_to_tray {
-                    // Stay alive in background via tray and background loop
-                } else {
-                    // If not minimizing to tray, we might want to prevent close or do something else
-                }
+        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+            let _ = ensure_window(app);
+        }))
+        .on_window_event(|_window, event| {
+            if let tauri::WindowEvent::CloseRequested { .. } = event {
+                // By default in Tauri 2.0, CloseRequested will lead to window destruction.
+                // We let this happen to save resources (Ghost Mode).
+                // Our RunEvent::ExitRequested handler will prevent the app from quitting.
             }
         })
         .setup(|app| {
@@ -337,6 +378,12 @@ pub fn run() {
                 app_handle: std::sync::Mutex::new(Some(app.handle().clone())),
             });
             app.manage(state.clone());
+
+            // Handle Silent Startup
+            let is_silent = std::env::args().any(|arg| arg == "--silent");
+            if !is_silent {
+                ensure_window(app.handle());
+            }
             
             // Start blocking stats listener
             let server_state = state.clone();
@@ -354,6 +401,8 @@ pub fn run() {
                     timer_interval.tick().await;
 
                     // 1. Tick Pomodoro (every second)
+                    // This handles the countdown logic for Pomodoro sessions and sends notifications
+                    // when a phase (Work/Break) is completed.
                     if let Some(completed_phase) = background_state.session_manager.pomodoro_tick() {
                         // Phase changed, send notification
                         if let Some(handle) = background_state.app_handle.lock().unwrap().as_ref() {
@@ -373,9 +422,37 @@ pub fn run() {
                     }
 
                     // 2. Enforce App Blocks (every 3 seconds)
+                    // We throttle this to save CPU resources. 3 seconds is frequent enough to prevent
+                    // meaningful usage of a blocked app, but infrequent enough to be negligible on CPU.
                     enforcement_counter += 1;
                     if enforcement_counter >= 3 {
                         enforcement_counter = 0;
+                        
+                        // Check for Scheduled Sessions (every 30 seconds or if no manual session is active)
+                        // This allows Bastion to auto-start sessions based on the user's weekly schedule.
+                        let active_session = background_state.session_manager.active_session.lock().unwrap();
+                        let has_manual_session = active_session.is_some();
+                        drop(active_session);
+
+                        if !has_manual_session {
+                            if let Ok(sessions) = background_state.db.get_sessions() {
+                                if let Some(scheduled) = background_state.session_manager.check_scheduled_sessions(&sessions) {
+                                    // Start a scheduled session automatically
+                                    let _ = background_state.session_manager.start_session(
+                                        scheduled.name,
+                                        60, // Dummy duration, we check every tick
+                                        scheduled.hardcore
+                                    );
+                                }
+                            }
+                        } else {
+                            // Check if manual session expired
+                            if background_state.session_manager.is_session_expired() {
+                                let _ = background_state.session_manager.end_session();
+                            }
+                        }
+
+                        // App Blocking Enforcement
                         if let Ok(apps) = background_state.db.get_blocked_apps() {
                             let blocked_process_names: Vec<String> = apps
                                 .into_iter()
@@ -383,9 +460,6 @@ pub fn run() {
                                 .map(|a| a.process_name)
                                 .collect();
                             
-                            // Pass the system object if we refactored it, 
-                            // but for now our revised enforce_app_blocks creates its own efficiently.
-                            // Actually, let's keep it simple for now as I already optimized enforce_app_blocks.
                             let killed = blocking::enforce_app_blocks(&blocked_process_names);
                             
                             // Log block events and notify frontend
@@ -477,7 +551,12 @@ pub fn run() {
             // Settings
             get_setting,
             set_setting,
+            get_block_counts,
+            get_block_counts,
             factory_reset,
+            set_master_password,
+            verify_master_password,
+            emergency_unlock,
             // System
             is_app_admin,
             kill_browsers,
@@ -493,6 +572,8 @@ pub fn run() {
                     .unwrap_or(Some("true".to_string()))
                     .unwrap_or("true".to_string()) == "true";
 
+                // In Ghost Mode, we always prevent exit if tray is enabled, 
+                // because the "main" window closing is normal behavior for backgrounding.
                 if minimize_to_tray {
                     api.prevent_exit();
                 }
@@ -504,6 +585,7 @@ pub fn run() {
 fn ensure_window(app: &tauri::AppHandle) {
     if let Some(window) = app.get_webview_window("main") {
         let _ = window.show();
+        let _ = window.unminimize();
         let _ = window.set_focus();
     } else {
         // Create new window with the same specs as tauri.conf.json
@@ -519,6 +601,12 @@ fn ensure_window(app: &tauri::AppHandle) {
         .transparent(true)
         .center()
         .build()
-        .unwrap();
+        .expect("Failed to build main window");
+
+        // Ensure new window is shown
+        if let Some(w) = app.get_webview_window("main") {
+            let _ = w.show();
+            let _ = w.set_focus();
+        }
     }
 }

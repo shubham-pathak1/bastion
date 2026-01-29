@@ -5,6 +5,7 @@ import { invoke } from '@tauri-apps/api/core';
 
 // ============= Types =============
 
+/** Represents a domain blocked by the hosts file. */
 export interface BlockedSite {
     id: number;
     domain: string;
@@ -13,22 +14,24 @@ export interface BlockedSite {
     created_at: string;
 }
 
+/** Represents an application executable blocked by the process monitor. */
 export interface BlockedApp {
     id: number;
     name: string;
-    process_name: string;
+    process_name: string; // e.g., 'discord.exe'
     category: string;
     enabled: boolean;
     created_at: string;
 }
 
+/** A recurring schedule for blocking sessions. */
 export interface Session {
     id: number;
     name: string;
-    start_time: string;
-    end_time: string;
-    days: string;
-    hardcore: boolean;
+    start_time: string; // HH:MM format
+    end_time: string;   // HH:MM format
+    days: string;       // JSON string of days array (e.g. '["Mon", "Tue"]')
+    hardcore: boolean;  // If true, cannot be cancelled easily
     enabled: boolean;
 }
 
@@ -119,9 +122,11 @@ export const blockedAppsApi = {
     getRunningProcesses: () =>
         invoke<RunningProcess[]>('get_running_processes'),
 
+    /** Returns a list of all installed applications (via PowerShell or common paths). */
     getInstalledApplications: () =>
         invoke<{ name: string; id: string }[]>('get_installed_applications'),
 
+    /** Manually triggers an enforcement check for blocked apps. Returns killed app names. */
     enforceBlocks: () =>
         invoke<string[]>('enforce_app_blocks'),
 };
@@ -144,11 +149,16 @@ export const sessionsApi = {
     endFocus: () =>
         invoke<void>('end_focus_session'),
 
+    /** Returns the remaining time in seconds for the current session, or null if inactive. */
     getTimeRemaining: () =>
         invoke<number | null>('get_session_time_remaining'),
 
+    /** Checks if the current session is in 'Hardcore Mode' (cannot be cancelled). */
     isHardcoreLocked: () =>
         invoke<boolean>('is_hardcore_locked'),
+
+    emergencyUnlock: (password: string) =>
+        invoke<void>('emergency_unlock', { password }),
 };
 
 // ============= Pomodoro API =============
@@ -181,6 +191,9 @@ export const statsApi = {
 
     logProtectedTime: (minutes: number) =>
         invoke<void>('log_protected_time', { minutes }),
+
+    getBlockCounts: () =>
+        invoke<Record<string, number>>('get_block_counts'),
 };
 
 // ============= Settings API =============
@@ -194,6 +207,12 @@ export const settingsApi = {
 
     factoryReset: () =>
         invoke<void>('factory_reset'),
+
+    setMasterPassword: (password: string) =>
+        invoke<void>('set_master_password', { password }),
+
+    verifyMasterPassword: (password: string) =>
+        invoke<boolean>('verify_master_password', { password }),
 };
 
 // ============= Combined API =============

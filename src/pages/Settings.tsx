@@ -4,21 +4,27 @@ import {
     Settings2 as SettingsIcon,
     Lock as LockIcon,
     Github as GithubIcon,
+    Plus as PlusIcon,
+    Trash2 as TrashIcon,
     AlertTriangle as AlertIcon,
     LogOut as LogoutIcon,
     FileText as LicenseIcon,
-    Database as DatabaseIcon
+    Database as DatabaseIcon,
+    Clock as ClockIcon
 } from 'lucide-react';
 import { openUrl } from '@tauri-apps/plugin-opener';
-import { settingsApi } from '../lib/api';
+import { settingsApi, sessionsApi } from '../lib/api';
 import { enable, disable, isEnabled } from '@tauri-apps/plugin-autostart';
 import logo from '../assets/bastion_logo.png';
+import CustomDialog from '../components/CustomDialog';
+import PasswordModal from '../components/PasswordModal';
 
-type Tab = 'general' | 'hardcore' | 'advanced' | 'about';
+type Tab = 'general' | 'hardcore' | 'schedules' | 'advanced' | 'about';
 
 const tabs = [
     { id: 'general', label: 'General', icon: SettingsIcon },
     { id: 'hardcore', label: 'Hardcore', icon: LockIcon },
+    { id: 'schedules', label: 'Schedules', icon: ClockIcon },
     { id: 'advanced', label: 'Advanced', icon: DatabaseIcon },
     { id: 'about', label: 'About', icon: LicenseIcon },
 ] as const;
@@ -62,8 +68,16 @@ export default function Settings() {
     const [hardcoreEnabled, setHardcoreEnabled] = useState(false);
     const [emergencyOverride, setEmergencyOverride] = useState(false);
 
+    // Dialog States
+    const [showResetConfirm, setShowResetConfirm] = useState(false);
+    const [showResetSuccess, setShowResetSuccess] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('');
+
     // Custom Warning Text
     const [customWarningText, setCustomWarningText] = useState('');
+
+    // Schedules State
+    const [schedules, setSchedules] = useState<any[]>([]);
 
     useEffect(() => {
         // Load settings
@@ -78,16 +92,29 @@ export default function Settings() {
                 ]);
 
                 if (boot !== null) setStartOnBoot(boot === 'true');
-                else setStartOnBoot(autostart); // Default to autostart status if not in DB
+                else setStartOnBoot(autostart);
 
                 if (tray !== null) setMinimizeToTray(tray === 'true');
                 if (notify !== null) setShowNotifications(notify === 'true');
                 if (warningText !== null) setCustomWarningText(warningText);
+                const masterPasswordHash = await settingsApi.get('master_password_hash');
+                setEmergencyOverride(!!masterPasswordHash && masterPasswordHash.length > 0);
             } catch (err) {
                 console.error('Failed to load settings:', err);
             }
         };
+
+        const loadSchedules = async () => {
+            try {
+                const data = await sessionsApi.getAll();
+                setSchedules(data);
+            } catch (err) {
+                console.error('Failed to load schedules:', err);
+            }
+        };
+
         loadSettings();
+        loadSchedules();
     }, []);
 
     const toggleStartOnBoot = async () => {
@@ -128,6 +155,41 @@ export default function Settings() {
             await settingsApi.set('custom_warning_text', text);
         } catch (err) {
             console.error('Failed to update warning text:', err);
+        }
+    };
+
+    // Password Modal State
+    const [showPasswordModal, setShowPasswordModal] = useState(false);
+    const [passwordModalType, setPasswordModalType] = useState<'set' | 'verify'>('verify');
+
+    const handleEmergencyToggle = () => {
+        if (emergencyOverride) {
+            // Disable it (verify first)
+            setPasswordModalType('verify');
+            setShowPasswordModal(true);
+        } else {
+            // Enable it (set password)
+            setPasswordModalType('set');
+            setShowPasswordModal(true);
+        }
+    };
+
+    const onPasswordSubmit = async (password: string) => {
+        if (passwordModalType === 'set') {
+            await settingsApi.setMasterPassword(password);
+            setEmergencyOverride(true);
+        } else {
+            const isValid = await settingsApi.verifyMasterPassword(password);
+            if (!isValid) throw new Error('Incorrect password');
+            // To disable, we clear the password hash (or just consider it disabled if we had a flag, but clearing hash is safer)
+            // Ideally we'd have a removeSetting, but setting it to empty string works if we check for Some() and non-empty in backend.
+            // Actually, let's just use empty string for now as "disabled".
+            // Backend `verify_master_password` handles Option, so if we can delete it that's best.
+            // Our set_setting overwrites. So we can overwrite with empty string?
+            // Let's assume empty string means disabled for now, or add a delete_setting command?
+            // Simpler: Just set it to empty string.
+            await settingsApi.set('master_password_hash', '');
+            setEmergencyOverride(false);
         }
     };
 
@@ -230,6 +292,82 @@ export default function Settings() {
                                 </div>
                             )}
 
+                            {activeTab === 'schedules' && (
+                                <div className="space-y-6">
+                                    <div className="flex items-center justify-between mb-6">
+                                        <h2 className="text-xl font-black text-black dark:text-white">Active Schedules</h2>
+                                        <button
+                                            onClick={async () => {
+                                                const newSchedule = {
+                                                    name: 'Focus Block',
+                                                    start_time: '09:00',
+                                                    end_time: '17:00',
+                                                    days: JSON.stringify(['Mon', 'Tue', 'Wed', 'Thu', 'Fri']),
+                                                    hardcore: true,
+                                                    enabled: true
+                                                };
+                                                await sessionsApi.add(newSchedule);
+                                                const data = await sessionsApi.getAll();
+                                                setSchedules(data);
+                                            }}
+                                            className="px-4 py-2 rounded-lg bg-black dark:bg-white text-white dark:text-black font-black uppercase tracking-widest text-[10px] hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-2"
+                                        >
+                                            <PlusIcon className="w-3.5 h-3.5" />
+                                            Add Work Hours
+                                        </button>
+                                    </div>
+
+                                    {schedules.length === 0 ? (
+                                        <div className="text-center py-12 bg-black/5 dark:bg-white/5 rounded-2xl border border-dashed border-black/10 dark:border-white/10">
+                                            <ClockIcon className="w-12 h-12 text-gray-400 dark:text-bastion-muted mx-auto mb-4 opacity-50" />
+                                            <p className="text-gray-500 dark:text-bastion-muted font-bold">No active schedules. Set work hours to automate blocking.</p>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-3">
+                                            {schedules.map((schedule) => (
+                                                <div key={schedule.id} className="p-4 rounded-xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 flex items-center justify-between group">
+                                                    <div className="flex items-center gap-4">
+                                                        <div className="w-10 h-10 rounded-lg bg-black/10 dark:bg-white/10 flex items-center justify-center">
+                                                            <ClockIcon className="w-5 h-5 text-black dark:text-white" />
+                                                        </div>
+                                                        <div>
+                                                            <p className="font-bold text-black dark:text-white uppercase tracking-tight">{schedule.name}</p>
+                                                            <p className="text-sm text-gray-500 dark:text-bastion-muted">
+                                                                {schedule.start_time} - {schedule.end_time} • {JSON.parse(schedule.days).join(', ')}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-center gap-3">
+                                                        {schedule.hardcore && (
+                                                            <span className="px-2 py-0.5 rounded bg-red-600/10 text-red-500 text-[10px] font-black uppercase tracking-widest border border-red-600/20">Hardcore</span>
+                                                        )}
+                                                        <button
+                                                            onClick={async () => {
+                                                                await sessionsApi.delete(schedule.id);
+                                                                const data = await sessionsApi.getAll();
+                                                                setSchedules(data);
+                                                            }}
+                                                            className="p-2 rounded-lg hover:bg-black/10 dark:hover:bg-red-500/10 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
+                                                        >
+                                                            <TrashIcon className="w-4 h-4" />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+
+                                    <div className="p-4 rounded-xl bg-white/5 border border-white/10 mt-8">
+                                        <div className="flex items-start gap-3">
+                                            <AlertIcon className="w-5 h-5 text-zinc-500 mt-0.5" />
+                                            <p className="text-xs text-zinc-500 leading-relaxed font-bold uppercase tracking-tight">
+                                                Scheduled sessions start automatically in the background. If "Ghost Mode" is active, Bastion will block distractions silently even if the window is closed.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
                             {activeTab === 'hardcore' && (
                                 <div className="space-y-4">
                                     <h2 className="text-xl font-black text-black dark:text-white mb-6">Hardcore Mode Configuration</h2>
@@ -248,7 +386,7 @@ export default function Settings() {
                                                 <h3 className="text-lg font-bold text-black dark:text-white mb-2">Unbreakable Commitment</h3>
                                                 <p className="text-gray-500 dark:text-bastion-muted max-w-xl">
                                                     Hardcore mode removes the ability to exit the session or modify blocklists until the timer expires.
-                                                    This includes preventing application exit and uninstallation during active sessions.
+                                                    This includes preventing application exit during active sessions.
                                                 </p>
                                             </div>
                                         </div>
@@ -258,8 +396,8 @@ export default function Settings() {
                                         <Toggle enabled={hardcoreEnabled} onChange={() => setHardcoreEnabled(!hardcoreEnabled)} />
                                     </SettingRow>
 
-                                    <SettingRow label="Emergency Override" description="Allow bypassing Hardcore Mode with Master Password (not recommended)">
-                                        <Toggle enabled={emergencyOverride} onChange={() => setEmergencyOverride(!emergencyOverride)} />
+                                    <SettingRow label="Emergency Override" description="Allow bypassing Hardcore Mode by entering a Master Password.">
+                                        <Toggle enabled={emergencyOverride} onChange={handleEmergencyToggle} />
                                     </SettingRow>
                                 </div>
                             )}
@@ -270,23 +408,52 @@ export default function Settings() {
 
                                     <SettingRow label="Factory Reset" description="Clear all data and return to initial state" danger>
                                         <button
-                                            onClick={async () => {
-                                                if (confirm('Are you sure you want to reset Bastion? This will delete all blocked sites, apps, sessions, and settings. This action cannot be undone.')) {
-                                                    try {
-                                                        await settingsApi.factoryReset();
-                                                        alert('Bastion has been reset. The app will now reload.');
-                                                        window.location.reload();
-                                                    } catch (err) {
-                                                        alert('Failed to reset: ' + err);
-                                                    }
-                                                }
-                                            }}
+                                            onClick={() => setShowResetConfirm(true)}
                                             className="px-4 py-2 rounded-lg bg-red-600/10 hover:bg-red-600/20 text-red-500 text-sm font-medium border border-red-600/20 flex items-center gap-2 transition-colors"
                                         >
                                             <LogoutIcon className="w-4 h-4" />
                                             Reset Bastion
                                         </button>
                                     </SettingRow>
+
+                                    {/* Dialogs */}
+                                    <CustomDialog
+                                        isOpen={showResetConfirm}
+                                        onClose={() => setShowResetConfirm(false)}
+                                        onConfirm={async () => {
+                                            try {
+                                                await settingsApi.factoryReset();
+                                                setShowResetSuccess(true);
+                                            } catch (err) {
+                                                setErrorMessage(String(err));
+                                            }
+                                        }}
+                                        title="Factory Reset"
+                                        message="Are you sure you want to reset Bastion? This will delete all blocked sites, apps, sessions, and settings from Bastion only. This action cannot be undone."
+                                        confirmLabel="Reset Everything"
+                                        type="danger"
+                                    />
+
+                                    <CustomDialog
+                                        isOpen={showResetSuccess}
+                                        onClose={() => window.location.reload()}
+                                        onConfirm={() => window.location.reload()}
+                                        title="Reset Complete"
+                                        message="Bastion has been factory reset. The application will now reload to apply changes."
+                                        confirmLabel="Reload Now"
+                                        isAlert
+                                        type="success"
+                                    />
+
+                                    <CustomDialog
+                                        isOpen={!!errorMessage}
+                                        onClose={() => setErrorMessage('')}
+                                        title="Reset Failed"
+                                        message={`Failed to reset: ${errorMessage}`}
+                                        confirmLabel="Close"
+                                        isAlert
+                                        type="warning"
+                                    />
                                 </div>
                             )}
 
@@ -330,6 +497,22 @@ export default function Settings() {
                     </AnimatePresence>
                 </div>
             </div>
+            <AnimatePresence>
+                {showPasswordModal && (
+                    <PasswordModal
+                        isOpen={showPasswordModal}
+                        onClose={() => setShowPasswordModal(false)}
+                        onConfirm={onPasswordSubmit}
+                        title={passwordModalType === 'set' ? "Set Master Password" : "Disable Override"}
+                        message={passwordModalType === 'set'
+                            ? "This password will be required to stop a Hardcore Mode session. Don't lose it!"
+                            : "Enter your Master Password to disable the Emergency Override feature."
+                        }
+                        confirmLabel={passwordModalType === 'set' ? "Enable Override" : "Disable Override"}
+                        type={passwordModalType}
+                    />
+                )}
+            </AnimatePresence>
         </div >
     );
 }

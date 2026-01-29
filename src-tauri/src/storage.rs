@@ -1,6 +1,6 @@
 //! Storage module - SQLite database for persistent data
 
-// use chrono::{DateTime, Utc};
+
 use rusqlite::{Connection, Result as SqliteResult, params};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
@@ -318,6 +318,23 @@ impl Database {
             })
         })?;
         events.collect()
+    }
+
+    pub fn get_block_counts(&self) -> SqliteResult<std::collections::HashMap<String, i64>> {
+        let conn = self.conn.lock().unwrap();
+        let mut stmt = conn.prepare(
+            "SELECT target, COUNT(*) as count FROM block_events GROUP BY target"
+        )?;
+        let rows = stmt.query_map([], |row| {
+            Ok((row.get::<_, String>(0)?, row.get::<_, i64>(1)?))
+        })?;
+        
+        let mut counts = std::collections::HashMap::new();
+        for row in rows {
+            let (target, count) = row?;
+            counts.insert(target, count);
+        }
+        Ok(counts)
     }
 
     // Stats

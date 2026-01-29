@@ -12,7 +12,8 @@ import {
     Rocket,
     Radar
 } from 'lucide-react';
-import { statsApi, sessionsApi, blockedSitesApi, BlockEvent } from '../lib/api';
+import { statsApi, sessionsApi, blockedSitesApi, BlockEvent, settingsApi } from '../lib/api';
+import PasswordModal from '../components/PasswordModal';
 
 export default function Home() {
     const navigate = useNavigate();
@@ -29,18 +30,27 @@ export default function Home() {
     const [hardcoreMode, setHardcoreMode] = useState(false);
     const [isStarting, setIsStarting] = useState(false);
 
+    const [canOverride, setCanOverride] = useState(false);
+    const [showUnlockModal, setShowUnlockModal] = useState(false);
+
     useEffect(() => {
         loadDashboardData();
 
         const interval = setInterval(async () => {
             try {
-                const remaining = await sessionsApi.getTimeRemaining();
+                const [remaining, isLocked] = await Promise.all([
+                    sessionsApi.getTimeRemaining(),
+                    sessionsApi.isHardcoreLocked()
+                ]);
+
                 if (remaining !== null && remaining > 0) {
                     setSessionTimeLeft(remaining);
                     setIsSessionActive(true);
+                    setHardcoreMode(isLocked); // Sync hardcore state
                 } else {
                     setSessionTimeLeft(null);
                     setIsSessionActive(false);
+                    setHardcoreMode(false);
                 }
             } catch {
                 // Session API not available
@@ -53,14 +63,16 @@ export default function Home() {
     const loadDashboardData = async () => {
         setIsLoading(true);
         try {
-            const [blocks, sites, stats] = await Promise.all([
+            const [blocks, sites, stats, masterHash] = await Promise.all([
                 statsApi.getRecentBlocks(8),
                 blockedSitesApi.getAll(),
                 statsApi.getFocusStats(1),
+                settingsApi.get('master_password_hash')
             ]);
 
             setRecentBlocks(blocks);
             setBlockedCount(sites.filter(s => s.enabled).length);
+            setCanOverride(!!masterHash && masterHash.length > 0);
 
             if (stats.length > 0) {
                 const today = stats[0];
@@ -137,7 +149,7 @@ export default function Home() {
                         >
                             Home
                         </motion.h1>
-                        <p className="text-bastion-muted text-xs font-bold uppercase tracking-widest mt-0.5">Control Center</p>
+                        <p className="text-bastion-muted text-xs font-bold uppercase tracking-widest mt-0.5">Dashboard</p>
                     </div>
 
                     {isSessionActive && (
@@ -181,9 +193,37 @@ export default function Home() {
                                     </div>
                                 </div>
                                 {isSessionActive && sessionTimeLeft !== null && (
-                                    <div className="text-right p-4 rounded-2xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5">
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-bastion-muted mb-1">Time Left</p>
-                                        <p className="text-2xl font-mono text-black dark:text-white font-black">{formatTimeLeft(sessionTimeLeft)}</p>
+                                    <div className="flex flex-col gap-2 items-end">
+                                        <div className="text-right p-4 rounded-2xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5 min-w-[140px]">
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-bastion-muted mb-1">Time Left</p>
+                                            <p className="text-2xl font-mono text-black dark:text-white font-black">{formatTimeLeft(sessionTimeLeft)}</p>
+                                        </div>
+
+                                        {/* Stop / Unlock Button */}
+                                        {!hardcoreMode ? (
+                                            <button
+                                                onClick={async () => {
+                                                    await sessionsApi.endFocus();
+                                                    setIsSessionActive(false);
+                                                }}
+                                                className="px-4 py-2 rounded-xl bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all text-xs font-black uppercase tracking-widest border border-red-500/20"
+                                            >
+                                                Stop Session
+                                            </button>
+                                        ) : canOverride ? (
+                                            <button
+                                                onClick={() => setShowUnlockModal(true)}
+                                                className="px-4 py-2 rounded-xl bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500 hover:text-black transition-all text-xs font-black uppercase tracking-widest border border-yellow-500/20 flex items-center gap-2"
+                                            >
+                                                <Lock className="w-3 h-3" />
+                                                Emergency Unlock
+                                            </button>
+                                        ) : (
+                                            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/5 dark:bg-white/5 text-bastion-muted opacity-50 cursor-not-allowed">
+                                                <Lock className="w-3 h-3" />
+                                                <span className="text-[9px] font-black uppercase tracking-widest">Locked</span>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
                             </div>
@@ -215,8 +255,8 @@ export default function Home() {
                                 <Rocket className="w-6 h-6" />
                             </div>
                             <div>
-                                <h3 className="text-sm font-black text-black dark:text-white uppercase tracking-widest">Engage</h3>
-                                <p className="text-[10px] text-bastion-muted font-bold">Start Focus Session</p>
+                                <h3 className="text-sm font-black text-black dark:text-white uppercase tracking-widest">Focus</h3>
+                                <p className="text-[10px] text-bastion-muted font-bold">Start New Session</p>
                             </div>
                         </motion.div>
 
@@ -225,13 +265,13 @@ export default function Home() {
                             <div className="flex items-center justify-between">
                                 <p className="text-[10px] font-black uppercase tracking-widest text-bastion-muted flex items-center gap-2">
                                     <ShieldCheck className="w-3 h-3" />
-                                    Defense
+                                    Blocked Items
                                 </p>
-                                <span className="text-[9px] font-black bg-black/5 dark:bg-white/5 px-2 py-0.5 rounded uppercase tracking-widest text-bastion-muted">{blockedCount} Monitoring</span>
+                                <span className="text-[9px] font-black bg-black/5 dark:bg-white/5 px-2 py-0.5 rounded uppercase tracking-widest text-bastion-muted">{blockedCount} Active</span>
                             </div>
                             <div className="mt-4">
                                 <p className="text-3xl font-black text-black dark:text-white">{todayStats.totalBlocks}</p>
-                                <p className="text-[10px] text-bastion-muted mt-1 font-bold">Incidents Blocked Today</p>
+                                <p className="text-[10px] text-bastion-muted mt-1 font-bold">Attempts Blocked Today</p>
                             </div>
                         </motion.div>
 
@@ -239,7 +279,7 @@ export default function Home() {
                             <div className="px-5 py-4 border-b border-black/5 dark:border-white/5 flex items-center justify-between bg-black/5 dark:bg-white/5">
                                 <h3 className="text-[10px] font-black uppercase tracking-widest text-bastion-muted flex items-center gap-2">
                                     <Radar className="w-3 h-3" />
-                                    Interception Log
+                                    Activity Log
                                 </h3>
                             </div>
                             <div className="p-2 max-h-[140px] overflow-y-auto no-scrollbar">
@@ -283,7 +323,7 @@ export default function Home() {
                                 </div>
                                 <div>
                                     <h3 className="text-xs font-black text-black dark:text-white uppercase tracking-widest">Pomodoro</h3>
-                                    <p className="text-[10px] text-bastion-muted font-bold">Recursive Focus Cycles</p>
+                                    <p className="text-[10px] text-bastion-muted font-bold">Interval Timer</p>
                                 </div>
                             </motion.div>
                         </motion.div>
@@ -299,8 +339,8 @@ export default function Home() {
                                     <Lock className="w-5 h-5" />
                                 </div>
                                 <div>
-                                    <h3 className="text-xs font-black text-black dark:text-white uppercase tracking-widest">System Guard</h3>
-                                    <p className="text-[10px] text-bastion-muted font-bold">Configure OS Firewall</p>
+                                    <h3 className="text-xs font-black text-black dark:text-white uppercase tracking-widest">Block Lists</h3>
+                                    <p className="text-[10px] text-bastion-muted font-bold">Manage Blocked Content</p>
                                 </div>
                             </motion.div>
                         </motion.div>
@@ -408,6 +448,21 @@ export default function Home() {
                             </div>
                         </motion.div>
                     </motion.div>
+                )}
+                {showUnlockModal && (
+                    <PasswordModal
+                        isOpen={showUnlockModal}
+                        onClose={() => setShowUnlockModal(false)}
+                        onConfirm={async (password) => {
+                            await sessionsApi.emergencyUnlock(password);
+                            setIsSessionActive(false);
+                            setHardcoreMode(false);
+                        }}
+                        title="Emergency Unlock"
+                        message="Enter your Master Password to override Hardcore Mode and stop the session."
+                        confirmLabel="Unlock & Stop"
+                        type="verify"
+                    />
                 )}
             </AnimatePresence>
         </div>

@@ -9,10 +9,10 @@ use sysinfo::{System, Signal, ProcessesToUpdate};
 #[cfg(target_os = "windows")]
 const HOSTS_PATH: &str = "C:\\Windows\\System32\\drivers\\etc\\hosts";
 
-#[cfg(target_os = "macos")]
+#[cfg(target_os = "macos")] // currently not supported
 const HOSTS_PATH: &str = "/etc/hosts";
 
-#[cfg(target_os = "linux")]
+#[cfg(target_os = "linux")] // currently not supported
 const HOSTS_PATH: &str = "/etc/hosts";
 
 const BASTION_MARKER_START: &str = "# === BASTION BLOCK START ===";
@@ -186,7 +186,13 @@ pub fn disable_firefox_doh() -> Result<(), BlockingError> {
     Ok(())
 }
 
-/// Disables DNS-over-HTTPS for Chromium-based browsers via Registry.
+/// Disables DNS-over-HTTPS (DoH) for Chromium-based browsers via Windows Registry.
+///
+/// This is critical because modern browsers often bypass the system `hosts` file by using DoH.
+/// By enforcing the system DNS, we ensure that our `127.0.0.1` blocks in the `hosts` file are respected.
+///
+/// Supports: Chrome, Thorium (and potentially others if they respect Global Policies).
+/// Requires: Administrator privileges.
 pub fn disable_chromium_doh() -> Result<(), BlockingError> {
     #[cfg(target_os = "windows")]
     {
@@ -197,12 +203,13 @@ pub fn disable_chromium_doh() -> Result<(), BlockingError> {
             .args(&["add", "HKLM\\SOFTWARE\\Policies\\Google\\Chrome", "/v", "DnsOverHttpsMode", "/t", "REG_SZ", "/d", "off", "/f"])
             .output();
 
-        // Disable for Thorium (Specifically requested by user)
+        // Disable for Thorium (Performance-focused Chromium fork)
         let _ = Command::new("reg")
             .args(&["add", "HKLM\\SOFTWARE\\Policies\\Thorium", "/v", "DnsOverHttpsMode", "/t", "REG_SZ", "/d", "off", "/f"])
             .output();
             
         // Also disable built-in DNS client to force OS/Hosts lookup
+        // This prevents the browser from using its own Async DNS resolver which might cache results or ignore hosts.
         let _ = Command::new("reg")
             .args(&["add", "HKLM\\SOFTWARE\\Policies\\Google\\Chrome", "/v", "BuiltInDnsClientEnabled", "/t", "REG_DWORD", "/d", "0", "/f"])
             .output();
@@ -334,12 +341,22 @@ pub fn kill_process_by_name(process_name: &str) -> Result<u32, BlockingError> {
     Ok(killed)
 }
 
-/// Monitor and kill blocked apps (call this periodically)
+/// Monitor and kill blocked apps (call this periodically).
+///
+/// This function:
+/// 1. Getting a fresh snapshot of running processes.
+/// 2. Compares them against the `blocked_apps` list (case-insensitive).
+/// 3. Attempts to gracefully terminate (SIGTERM) first, then force kill (SIGKILL).
+/// 4. Returns a list of apps that were successfully killed.
+///
+/// # Safety
+/// Includes a hardcoded `SYSTEM_WHITELIST` to prevent accidental killing of critical Windows processes
+/// (like `explorer.exe` or `svchost.exe`) even if the user accidentally adds them to the blocklist.
 pub fn enforce_app_blocks(blocked_apps: &[String]) -> Vec<String> {
     if blocked_apps.is_empty() { return Vec::new(); }
     
     let mut system = System::new();
-    // Incremental refresh for performance
+    // Incremental refresh for performance (don't re-scan static info)
     system.refresh_processes(sysinfo::ProcessesToUpdate::All, true);
     
     let mut killed_apps = Vec::new();

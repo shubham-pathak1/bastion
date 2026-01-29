@@ -56,6 +56,11 @@ impl Default for PomodoroState {
     }
 }
 
+/// Manages the state of active focus sessions and Pomodoro timers.
+///
+/// This struct is thread-safe and shared across the application state.
+/// It uses `AtomicBool` for the critical `hardcore_locked` flag to ensure atomic access
+/// without needing a full mutex lock for read-heavy operations (like blocking checks).
 pub struct SessionManager {
     pub active_session: Mutex<Option<ActiveSession>>,
     pub pomodoro_state: Mutex<PomodoroState>,
@@ -77,7 +82,10 @@ impl SessionManager {
         }
     }
 
-    /// Start a manual focus session
+    /// Start a manual focus session.
+    ///
+    /// If `hardcore` is true, the session cannot be ended early until the duration expires
+    /// (unless the emergency override is used).
     pub fn start_session(&self, name: String, duration_minutes: i64, hardcore: bool) -> ActiveSession {
         let now = Local::now().timestamp();
         let session = ActiveSession {
@@ -112,7 +120,11 @@ impl SessionManager {
         }
         
         drop(active);
-        
+        self.force_end_session()
+    }
+
+    /// Force end the current session (bypassing hardcore checks)
+    pub fn force_end_session(&self) -> Result<(), String> {
         let mut active = self.active_session.lock().unwrap();
         *active = None;
         self.is_hardcore_locked.store(false, Ordering::SeqCst);
@@ -255,7 +267,8 @@ impl SessionManager {
         }
     }
 
-    /// Get current pomodoro state
+    /// Get current pomodoro state.
+    /// Returns a clone of the state to avoid holding the lock.
     pub fn get_pomodoro_state(&self) -> PomodoroState {
         self.pomodoro_state.lock().unwrap().clone()
     }
